@@ -83,10 +83,11 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
   const docsSiteUrl = "https://pratyush-nirwan.github.io/patchwork/";
 
   const badgeVer = displayVersion.replace(/-/g, "--");
-  const badgeNode = encodeURIComponent(nodeReq);
+  const badgeLicense = encodeURIComponent(license.replace(/-/g, "--"));
+  const badgeNode = encodeURIComponent(nodeReq.replace(/-/g, "--"));
   const badges = [
     `![Version ${displayVersion}](https://img.shields.io/badge/version-${badgeVer}-C84317?style=flat-square)`,
-    `![License ${license}](https://img.shields.io/badge/license-${encodeURIComponent(license)}-1D242E?style=flat-square)`,
+    `![License ${license}](https://img.shields.io/badge/license-${badgeLicense}-1D242E?style=flat-square)`,
     `![Node ${nodeReq}](https://img.shields.io/badge/node-${badgeNode}-339933?style=flat-square)`,
     `![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square)`,
     `![Status ${channel}](https://img.shields.io/badge/status-${encodeURIComponent(channel)}-D97706?style=flat-square)`,

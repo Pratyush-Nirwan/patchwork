@@ -12,7 +12,7 @@
 
 Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boards — no Docker required.
 
-![Version v0.7.0-beta](https://img.shields.io/badge/version-v0.7.0--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL-3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square)
+![Version v0.7.0-beta](https://img.shields.io/badge/version-v0.7.0--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square)
 
 [Documentation](https://pratyush-nirwan.github.io/patchwork/) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](CONTRIBUTING.md)
 

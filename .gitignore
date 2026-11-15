@@ -19,4 +19,18 @@ documentation-dist/
 documentation-dist.tmp-*/
 documentation-dist.bak-*/
 .patchwork-version.json
+.impeccable/
+dist/
+build/
+.turbo/
+.cache/
+.vitest/
+blob-report/
+playwright/.cache/
+.playwright-mcp/
+tmp/
+temp/
+.eslintcache
+.DS_Store
+Thumbs.db
 

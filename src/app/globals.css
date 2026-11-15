@@ -1,0 +1,411 @@
+@import "tailwindcss";
+
+:root {
+  --pw-bg: #F6F5F2;
+  --pw-surface: #FFFFFF;
+  --pw-surface-muted: #ECEAE4;
+  --pw-surface-hover: #F0EFEA;
+  --pw-rail-bg: #141920;
+  --pw-rail-surface: #1D242E;
+  --pw-rail-ink: #EAEEF3;
+  --pw-rail-muted: #9AA6B5;
+  --pw-rail-border: #28313E;
+  --pw-ink: #141619;
+  --pw-ink-secondary: #434B56;
+  --pw-ink-muted: #5C6673;
+  --pw-ghost-active: #525B68;
+  --pw-ghost-rest: #687280;
+  --pw-border: #D8D6D0;
+  --pw-accent: #C84317;
+  --pw-accent-hover: #AF3810;
+  --pw-accent-soft: #FCECE6;
+  --pw-urgent: #B91C1C;
+  --pw-high: #C2410C;
+  --pw-medium: #1D4ED8;
+  --pw-low: #0F766E;
+  --pw-success: #15803D;
+  --pw-shadow: 0 6px 20px -4px rgba(20, 22, 25, 0.08), 0 2px 6px -1px rgba(20, 22, 25, 0.04);
+  --font-mono: "Berkeley Mono", "Commit Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Motion & skeleton tokens */
+  --pw-dur-instant: 0ms;
+  --pw-dur-fast: 120ms;
+  --pw-dur-base: 180ms;
+  --pw-dur-slow: 260ms;
+  --pw-dur-page: 320ms;
+  --pw-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --pw-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --pw-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --pw-dist-xs: 4px;
+  --pw-dist-sm: 8px;
+  --pw-dist-md: 16px;
+  --pw-stagger-step: 24ms;
+  --pw-skeleton-base: #E6E3DC;
+  --pw-skeleton-highlight: rgba(255, 255, 255, 0.65);
+}
+
+.dark {
+  --pw-bg: #0D1014;
+  --pw-surface: #13181E;
+  --pw-surface-muted: #1A2129;
+  --pw-surface-hover: #1E2630;
+  --pw-rail-bg: #090C10;
+  --pw-rail-surface: #12171F;
+  --pw-rail-ink: #EBF0F5;
+  --pw-rail-muted: #93A0B0;
+  --pw-rail-border: #1E2631;
+  --pw-ink: #EBF0F5;
+  --pw-ink-secondary: #A6B2C0;
+  --pw-ink-muted: #8A97A8;
+  --pw-ghost-active: #93A0B0;
+  --pw-ghost-rest: #7E8B9B;
+  --pw-border: #222A35;
+  --pw-accent: #F05A28;
+  --pw-accent-hover: #FF6E3D;
+  --pw-accent-soft: #2D1A14;
+  --pw-urgent: #F87171;
+  --pw-high: #FB923C;
+  --pw-medium: #60A5FA;
+  --pw-low: #2DD4BF;
+  --pw-success: #4ADE80;
+  --pw-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 2px 8px -2px rgba(0, 0, 0, 0.35);
+  --pw-skeleton-base: #1D252F;
+  --pw-skeleton-highlight: rgba(255, 255, 255, 0.07);
+}
+
+* {
+  box-sizing: border-box;
+  caret-color: var(--pw-accent);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--pw-bg);
+  color: var(--pw-ink);
+  font-family: "Söhne", "Neue Haas Grotesk Text", "Atkinson Hyperlegible", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-underline-offset: 3px;
+}
+
+::selection {
+  background-color: var(--pw-accent);
+  color: #FFFFFF;
+}
+
+:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.ease-out-dispatch {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pw-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pw-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pw-ink-muted);
+}
+
+mark {
+  background-color: var(--pw-accent-soft);
+  color: var(--pw-accent);
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+@keyframes hold-vibrate {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  15% {
+    transform: translate3d(calc(var(--vibe, 0) * -3px), calc(var(--vibe, 0) * 1.8px), 0) rotate(calc(var(--vibe, 0) * -1.2deg));
+  }
+  30% {
+    transform: translate3d(calc(var(--vibe, 0) * 2.8px), calc(var(--vibe, 0) * -2.2px), 0) rotate(calc(var(--vibe, 0) * 1deg));
+  }
+  45% {
+    transform: translate3d(calc(var(--vibe, 0) * -2.2px), calc(var(--vibe, 0) * -1.8px), 0) rotate(calc(var(--vibe, 0) * -0.8deg));
+  }
+  60% {
+    transform: translate3d(calc(var(--vibe, 0) * 3px), calc(var(--vibe, 0) * 2px), 0) rotate(calc(var(--vibe, 0) * 1.3deg));
+  }
+  75% {
+    transform: translate3d(calc(var(--vibe, 0) * -2px), calc(var(--vibe, 0) * 2.8px), 0) rotate(calc(var(--vibe, 0) * -1deg));
+  }
+  90% {
+    transform: translate3d(calc(var(--vibe, 0) * 2.5px), calc(var(--vibe, 0) * -1.5px), 0) rotate(calc(var(--vibe, 0) * 0.9deg));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+.animate-hold-vibrate {
+  animation: hold-vibrate 0.065s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  .dark {
+    --pw-ghost-active: var(--pw-ink);
+    --pw-ghost-rest: var(--pw-ink-secondary);
+  }
+}
+
+@media (forced-colors: active) {
+  [data-testid="command-ghost-layer"] {
+    color: GrayText !important;
+  }
+}
+
+@keyframes pw-ghost-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pw-ghost-enter {
+  animation: pw-ghost-fade 80ms ease-out;
+}
+
+/* Motion & Skeleton System (transform & opacity only) */
+@keyframes pw-shimmer {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.pw-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--pw-skeleton-base);
+}
+
+.pw-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translate3d(-100%, 0, 0);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--pw-skeleton-highlight) 50%,
+    transparent 100%
+  );
+  animation: pw-shimmer 1.4s var(--pw-ease-in-out) infinite;
+}
+
+@keyframes pw-progress-indeterminate {
+  0% {
+    transform: translate3d(-100%, 0, 0) scaleX(0.35);
+  }
+  50% {
+    transform: translate3d(25%, 0, 0) scaleX(0.55);
+  }
+  100% {
+    transform: translate3d(120%, 0, 0) scaleX(0.35);
+  }
+}
+
+.pw-progress-bar-track {
+  position: relative;
+  overflow: hidden;
+  height: 2px;
+  width: 100%;
+  background-color: transparent;
+}
+
+.pw-progress-bar-fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background-color: var(--pw-accent);
+  animation: pw-progress-indeterminate 1.1s var(--pw-ease-in-out) infinite;
+}
+
+@keyframes pw-dnd-shake {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-5px, 0, 0);
+  }
+  45% {
+    transform: translate3d(5px, 0, 0);
+  }
+  70% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  85% {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+.pw-dnd-rollback {
+  animation: pw-dnd-shake var(--pw-dur-slow) var(--pw-ease-out);
+}
+
+@keyframes pw-remote-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pw-snackbar-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.pw-remote-highlight {
+  position: relative;
+}
+
+.pw-remote-highlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--pw-accent);
+  pointer-events: none;
+  animation: pw-remote-flash 1200ms var(--pw-ease-out) forwards;
+}
+
+/* Collapse via grid-template-rows (no height animation) */
+.pw-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--pw-dur-base) var(--pw-ease-out),
+    opacity var(--pw-dur-fast) var(--pw-ease-out);
+}
+
+.pw-collapse[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.pw-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Pause CSS animations when tab is hidden */
+.pw-tab-hidden *,
+.pw-tab-hidden *::before,
+.pw-tab-hidden *::after {
+  animation-play-state: paused !important;
+}
+
+/* Respect OS prefers-reduced-motion, in-app Reduce motion, and test flags */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pw-dur-fast: 0ms;
+    --pw-dur-base: 0ms;
+    --pw-dur-slow: 0ms;
+    --pw-dur-page: 0ms;
+    --pw-dist-xs: 0px;
+    --pw-dist-sm: 0px;
+    --pw-dist-md: 0px;
+    --pw-stagger-step: 0ms;
+  }
+
+  .pw-ghost-enter,
+  .pw-dnd-rollback,
+  .pw-remote-highlight::after,
+  .pw-progress-bar-fill,
+  .pw-skeleton::after {
+    animation: none !important;
+  }
+
+  .pw-skeleton::after {
+    display: none;
+  }
+
+  .pw-collapse {
+    transition-duration: 0ms !important;
+  }
+}
+
+:root[data-reduce-motion="true"],
+:root[data-test-animations="off"] {
+  --pw-dur-fast: 0ms;
+  --pw-dur-base: 0ms;
+  --pw-dur-slow: 0ms;
+  --pw-dur-page: 0ms;
+  --pw-dist-xs: 0px;
+  --pw-dist-sm: 0px;
+  --pw-dist-md: 0px;
+  --pw-stagger-step: 0ms;
+}
+
+:root[data-reduce-motion="true"] .pw-ghost-enter,
+:root[data-reduce-motion="true"] .pw-dnd-rollback,
+:root[data-reduce-motion="true"] .pw-remote-highlight::after,
+:root[data-reduce-motion="true"] .pw-progress-bar-fill,
+:root[data-reduce-motion="true"] .pw-skeleton::after,
+:root[data-test-animations="off"] .pw-ghost-enter,
+:root[data-test-animations="off"] .pw-dnd-rollback,
+:root[data-test-animations="off"] .pw-remote-highlight::after,
+:root[data-test-animations="off"] .pw-progress-bar-fill,
+:root[data-test-animations="off"] .pw-skeleton::after {
+  animation: none !important;
+}
+
+:root[data-reduce-motion="true"] .pw-skeleton::after,
+:root[data-test-animations="off"] .pw-skeleton::after {
+  display: none;
+}
+
+:root[data-reduce-motion="true"] *,
+:root[data-reduce-motion="true"] *::before,
+:root[data-reduce-motion="true"] *::after,
+:root[data-test-animations="off"] *,
+:root[data-test-animations="off"] *::before,
+:root[data-test-animations="off"] *::after {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+}

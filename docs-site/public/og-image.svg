@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#141920" />
+  <rect x="80" y="90" width="96" height="96" rx="14" fill="#C84317" />
+  <rect x="196" y="90" width="96" height="96" rx="14" fill="#EAEEF3" />
+  <rect x="80" y="206" width="96" height="84" rx="14" fill="#EAEEF3" opacity="0.7" />
+  <rect x="196" y="206" width="96" height="84" rx="14" fill="#F05A28" />
+  <text x="80" y="385" fill="#EAEEF3" font-family="system-ui, -apple-system, sans-serif" font-size="68" font-weight="700">Patchwork Documentation</text>
+  <text x="80" y="450" fill="#9AA6B5" font-family="system-ui, -apple-system, sans-serif" font-size="32">Self-hosted engineering ticketing platform (No Docker)</text>
+</svg>

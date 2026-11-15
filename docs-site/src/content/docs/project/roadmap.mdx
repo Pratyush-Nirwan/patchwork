@@ -1,0 +1,25 @@
+---
+title: "Roadmap & Known Limitations"
+description: "Honest scope of Patchwork v1 and features intentionally not included."
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import rootPkg from "../../../../package.json";
+export const versionLabel = `v${rootPkg.version}`;
+
+This page lists known boundaries so teams know what Patchwork does and does not support today.
+
+<Aside type="caution" title="Beta software">
+  Patchwork {versionLabel} is pre-1.0 beta software. Features and data formats may change between releases. Back up PostgreSQL, `.env`, and MinIO data before upgrading, and report issues on the project issue tracker.
+</Aside>
+
+## Not Included in {versionLabel}
+
+- **No Docker / container images**: Patchwork is intentionally native-only on Windows and Linux.
+- **No email notifications or SMTP delivery**: Password resets and initial credentials are distributed by admins directly.
+- **No in-app notification inbox**: Real-time updates sync active boards via SSE without a persistent notification bell.
+- **No standalone audit log table**: Ticket mutations record activity feeds (`activities`), but there is no global admin audit-log stream.
+- **No Personal Access Tokens (PATs) / public REST API tokens**: Authentication uses browser HTTP-only sessions + CSRF headers.
+- **No inbound or outbound webhooks**: GitHub/GitLab integration fetches link metadata on demand via `/api/links`.
+- **No SSO / OAuth login**: Accounts authenticate with local email and `argon2id` passwords.
+- **No native desktop or mobile apps**: Responsive web UI works in desktop and mobile browsers.

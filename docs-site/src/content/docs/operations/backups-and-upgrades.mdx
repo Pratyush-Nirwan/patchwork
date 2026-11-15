@@ -1,0 +1,58 @@
+---
+title: "Backups & Upgrades"
+description: "PostgreSQL pg_dump backups, MinIO data directory sync, upgrade steps, and disaster recovery."
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+This guide is for operators managing backups, upgrades, and disaster recovery.
+
+## Recommended Backup Schedule
+
+- **PostgreSQL (`pg_dump`)**: Nightly compressed custom-format dump (`-Fc`), plus a pre-upgrade snapshot.
+- **MinIO data directory**: Nightly incremental sync (`rsync` or `robocopy`) of `/var/lib/minio/data` (or `./.minio-data` in development).
+- **`.env` secrets**: Back up `.env` securely (especially `TOKEN_ENCRYPTION_KEY`, `SESSION_SECRET`, and `CSRF_SECRET`).
+
+## Backup & Restore Commands
+
+<Tabs>
+  <TabItem label="Windows (PowerShell)">
+    ```powershell
+    pg_dump -Fc -U postgres patchwork > patchwork-$(Get-Date -Format yyyy-MM-dd).dump
+    # Restore:
+    pg_restore -d patchwork --clean --if-exists -U postgres patchwork-YYYY-MM-DD.dump
+    ```
+  </TabItem>
+  <TabItem label="Linux (bash)">
+    ```bash
+    sudo -u postgres pg_dump -Fc patchwork > /var/backups/patchwork-$(date +%F).dump
+    sudo rsync -a --delete /var/lib/minio/data/ /var/backups/minio-data/
+
+    # Restore:
+    sudo -u postgres pg_restore -d patchwork --clean --if-exists /var/backups/patchwork-YYYY-MM-DD.dump
+    ```
+  </TabItem>
+</Tabs>
+
+## Upgrade Procedure
+
+1. Back up PostgreSQL and `.env`.
+2. Pull the new release and install dependencies:
+   ```bash
+   npm ci
+   npm run db:migrate
+   npm run build
+   ```
+3. Restart Patchwork (`sudo systemctl restart patchwork.service` on Linux, or `npm run stop` then `npm run start`).
+
+## Disaster Recovery
+
+1. Provision PostgreSQL 16+ and restore your latest `.dump` with `pg_restore`.
+2. Restore the MinIO data directory before starting MinIO.
+3. Restore `.env` with restricted permissions (`chmod 600 .env` on Linux; `icacls` on Windows).
+4. Run `node scripts/setup.mjs --check` and verify `/api/health`.
+
+## Related Pages
+
+- [Installation](/getting-started/installation/)
+- [Monitoring & Maintenance](/operations/monitoring-and-maintenance/)

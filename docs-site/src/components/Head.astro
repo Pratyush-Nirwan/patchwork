@@ -1,0 +1,16 @@
+---
+import Default from "@astrojs/starlight/components/Head.astro";
+---
+
+<Default {...Astro.props} />
+<script is:inline>
+  try {
+    var pwTheme =
+      localStorage.getItem("patchwork_theme") ||
+      localStorage.getItem("patchwork-theme");
+    if (pwTheme === "light" || pwTheme === "dark") {
+      document.documentElement.dataset.theme = pwTheme;
+      localStorage.setItem("starlight-theme", pwTheme);
+    }
+  } catch (e) {}
+</script>

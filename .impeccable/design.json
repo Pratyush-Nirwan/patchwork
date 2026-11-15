@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T21:14:30.000Z",
+  "title": "Design System: Patchwork",
+  "extensions": {
+    "colorMeta": {
+      "signal-vermilion": {
+        "role": "primary",
+        "displayName": "Signal Vermilion",
+        "canonical": "#C84317",
+        "tonalRamp": ["#3B1105", "#5C1C09", "#7F280E", "#A33413", "#C84317", "#E56338", "#F39B7E", "#FCECE6"]
+      },
+      "drafting-paper": {
+        "role": "neutral",
+        "displayName": "Drafting Paper",
+        "canonical": "#F6F5F2",
+        "tonalRamp": ["#141619", "#282C32", "#434B56", "#5C6673", "#8A94A0", "#C4C2BC", "#ECEAE4", "#F6F5F2"]
+      },
+      "dispatch-rail": {
+        "role": "neutral",
+        "displayName": "Dispatch Rail Slate",
+        "canonical": "#141920",
+        "tonalRamp": ["#090C10", "#141920", "#1D242E", "#28313E", "#3B4758", "#5C6B7F", "#9AA6B5", "#EAEEF3"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Split-screen authentication hero title." },
+      "headline": { "displayName": "Headline", "purpose": "Inspector and modal titles." },
+      "title": { "displayName": "Title", "purpose": "Kanban column headers and section headers." },
+      "body": { "displayName": "Body", "purpose": "Compact workspace copy, markdown descriptions, and comments." },
+      "label": { "displayName": "Label Mono", "purpose": "Ticket keys, project prefixes, WIP counters, and RBAC badges." }
+    },
+    "shadows": [
+      {
+        "name": "overlay-elevation",
+        "value": "0 6px 20px -4px rgba(20, 22, 25, 0.08), 0 2px 6px -1px rgba(20, 22, 25, 0.04)",
+        "purpose": "Slide-over ticket inspector, modals, and global search dropdown."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-dispatch",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "WIP bar transitions and panel state changes."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Dispatch Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button for creating tickets, columns, and submitting forms.",
+      "html": "<button class=\"ds-btn-primary\">+ New Ticket</button>",
+      "css": ".ds-btn-primary { background: #C84317; color: #FFFFFF; padding: 6px 12px; font-size: 12px; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; transition: background 0.15s ease; } .ds-btn-primary:hover { background: #AF3810; } .ds-btn-primary:focus-visible { outline: 2px solid #C84317; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Bordered structural action button for adding columns or toggling sidebar.",
+      "html": "<button class=\"ds-btn-secondary\">Add Column</button>",
+      "css": ".ds-btn-secondary { background: #F6F5F2; color: #141619; padding: 6px 10px; font-size: 12px; font-weight: 500; border: 1px solid #D8D6D0; border-radius: 4px; cursor: pointer; } .ds-btn-secondary:hover { background: #F0EFEA; }"
+    },
+    {
+      "name": "Global FTS Search Input",
+      "kind": "input",
+      "refersTo": "card-ticket",
+      "description": "Global search bar for querying tickets, comments, and attachment contents.",
+      "html": "<input class=\"ds-input-search\" placeholder=\"Search tickets, comments, attachments... (/)\" />",
+      "css": ".ds-input-search { width: 280px; background: #F6F5F2; color: #141619; border: 1px solid #D8D6D0; border-radius: 4px; padding: 6px 10px; font-size: 12px; } .ds-input-search:focus-visible { outline: 2px solid #C84317; outline-offset: 2px; }"
+    },
+    {
+      "name": "Kanban Ticket Card",
+      "kind": "card",
+      "refersTo": "card-ticket",
+      "description": "Compact Kanban card with tabular monospace key, priority badge, and assignee.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card-top\"><span class=\"ds-key\">TELE-1</span><span class=\"ds-prio\">URGENT</span></div><h4 class=\"ds-title\">Calibrate star tracker gyroscopes</h4></article>",
+      "css": ".ds-card { background: #F6F5F2; color: #141619; border: 1px solid #D8D6D0; border-radius: 4px; padding: 10px; width: 260px; } .ds-card:hover { border-color: #5C6673; } .ds-card-top { display: flex; justify-content: space-between; margin-bottom: 6px; font-family: monospace; font-size: 11px; font-weight: 600; } .ds-key { color: #C84317; } .ds-prio { color: #B91C1C; background: rgba(185,28,28,0.12); padding: 1px 6px; border-radius: 3px; font-size: 10px; } .ds-title { margin: 0; font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Priority & Role Chip",
+      "kind": "chip",
+      "refersTo": "card-ticket",
+      "description": "Monospace uppercase badge for RBAC roles and ticket labels.",
+      "html": "<span class=\"ds-chip\">ADMIN · LEAD</span>",
+      "css": ".ds-chip { display: inline-block; background: #ECEAE4; color: #434B56; border: 1px solid #D8D6D0; border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Precision Engineering Dispatch Ledger",
+    "overview": "Patchwork treats multi-team issue tracking as a high-density operational dispatch board rather than a decorative marketing wall. Inspired by Swiss railway timetables and architectural drafting sheets, every pixel serves scannability: a dark cobalt-slate left navigation rail anchors the Org -> Team -> Project -> Board hierarchy, while the warm drafting-paper canvas holds crisp 1px-bordered columns, tabular ticket keys, and a slide-over detail inspector.",
+    "keyCharacteristics": [
+      "High-signal operational density with 12px base workspace copy and tabular-nums alignment on all ticket keys, counts, and WIP gauges.",
+      "Tonal architectural contrast pairing a deep slate navigation rail (#141920) with a low-glare warm stone workspace ground (#F6F5F2).",
+      "Precision WIP capacity bars integrated directly into Kanban column headers to surface bottlenecks before cards overflow."
+    ],
+    "rules": [
+      {
+        "name": "The Structural Hairline Rule",
+        "body": "Every workspace boundary—navigation rail, top breadcrumb bar, Kanban column, and ticket card—is separated by a 1px structural border (#D8D6D0 / #222A35) rather than heavy drop shadows.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Telemetry Rule",
+        "body": "Every ticket key, WIP ratio (2/4), attachment byte size, and timestamp must enforce font-variant-numeric: tabular-nums so vertical columns scan without jitter.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do keep ticket cards compact (p-2.5) with monospace keys (TELE-1) and priority badges on the top row.",
+      "Do use tabular-nums on all ticket numbers, WIP counters, and file sizes.",
+      "Do maintain >=4.5:1 contrast on all secondary slate labels in both light and dark modes."
+    ],
+    "donts": [
+      "Don't place uppercase eyebrow/kicker labels above section headings.",
+      "Don't use decorative glassmorphism, gradient text, or >1px colored side borders on ticket cards.",
+      "Don't use emoji or raw Unicode symbols in place of SVG icons."
+    ]
+  }
+}
+

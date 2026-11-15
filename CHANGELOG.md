@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to Patchwork are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [v0.7.0-beta] - 2026-11-15
+
+### Added
+- Cohesive motion system (`src/lib/motion.ts`, `src/components/ui/motion.tsx`, CSS tokens in `src/app/globals.css`), geometry-matched domain skeleton loaders (`src/components/skeletons/`), App Router `loading.tsx` boundaries, `RegionErrorBoundary`, stale-while-revalidate progress bars, pre-paint theme/reduce-motion script, and an in-app **Reduce motion** toggle in account settings.
+- Embedded documentation serving at `/documentation` from static `documentation-dist/` with scoped CSP, `X-Robots-Tag: noindex`, `ETag`/`304`, and immutable asset caching, plus `DOCS_BASE` / `docs:build` / `docs:build:standalone`.
+- `/docs [topic]` slash command, `"Documentation"` Command Palette search entry, sidebar/login/Setup Wizard documentation links, and installer `--check`/Repair/Step 8 documentation integration.
+- Official Starlight documentation site in `docs-site/` with generated references (`npm run docs:generate`), coverage and staleness checks (`npm run docs:check`), automated Playwright screenshots (`npm run docs:screenshots`), and release helper (`npm run release:docs`).
+- Root `SECURITY.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/pull_request_template.md`, and `.github/workflows/docs.yml`.
+- Single-source-of-truth versioning (`src/lib/version.ts`, `scripts/lib/version.mjs`), `npm run version:check`, `npm run release:prepare`, `/api/health` version/channel metadata, sidebar/About/System Config version display, and installer upgrade detection.
+- Multi-team engineering workspace (`Organization -> Teams -> Projects -> Boards -> Tickets`) with Kanban drag-and-drop, WIP capacity gauges, and Calendar view.
+- Native CLI installer (`scripts/setup.mjs`), encrypted one-time Admin Setup Token (`AES-256-GCM`), and multi-step Setup Wizard with CSV employee import.
+- Server-enforced RBAC (`admin`, `lead`, `member`, `viewer`, plus `developer`/`tester` sub-roles).
+- Spotlight Command Palette (`Ctrl+K` / `Cmd+K`) with slash commands, inline ghost hints, option key completion, `/help` reference, `Shift+Enter` keep-open, and session command history.
+- MinIO presigned attachments with text extraction and PostgreSQL `tsvector` + GIN full-text search.
+- Real-time board sync via PostgreSQL `LISTEN/NOTIFY` and Server-Sent Events (`/api/events`).
+- System Configuration (`/dashboard/system`) for users, org, hierarchy, roles, security/session policies, storage, search reindexing, integrations, appearance defaults, diagnostics, data export, and danger zone.
+
+[Unreleased]: https://github.com/owner/patchwork/compare/v0.7.0-beta...HEAD
+[v0.7.0-beta]: https://github.com/owner/patchwork/releases/tag/v0.7.0-beta

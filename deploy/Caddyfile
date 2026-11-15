@@ -1,0 +1,21 @@
+# Patchwork reverse proxy configuration (Caddy)
+# Replace patchwork.example.com and files.patchwork.example.com with your actual domains.
+# Ensure DNS A/AAAA records exist for both patchwork.example.com and files.patchwork.example.com.
+# Set MINIO_PUBLIC_URL=https://files.patchwork.example.com in your .env file.
+
+patchwork.example.com {
+	encode gzip zstd
+
+	# Reverse-proxy Patchwork (including embedded /documentation)
+	reverse_proxy 127.0.0.1:3000 {
+		# Keep SSE streaming unbuffered for /api/events without stripping static /documentation cache headers
+		flush_interval -1
+	}
+}
+
+files.patchwork.example.com {
+	# Dedicated host for MinIO S3 API (no path rewriting so presigned URLs validate)
+	reverse_proxy 127.0.0.1:9000 {
+		flush_interval -1
+	}
+}

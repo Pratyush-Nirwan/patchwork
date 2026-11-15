@@ -1,0 +1,32 @@
+---
+title: "Security"
+description: "Authentication, Argon2id, CSRF, AES-256-GCM setup token encryption, upload validation, security headers, and vulnerability reporting."
+---
+
+This page is for security reviewers and administrators operating Patchwork.
+
+## Authentication & Session Model
+
+- **Passwords**: Hashed with `argon2id`. Complexity rules are enforced server-side from `SecuritySettingsSchema`.
+- **Sessions**: Stored in PostgreSQL (`sessions`), delivered via `HttpOnly` cookies, and validated against both `expiresAt` and optional `sessionIdleTimeoutMs`.
+- **CSRF Protection**: State-changing API requests require a matching `x-csrf-token` header checked against the session's `csrfToken`.
+- **Authorization**: Every route verifies organization and team RBAC roles server-side (`src/lib/rbac.ts`).
+
+## Admin Setup Token & `TOKEN_ENCRYPTION_KEY`
+
+During installation, `scripts/setup.mjs` encrypts the one-time Admin Setup Token with `AES-256-GCM` using `TOKEN_ENCRYPTION_KEY` and deletes the ciphertext as soon as `/setup` verifies it. Never regenerate `TOKEN_ENCRYPTION_KEY` while an unconfirmed setup token is pending.
+
+## File Upload Validation & Headers
+
+- Uploads validate MIME type, extension, and byte size against `StorageSettingsSchema` and `MAX_ATTACHMENT_BYTES`.
+- Exported filenames pass through `sanitizeFilename()`.
+- Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, etc.) are applied across responses.
+
+## Reporting a Vulnerability
+
+See `SECURITY.md` at the repository root: do not file public issues for security bugs. Open a private GitHub Security Advisory or email `security@example.com`.
+
+## Related Pages
+
+- [Sessions & Security Policy](/admin-guide/sessions-and-security-policy/)
+- [Roles & Permissions Matrix](/reference/roles-and-permissions/)

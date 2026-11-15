@@ -1,0 +1,26 @@
+[Unit]
+Description=Patchwork Ticketing Platform (Next.js App Server)
+After=network.target postgresql.service minio.service
+Requires=postgresql.service minio.service
+
+[Service]
+Type=simple
+User=patchwork
+Group=patchwork
+WorkingDirectory=/opt/patchwork
+EnvironmentFile=/opt/patchwork/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=patchwork
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/patchwork/.next /opt/patchwork/logs /opt/patchwork/backups
+
+[Install]
+WantedBy=multi-user.target

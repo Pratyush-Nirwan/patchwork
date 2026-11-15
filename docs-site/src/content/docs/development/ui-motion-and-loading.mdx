@@ -1,0 +1,43 @@
+---
+title: UI Motion & Loading States
+description: Motion tokens, shared animation primitives, geometry-matched skeletons, and reduced-motion accessibility in Patchwork.
+---
+
+Patchwork uses a lightweight CSS-and-React motion and skeleton system designed for zero layout shift (`CLS <= 0.05`) and zero heavy animation dependencies.
+
+## Motion Tokens
+
+Defined in `src/app/globals.css` and mirrored in `src/lib/motion.ts`:
+
+| Token | Value | Usage |
+| --- | --- | --- |
+| `--pw-dur-instant` | `0ms` | Immediate state switches and reduced motion |
+| `--pw-dur-fast` | `120ms` | Micro-transitions, fade-ins, command palette |
+| `--pw-dur-base` | `180ms` | Drawers, modals, snackbars, collapse panels |
+| `--pw-dur-slow` | `260ms` | Rollback shake and multi-step confirmations |
+| `--pw-dur-page` | `320ms` | Route-level transitions |
+| `--pw-ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | Entering elements |
+| `--pw-ease-in` | `cubic-bezier(0.7, 0, 0.84, 0)` | Exiting elements |
+| `--pw-ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` | Shimmer and progress loops |
+| `--pw-dist-xs` / `sm` / `md` | `4px` / `8px` / `16px` | Slide offsets |
+| `--pw-stagger-step` | `24ms` | List stagger step (capped at 12 items) |
+
+All keyframes and transitions animate **`transform` and `opacity` only** — never `width`, `height`, `top`, `left`, `margin`, or `box-shadow` on large elements.
+
+## Shared Primitives
+
+- `src/components/ui/motion.tsx`: `Presence`, `Fade`, `Slide`, `Scale`, `Collapse` (via `grid-template-rows`), `RouteProgressBar`, and `RegionErrorBoundary`.
+- `src/components/ui/skeleton.tsx`: `Skeleton`, `SkeletonText`, `SkeletonCircle`, `SkeletonChip`, `SkeletonRegion`, and `RevalidateBar`.
+- `src/components/skeletons/`: Domain-matched skeletons (`WorkspaceSkeleton`, `BoardSkeleton`, `TicketPanelSkeleton`, `SystemConfigSkeleton`, `SetupWizardSkeleton`, `SearchPaletteSkeleton`) plus Next.js App Router `loading.tsx` boundaries.
+
+## Anti-Flash & Stale-While-Revalidate
+
+- `useAntiFlashLoading(isLoading, 150, 300)` waits `150ms` before showing a skeleton so fast cached responses never flash, and holds a visible skeleton for at least `300ms` once shown.
+- Refetches (board switches, filters, SSE sync) keep existing content visible at `opacity: 0.6` with a thin top `RevalidateBar` instead of replacing content with a skeleton.
+
+## Reduced Motion & Test Determinism
+
+- Respects OS `prefers-reduced-motion: reduce`.
+- Users can also toggle **Reduce motion** in **Preferences & Keyboard Shortcuts** (`UserSettingsModal`), persisted under `patchwork_reduce_motion` and applied before paint via `data-reduce-motion="true"`.
+- Background tabs pause CSS animations automatically via `useDocumentHidden()`.
+- Automated tests can disable animations via `NEXT_PUBLIC_DISABLE_ANIMATIONS=1` or `window.__PATCHWORK_TEST_DISABLE_ANIMATIONS__ = true`.

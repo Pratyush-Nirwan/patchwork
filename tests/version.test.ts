@@ -1,0 +1,197 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import {
+  version,
+  displayVersion,
+  tag,
+  channel,
+  buildDate,
+} from "../src/lib/version";
+import { GET as healthGet } from "../src/app/api/health/route";
+import { generateDiagnosticsBundle } from "../src/lib/diagnostics";
+import * as scriptVersion from "../scripts/lib/version.mjs";
+import { checkVersionConsistency } from "../scripts/check-version.mjs";
+import { prepareRelease } from "../scripts/release-prepare.mjs";
+import { detectInstallState, formatStateTable } from "../scripts/setup/state-detect.mjs";
+import { runRepair } from "../scripts/setup/repair.mjs";
+
+function createTempRepoCopy({ includeLocksAndBuildInfo = true } = {}): string {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-ver-test-"));
+  const root = process.cwd();
+  const files = [
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "docs-site/package.json",
+    "docs-site/src/content/docs/project/changelog.mdx",
+  ];
+  if (includeLocksAndBuildInfo) {
+    files.push(
+      "package-lock.json",
+      "docs-site/package-lock.json",
+      "documentation-dist/.build-info.json"
+    );
+  }
+  for (const rel of files) {
+    const src = path.join(root, rel);
+    if (!fs.existsSync(src)) continue;
+    const dst = path.join(tmp, rel);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.copyFileSync(src, dst);
+  }
+  return tmp;
+}
+
+describe("Single-Source Versioning (v0.7.0-beta)", () => {
+  it("app and script helpers return 0.7.0-beta, v0.7.0-beta, tag v0.7.0-beta, and beta channel", () => {
+    expect(version).toBe("0.7.0-beta");
+    expect(displayVersion).toBe("v0.7.0-beta");
+    expect(tag).toBe("v0.7.0-beta");
+    expect(channel).toBe("beta");
+    expect(buildDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    expect(scriptVersion.version).toBe("0.7.0-beta");
+    expect(scriptVersion.displayVersion).toBe("v0.7.0-beta");
+    expect(scriptVersion.tag).toBe("v0.7.0-beta");
+    expect(scriptVersion.channel).toBe("beta");
+    expect(scriptVersion.isValidSemver("0.7.0-beta")).toBe(true);
+    expect(scriptVersion.compareSemver("0.6.0", "0.7.0-beta")).toBeLessThan(0);
+    expect(scriptVersion.compareSemver("0.7.0-beta", "0.7.0")).toBeLessThan(0);
+  });
+
+  it("/api/health returns version and channel, and diagnostics bundle includes version without secrets", async () => {
+    const res = await healthGet();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+    expect(body.version).toBe("0.7.0-beta");
+    expect(body.displayVersion).toBe("v0.7.0-beta");
+    expect(body.channel).toBe("beta");
+
+    const bundle = await generateDiagnosticsBundle();
+    expect(bundle.appVersion).toBe("0.7.0-beta");
+    expect(bundle.channel).toBe("beta");
+    const serialized = JSON.stringify(bundle);
+    expect(serialized).not.toMatch(/SESSION_SECRET|CSRF_SECRET|TOKEN_ENCRYPTION_KEY|minioadmin/i);
+  });
+
+  it("installer state-detect formats v0.7.0-beta and Repair flags an older installed version", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-upgrade-"));
+    try {
+      const state = await detectInstallState({
+        projectDir: tmp,
+        envPath: path.join(tmp, ".env"),
+        minioDataDir: path.join(tmp, ".minio-data"),
+        drizzleDir: path.join(process.cwd(), "drizzle"),
+        installedVersion: "0.6.0-beta",
+      });
+      expect(state.diskVersion).toBe("0.7.0-beta");
+      expect(state.diskDisplayVersion).toBe("v0.7.0-beta");
+      expect(state.installedVersion).toBe("0.6.0-beta");
+      expect(state.upgradeAvailable).toBe(true);
+
+      const table = formatStateTable(state);
+      expect(table).toContain("v0.7.0-beta");
+      expect(table).toContain("Upgrade available: run migrations");
+      expect(table).toContain("/documentation/operations/backups-and-upgrades/");
+
+      const repair = await runRepair({
+        projectDir: tmp,
+        envPath: path.join(tmp, ".env"),
+        minioDataDir: path.join(tmp, ".minio-data"),
+        drizzleDir: path.join(process.cwd(), "drizzle"),
+        installedVersion: "0.6.0-beta",
+      });
+      expect(
+        repair.manualActions.some((m) =>
+          m.includes("Upgrade available: run migrations") &&
+          m.includes("/documentation/operations/backups-and-upgrades/")
+        )
+      ).toBe(true);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("documentation-dist/.build-info.json records version 0.7.0-beta", () => {
+    const buildInfoPath = path.join(process.cwd(), "documentation-dist/.build-info.json");
+    if (fs.existsSync(buildInfoPath)) {
+      const info = JSON.parse(fs.readFileSync(buildInfoPath, "utf8"));
+      expect(info.version).toBe("0.7.0-beta");
+      expect(info.displayVersion).toBe("v0.7.0-beta");
+    }
+  });
+
+  it("version:check passes on clean repo and fails on mismatch, missing changelog, or invalid display variant", () => {
+    expect(checkVersionConsistency(process.cwd())).toEqual([]);
+
+    const tmp = createTempRepoCopy();
+    try {
+      expect(checkVersionConsistency(tmp)).toEqual([]);
+
+      // Mismatched docs-site/package.json
+      const docsPkgPath = path.join(tmp, "docs-site/package.json");
+      const docsPkg = JSON.parse(fs.readFileSync(docsPkgPath, "utf8"));
+      fs.writeFileSync(docsPkgPath, JSON.stringify({ ...docsPkg, version: "0.6.0" }, null, 2));
+      expect(checkVersionConsistency(tmp).some((e) => e.includes("docs-site/package.json"))).toBe(true);
+      fs.writeFileSync(docsPkgPath, JSON.stringify(docsPkg, null, 2));
+
+      // Missing CHANGELOG.md section
+      const clPath = path.join(tmp, "CHANGELOG.md");
+      const clOriginal = fs.readFileSync(clPath, "utf8");
+      fs.writeFileSync(clPath, "# Changelog\n\n## [Unreleased]\n");
+      expect(checkVersionConsistency(tmp).some((e) => e.includes("CHANGELOG.md"))).toBe(true);
+      fs.writeFileSync(clPath, clOriginal);
+
+      // Invalid display variant in src/
+      const badFile = path.join(tmp, "src/bad-variant.ts");
+      fs.mkdirSync(path.dirname(badFile), { recursive: true });
+      fs.writeFileSync(badFile, `export const label = "${["0.7.0", "beta"].join(" ")}";\n`);
+      expect(checkVersionConsistency(tmp).some((e) => e.includes("Invalid version display variant"))).toBe(true);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("release:prepare dry run updates all locations, rolls changelog, and prints git commands without running git", () => {
+    const tmp = createTempRepoCopy({ includeLocksAndBuildInfo: false });
+    try {
+      // Seed an [Unreleased] entry
+      const clPath = path.join(tmp, "CHANGELOG.md");
+      const cl = fs.readFileSync(clPath, "utf8").replace(
+        "## [Unreleased]",
+        "## [Unreleased]\n\n### Added\n- Test release feature."
+      );
+      fs.writeFileSync(clPath, cl);
+
+      const res = prepareRelease({
+        repoRoot: tmp,
+        targetVersion: "0.8.0-beta.1",
+        syncLockfiles: false,
+        runChecks: false,
+        today: "2026-12-01",
+      });
+
+      expect(res.version).toBe("0.8.0-beta.1");
+      expect(res.displayVersion).toBe("v0.8.0-beta.1");
+      expect(res.tag).toBe("v0.8.0-beta.1");
+      expect(res.commands).toContain('git commit -m "chore(release): v0.8.0-beta.1"');
+      expect(res.commands.some((c) => c.includes("git tag -a v0.8.0-beta.1"))).toBe(true);
+
+      const rootPkg = JSON.parse(fs.readFileSync(path.join(tmp, "package.json"), "utf8"));
+      const docsPkg = JSON.parse(fs.readFileSync(path.join(tmp, "docs-site/package.json"), "utf8"));
+      expect(rootPkg.version).toBe("0.8.0-beta.1");
+      expect(docsPkg.version).toBe("0.8.0-beta.1");
+
+      const updatedCl = fs.readFileSync(clPath, "utf8");
+      expect(updatedCl).toContain("## [Unreleased]");
+      expect(updatedCl).toContain("## [v0.8.0-beta.1] - 2026-12-01");
+      expect(updatedCl).toContain("- Test release feature.");
+      expect(updatedCl).toContain("[v0.8.0-beta.1]:");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});

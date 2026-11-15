@@ -1,0 +1,37 @@
+---
+title: "Database Seeding"
+description: "Populating local development and test databases with deterministic fixtures using scripts/seed.mjs."
+---
+
+This guide is for contributors and testers generating deterministic sample workspaces with `scripts/seed.mjs`.
+
+## Safety Guards
+
+- Refuses to run when `NODE_ENV=production`.
+- Refuses to run against non-localhost or non-dev/test databases unless `--force-dev` is passed explicitly.
+
+## Usage & Flags
+
+```bash
+npm run seed -- --size small
+npm run seed -- --reset --size medium --seed 42
+```
+
+- `--size <small|medium|large>`: Controls fixture volume (teams, projects, boards, tickets, comments, attachments).
+- `--reset`: Clears existing workspace data before seeding.
+- `--seed <number>`: Deterministic PRNG seed (default: `42`).
+- `--yes`: Skip interactive confirmation prompts.
+
+## Shared Development Credentials
+
+- **Admin Email**: `alex.chen@example.com`
+- **Shared Dev Password**: `DevPassword123!`
+
+## Expected Result
+
+`npm run seed` prints a summary table of seeded organizations, teams, users, projects, boards, columns, tickets, comments, and attachments.
+
+## Related Pages
+
+- [Local Setup](/development/local-setup/)
+- [Database Schema & API Route Groups](/reference/database-schema/)

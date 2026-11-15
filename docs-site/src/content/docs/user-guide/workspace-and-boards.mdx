@@ -1,0 +1,44 @@
+---
+title: "Workspace & Boards"
+description: "Signing in, navigating teams and projects, Kanban columns, drag-to-reorder, WIP capacity gauges, and Calendar view."
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+This guide is for all workspace users (`admin`, `lead`, `member`, and `viewer`).
+
+<Aside type="note">
+**Role note**: Viewers can browse boards and switch between Board and Calendar views. Members can move tickets between columns. Only Admins and Team Leads can create, rename, delete, or drag-reorder Kanban columns.
+</Aside>
+
+## Signing In & Password Changes
+
+1. Open Patchwork and sign in with your email and password.
+2. If your account was imported with a temporary password, Patchwork prompts you to set a new password before opening the workspace.
+3. To change your password later, open **Account Settings** from the bottom-left user menu in the navigation rail.
+
+## Navigating the Workspace
+
+Use the left navigation rail to switch between:
+
+- **Teams** you belong to
+- **Projects** and their **Boards**
+- **Board** vs. **Calendar** view toggle in the top bar
+- **System Configuration** (Admins only)
+
+Toggle the navigation rail with `[` (customizable in Keyboard Shortcuts).
+
+## Kanban Columns & WIP Limits
+
+- **Creating & editing columns** (`admin` / `lead`): Click **Add Column** in the top bar or edit a column header to set a name, color, and optional WIP limit.
+- **Reordering columns** (`admin` / `lead`): Drag the column grip handle horizontally to reorder columns.
+- **WIP capacity gauge**: Columns with a WIP limit show a progress track under the column title that turns red when the ticket count exceeds the limit.
+
+## Expected Result
+
+Board changes persist immediately in PostgreSQL and synchronize in real time to other team members via SSE.
+
+## Related Pages
+
+- [Tickets & Collaboration](/user-guide/tickets-and-collaboration/)
+- [Roles & Permissions Matrix](/reference/roles-and-permissions/)

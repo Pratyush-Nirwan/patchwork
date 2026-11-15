@@ -1,0 +1,61 @@
+---
+title: "Troubleshooting & FAQ"
+description: "Common errors on Windows and Linux (ports, PostgreSQL auth, missing MinIO binary, lost setup token, migrations, SSE, and uploads) with exact fixes."
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+This page is for administrators and developers diagnosing setup or runtime issues.
+
+## Port `3000` or `9000` Already in Use
+
+<Tabs>
+  <TabItem label="Windows (PowerShell)">
+    ```powershell
+    Get-NetTCPConnection -LocalPort 3000,9000 -ErrorAction SilentlyContinue | Select-Object LocalPort, OwningProcess
+    npm run stop
+    ```
+  </TabItem>
+  <TabItem label="Linux (bash)">
+    ```bash
+    ss -tulpn | grep -E ':(3000|9000)\b'
+    npm run stop
+    ```
+  </TabItem>
+</Tabs>
+
+## PostgreSQL Authentication Failure
+
+- Verify `DATABASE_URL` in `.env` matches your PostgreSQL `postgres` user password.
+- On Linux, if peer authentication rejects password login, run `sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'your-password';"` or let `npm run setup` configure the database via `sudo -u postgres`.
+- On Windows, ensure PostgreSQL bin directory is on `PATH` if `psql` or `pg_dump` fails.
+
+## Missing MinIO Binary
+
+Download the official MinIO binary to `./bin/minio.exe` (Windows) or `./bin/minio` (Linux, with `chmod +x ./bin/minio`). See [Installation](/getting-started/installation/).
+
+## Lost Admin Setup Token
+
+The token is shown once and cannot be recovered. Run:
+
+```bash
+node scripts/setup.mjs --action=reset
+```
+
+Then run `npm run setup` to generate a new token.
+
+## Migrations Failing
+
+Run `npm run db:migrate` manually and inspect the output. For local test databases, reset cleanly with `npm run db:reset:test`.
+
+## SSE Not Updating Behind a Proxy
+
+Reverse proxies buffer responses by default. Ensure `flush_interval -1` (Caddy) or `proxy_buffering off; proxy_cache off;` (Nginx) is configured on `/api/events`. See [Domain & HTTPS](/getting-started/domain-and-https/).
+
+## Attachment Uploads Failing Through a Proxy
+
+Ensure `MINIO_PUBLIC_URL` in `.env` points to your dedicated `https://files.<domain>` subdomain rather than a path rewrite, and that the proxy forwards `Host` and TLS headers cleanly.
+
+### `/documentation` returns `Docs not built. Run npm run docs:build.`
+
+The embedded static documentation bundle in `documentation-dist/` has not been built yet. Run `npm run docs:build` (or `npm run build` for a full production build), or run `npm run setup` and select **Repair** to rebuild it automatically.

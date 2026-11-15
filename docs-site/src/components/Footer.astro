@@ -1,0 +1,17 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import Default from "@astrojs/starlight/components/Footer.astro";
+
+const rootPkgPath = path.resolve(process.cwd(), "../package.json");
+const fallbackPkgPath = path.resolve(process.cwd(), "package.json");
+const pkgPath = fs.existsSync(rootPkgPath) ? rootPkgPath : fallbackPkgPath;
+const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+const version = String(pkg.version || "").trim();
+---
+
+<Default {...Astro.props} />
+<div class="pw-version-footer">
+  <span>Patchwork — Self-hosted engineering ticketing (AGPL-3.0)</span>
+  <span class="pw-version-badge" data-testid="docs-footer-version">v{version}</span>
+</div>

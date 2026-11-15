@@ -9,18 +9,26 @@ import {
   syncPackageVersions,
 } from "./lib/version.mjs";
 import { checkVersionConsistency } from "./check-version.mjs";
+import { renderReadme } from "./docs/readme.mjs";
 
 const REPO_URL = "https://github.com/owner/patchwork";
 
 function updateReadmeBadge(repoRoot, displayVersion) {
+  const templatePath = path.join(repoRoot, "docs", "README.template.md");
   const readmePath = path.join(repoRoot, "README.md");
+  if (fs.existsSync(templatePath)) {
+    fs.writeFileSync(readmePath, renderReadme(repoRoot), "utf8");
+    return;
+  }
   if (!fs.existsSync(readmePath)) return;
   const escaped = displayVersion.replace(/-/g, "--");
   const original = fs.readFileSync(readmePath, "utf8");
-  const updated = original.replace(
-    /https:\/\/img\.shields\.io\/badge\/version-[^)\s]+-blue/,
-    `https://img.shields.io/badge/version-${escaped}-blue`
-  );
+  const updated = original
+    .replace(/!\[Version [^\]]+\]/g, `![Version ${displayVersion}]`)
+    .replace(
+      /https:\/\/img\.shields\.io\/badge\/version-[^)?\s]+-(blue|[0-9A-Fa-f]{6})/g,
+      `https://img.shields.io/badge/version-${escaped}-$1`
+    );
   if (updated !== original) {
     fs.writeFileSync(readmePath, updated, "utf8");
   }

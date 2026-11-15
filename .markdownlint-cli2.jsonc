@@ -1,0 +1,22 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD033": {
+      "allowed_elements": [
+        "div",
+        "p",
+        "picture",
+        "source",
+        "img",
+        "details",
+        "summary",
+        "strong",
+        "br",
+        "sup",
+        "sub"
+      ]
+    },
+    "MD041": false
+  }
+}

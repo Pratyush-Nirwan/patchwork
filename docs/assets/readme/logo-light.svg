@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" width="240" height="48" fill="none" role="img" aria-label="Patchwork logo">
+  <rect x="4" y="4" width="40" height="40" rx="8" fill="#141920" />
+  <rect x="11" y="11" width="11" height="11" rx="2" fill="#C84317" />
+  <rect x="26" y="11" width="11" height="11" rx="2" fill="#EAEEF3" />
+  <rect x="11" y="26" width="11" height="11" rx="2" fill="#EAEEF3" opacity="0.78" />
+  <rect x="26" y="26" width="11" height="11" rx="2" fill="#F05A28" />
+  <text x="56" y="32" fill="#141920" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="-0.02em">Patchwork</text>
+</svg>

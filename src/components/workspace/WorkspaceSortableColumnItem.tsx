@@ -4,18 +4,18 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-ArrowLeft,
-ArrowRight,
-GitPullRequest,
-GripVertical,
-MessageSquare,
-Paperclip,
-Plus,
-Trash2,
+  ArrowLeft,
+  ArrowRight,
+  GitPullRequest,
+  GripVertical,
+  MessageSquare,
+  Paperclip,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { PRIORITY_STYLES } from "@/lib/priority";
-import { checkSubRoleTransition } from "@/lib/workflow-stages";
-import type { BoardData,ColumnItem,TicketItem } from "./types";
+import { checkSubRoleTransition, getColumnStage } from "@/lib/workflow-stages";
+import type { BoardData, ColumnItem, TicketItem } from "./types";
 
 interface WorkspaceSortableColumnProps {
   col: ColumnItem;
@@ -143,15 +143,14 @@ export function WorkspaceSortableColumnItem({
           setDraggedTicketId(null);
         }
       }}
-      className={`flex w-76 shrink-0 flex-col rounded border max-h-full transition ${
-        isDragging
-          ? "border-dashed border-[var(--pw-accent)] bg-[var(--pw-surface-muted)] opacity-60"
-          : isJumpDisallowed && draggedTicketId
+      className={`flex w-76 shrink-0 flex-col rounded border max-h-full transition ${isDragging
+        ? "border-dashed border-[var(--pw-accent)] bg-[var(--pw-surface-muted)] opacity-60"
+        : isJumpDisallowed && draggedTicketId
           ? "border-dashed border-red-500/40 bg-red-500/5 opacity-70 cursor-not-allowed"
           : overWip
-          ? "border-red-500/60 bg-[var(--pw-surface)]"
-          : "border-[var(--pw-border)] bg-[var(--pw-surface)]"
-      }`}
+            ? "border-red-500/60 bg-[var(--pw-surface)]"
+            : "border-[var(--pw-border)] bg-[var(--pw-surface)]"
+        }`}
     >
       {/* Column Header */}
       <div className="border-b border-[var(--pw-border)] p-2.5 space-y-2">
@@ -175,9 +174,8 @@ export function WorkspaceSortableColumnItem({
             />
             <h3
               onClick={() => canEditStructure && handleRenameColumn(col)}
-              className={`text-xs font-semibold tracking-tight truncate ${
-                canEditStructure ? "cursor-pointer hover:underline" : ""
-              }`}
+              className={`text-xs font-semibold tracking-tight truncate ${canEditStructure ? "cursor-pointer hover:underline" : ""
+                }`}
               title={canEditStructure ? "Click to rename column" : col.name}
             >
               {col.name}
@@ -186,11 +184,10 @@ export function WorkspaceSortableColumnItem({
 
           <div className="flex items-center gap-1 shrink-0">
             <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums ${
-                overWip
-                  ? "bg-red-500/15 font-bold text-[var(--pw-urgent)]"
-                  : "bg-[var(--pw-surface-muted)] text-[var(--pw-ink-secondary)]"
-              }`}
+              className={`rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums ${overWip
+                ? "bg-red-500/15 font-bold text-[var(--pw-urgent)]"
+                : "bg-[var(--pw-surface-muted)] text-[var(--pw-ink-secondary)]"
+                }`}
             >
               {col.wipLimit ? `${colTickets.length}/${col.wipLimit}` : colTickets.length}
             </span>
@@ -235,9 +232,8 @@ export function WorkspaceSortableColumnItem({
         {col.wipLimit !== null && (
           <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--pw-surface-muted)]">
             <div
-              className={`h-full transition-all duration-300 ease-out-dispatch ${
-                overWip ? "bg-[var(--pw-urgent)]" : "bg-[var(--pw-accent)]"
-              }`}
+              className={`h-full transition-all duration-300 ease-out-dispatch ${overWip ? "bg-[var(--pw-urgent)]" : "bg-[var(--pw-accent)]"
+                }`}
               style={{
                 width: `${Math.min(
                   100,
@@ -281,13 +277,11 @@ export function WorkspaceSortableColumnItem({
                 }
               }}
               onClick={() => setSelectedTicketId(ticket.id)}
-              className={`group cursor-pointer rounded border p-2.5 transition-[transform,opacity,border-color,background-color] duration-150 ${
-                draggedTicketId === ticket.id ? "opacity-50 scale-[0.98]" : ""
-              } ${rollbackTicketId === ticket.id ? "pw-dnd-rollback border-[var(--pw-urgent)]" : ""} ${
-                selectedTicketId === ticket.id
+              className={`group cursor-pointer rounded border p-2.5 transition-[transform,opacity,border-color,background-color] duration-150 ${draggedTicketId === ticket.id ? "opacity-50 scale-[0.98]" : ""
+                } ${rollbackTicketId === ticket.id ? "pw-dnd-rollback border-[var(--pw-urgent)]" : ""} ${selectedTicketId === ticket.id
                   ? "border-[var(--pw-accent)] bg-[var(--pw-surface-hover)]"
                   : "border-[var(--pw-border)] bg-[var(--pw-bg)] hover:border-[var(--pw-ink-muted)]"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <span className="font-mono text-[11px] font-semibold text-[var(--pw-accent)] tabular-nums">

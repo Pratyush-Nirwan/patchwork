@@ -3,6 +3,13 @@
   "version": "0.7.0-beta",
   "private": true,
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pratyush-Nirwan/patchwork.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/run-chain.mjs docs:build build:app",
@@ -27,10 +34,13 @@
     "docs:generate": "node scripts/docs/generate.mjs",
     "docs:screenshots": "node scripts/docs/screenshots.mjs",
     "docs:check": "node scripts/docs/check.mjs",
+    "readme:screenshots": "node scripts/docs/readme-screenshots.mjs",
+    "readme:generate": "node scripts/docs/readme.mjs",
+    "readme:check": "node scripts/docs/readme-check.mjs",
     "version:check": "node scripts/check-version.mjs",
     "release:docs": "node scripts/docs/release.mjs",
     "release:prepare": "node scripts/release-prepare.mjs",
-    "verify": "node scripts/run-chain.mjs services:test db:reset:test version:check docs:check docs:build lint typecheck test build test:e2e node:scripts/smoke.mjs"
+    "verify": "node scripts/run-chain.mjs services:test db:reset:test version:check readme:check docs:check docs:build lint typecheck test build test:e2e node:scripts/smoke.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
@@ -65,6 +75,7 @@
     "drizzle-kit": "^0.30.4",
     "eslint": "^9.20.1",
     "eslint-config-next": "^15.1.7",
+    "markdownlint-cli2": "^0.24.1",
     "postcss": "^8.5.2",
     "tailwindcss": "^4.0.6",
     "typescript": "^5.7.3",

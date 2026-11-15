@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { findRepoRoot } from "./extract.mjs";
 import { checkVersionConsistency } from "../check-version.mjs";
+import { checkReadme } from "./readme-check.mjs";
 import { generateAllDocs } from "./generate.mjs";
 import { checkCoverage } from "./coverage.mjs";
 
@@ -130,6 +131,7 @@ export function runDocsChecks(repoRoot = findRepoRoot()) {
   }
 
   errors.push(...checkVersionConsistency(repoRoot));
+  errors.push(...checkReadme(repoRoot));
 
   return errors;
 }

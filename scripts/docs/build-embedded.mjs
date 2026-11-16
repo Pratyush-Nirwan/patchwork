@@ -55,7 +55,7 @@ export function buildEmbeddedDocs({
   if (fs.existsSync(pagefindSrc)) {
     fs.cpSync(pagefindSrc, path.join(tmpDir, "pagefind"), { recursive: true, dereference: true });
   }
-  for (const staticFile of ["favicon.svg", "og-image.svg", "changelog.xml", "404.html"]) {
+  for (const staticFile of ["favicon.svg", "og-image.svg", "og-image.png", "changelog.xml", "404.html"]) {
     const src = path.join(distRoot, staticFile);
     if (fs.existsSync(src)) {
       fs.copyFileSync(src, path.join(tmpDir, staticFile));

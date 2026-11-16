@@ -14,7 +14,21 @@ const rawBase = isEmbedded ? "/" : process.env.SITE_BASE || "/";
 const siteBase =
   rawBase === "" || rawBase === "/" ? "/" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
 const basePrefix = siteBase === "/" ? "" : siteBase;
-const siteUrl = !isEmbedded ? process.env.SITE_URL || undefined : undefined;
+const rawSiteUrl =
+  !isEmbedded
+    ? process.env.SITE_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : "")
+    : "";
+const siteUrl = rawSiteUrl ? rawSiteUrl.replace(/\/+$/, "") : undefined;
+const ogImage = isEmbedded
+  ? "/documentation/og-image.png"
+  : siteUrl
+    ? `${siteUrl}${basePrefix}/og-image.png`
+    : `${basePrefix}/og-image.png`;
 const repoUrl = process.env.REPO_URL || meta.repositoryUrl;
 
 function prefixHref(href) {
@@ -63,7 +77,11 @@ const headTags = [
   },
   {
     tag: "meta",
-    attrs: { property: "og:image", content: isEmbedded ? "/documentation/og-image.svg" : `${basePrefix}/og-image.svg` },
+    attrs: { property: "og:image", content: ogImage },
+  },
+  {
+    tag: "meta",
+    attrs: { name: "twitter:image", content: ogImage },
   },
 ];
 

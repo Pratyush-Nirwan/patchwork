@@ -11,9 +11,17 @@ interface Props {
 const { title, description, canonicalPath = "/" } = Astro.props;
 const rawBase = process.env.SITE_BASE || "/";
 const basePrefix = rawBase === "/" ? "" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
-const siteOrigin = (process.env.SITE_URL || "").replace(/\/+$/, "");
+const rawSiteUrl =
+  process.env.SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "");
+const siteOrigin = rawSiteUrl.replace(/\/+$/, "");
 const repoUrl = process.env.REPO_URL || appMeta.repositoryUrl;
 const canonicalUrl = siteOrigin ? `${siteOrigin}${basePrefix}${canonicalPath}` : undefined;
+const ogImageUrl = siteOrigin ? `${siteOrigin}${basePrefix}/og-image.png` : `${basePrefix}/og-image.png`;
 
 const href = (p: string) => `${basePrefix}${p}`;
 
@@ -47,10 +55,14 @@ const jsonLd = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={href("/og-image.svg")} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Patchwork — Ticketing for engineering orgs that run their own stack." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script is:inline>
       try {

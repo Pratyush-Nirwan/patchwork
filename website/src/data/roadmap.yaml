@@ -1,0 +1,220 @@
+currentVersion: "v0.7.1-beta"
+targetVersion: "v1.0.0"
+
+categories:
+  - id: "ticketing-and-workflow"
+    title: "Ticketing and Workflow"
+  - id: "collaboration-and-notifications"
+    title: "Collaboration and Notifications"
+  - id: "views-and-analytics"
+    title: "Views and Analytics"
+  - id: "git-and-developer-integrations"
+    title: "Git and Developer Integrations"
+  - id: "security-audit-and-operations"
+    title: "Security, Audit, and Operations"
+
+items:
+  - id: "ticket-dependencies-subtasks"
+    title: "Ticket dependencies and subtasks"
+    category: "ticketing-and-workflow"
+    summary: "Tickets will support blocked-by and blocks relations, checklist subtasks, and blocked badges on Kanban cards. Slash commands for managing dependencies and subtasks are planned (command names to be decided; /link remains reserved for Git/GitLab URLs)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "Command names to be decided; /link already exists for GitHub/GitLab URLs."
+    codeSignals:
+      commands: ["subtask", "depends", "blocks"]
+      tables: ["ticket_dependencies", "ticket_subtasks"]
+
+  - id: "sprints-cycles"
+    title: "Sprints and cycles"
+    category: "ticketing-and-workflow"
+    summary: "Boards will support time-boxed iterations with active, upcoming, and completed states, burndown and velocity tracking, and a sprint filter."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals:
+      commands: ["sprint"]
+      tables: ["sprints", "cycles"]
+
+  - id: "ticket-templates-recurring"
+    title: "Ticket templates and recurring tickets"
+    category: "ticketing-and-workflow"
+    summary: "Teams will be able to define reusable field and markdown templates (for example Bug Report, Incident, Release Checklist) and schedule recurring tickets via a background worker (details to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "Background worker scheduling details to be decided."
+    codeSignals:
+      tables: ["ticket_templates", "recurring_tickets"]
+
+  - id: "bulk-actions-multiselect"
+    title: "Bulk actions and multi-select"
+    category: "ticketing-and-workflow"
+    summary: "Users will be able to Shift-click or Cmd/Ctrl-click cards on a board to bulk move, assign, label, or archive tickets in one action."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals: {}
+
+  - id: "saved-views-filters"
+    title: "Saved views and custom filters"
+    category: "ticketing-and-workflow"
+    summary: "Users will be able to save filter queries as pinned views in the sidebar for quick access."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals:
+      tables: ["saved_views"]
+
+  - id: "in-app-notifications-mentions"
+    title: "In-app notification center and @mentions"
+    category: "collaboration-and-notifications"
+    summary: "A bell inbox will surface @mentions, ticket assignments, and updates to watched tickets on top of the existing real-time update channel."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: ["ticket-watchers"]
+    codeSignals:
+      tables: ["notifications"]
+      routes: ["notifications"]
+
+  - id: "ticket-watchers"
+    title: "Ticket watchers"
+    category: "collaboration-and-notifications"
+    summary: "Users will be able to follow a ticket without being its assignee, including toggling watch state via a slash command (command name to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "Watch slash command name to be decided."
+    codeSignals:
+      commands: ["watch", "unwatch"]
+      tables: ["ticket_watchers"]
+
+  - id: "outbound-email-webhooks"
+    title: "Outbound email and webhook alerts"
+    category: "collaboration-and-notifications"
+    summary: "Administrators will be able to configure optional SMTP digests and mention emails, plus signed outbound webhooks (Slack, Discord, Mattermost, generic HTTP) in System Configuration (details to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "SMTP and webhook delivery/signing details to be decided."
+    codeSignals:
+      envVars: ["SMTP_HOST", "SMTP_URL"]
+      tables: ["webhooks", "outbound_webhooks"]
+
+  - id: "presence-typing-indicators"
+    title: "Presence and typing indicators"
+    category: "collaboration-and-notifications"
+    summary: "Ticket panels will show who is currently viewing or typing on a ticket in real time."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals: {}
+
+  - id: "list-table-view"
+    title: "List and table view"
+    category: "views-and-analytics"
+    summary: "Boards will include a sortable, inline-editable table view alongside the existing Kanban board and Calendar views."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals: {}
+
+  - id: "my-work"
+    title: "My Work"
+    category: "views-and-analytics"
+    summary: "A cross-board personal view will gather tickets assigned to you, created by you, and due soon."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals: {}
+
+  - id: "cycle-time-wip-metrics"
+    title: "Cycle time and WIP metrics"
+    category: "views-and-analytics"
+    summary: "Teams will be able to view lead time, cycle time per column, throughput, and bottleneck charts derived from existing activity history."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals: {}
+
+  - id: "inbound-git-webhooks"
+    title: "Inbound GitHub and GitLab webhooks"
+    category: "git-and-developer-integrations"
+    summary: "Patchwork will automatically link commits, pull requests, and merge requests that mention a ticket key, with optional column transitions (for example to In Review on PR open and Done on merge; details to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "Webhook secret/transition rules to be decided."
+    codeSignals: {}
+
+  - id: "email-to-ticket-intake"
+    title: "Email-to-ticket and public intake form"
+    category: "git-and-developer-integrations"
+    summary: "Organizations will be able to accept external bug reports via a token-protected intake form or an email/webhook bridge (details to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "Intake authentication and routing details to be decided."
+    codeSignals:
+      tables: ["intake_forms"]
+
+  - id: "personal-api-tokens"
+    title: "Personal API tokens"
+    category: "git-and-developer-integrations"
+    summary: "Users will be able to create scoped personal access tokens for scripts and CI pipelines to call a REST API."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals:
+      tables: ["api_tokens", "personal_access_tokens"]
+
+  - id: "audit-log-viewer"
+    title: "Audit log viewer"
+    category: "security-audit-and-operations"
+    summary: "System Configuration will add a searchable, exportable admin log of authentication events, role changes, exports, and destructive actions."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals:
+      tables: ["audit_logs", "audit_log"]
+
+  - id: "two-factor-passkeys-sso"
+    title: "Two-factor authentication, passkeys, and SSO"
+    category: "security-audit-and-operations"
+    summary: "Authentication will add optional TOTP two-factor authentication, WebAuthn passkeys, and OIDC single sign-on (for example Authentik, Keycloak, GitHub, Google; details to be decided)."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    notes: "OIDC provider configuration and account-linking details to be decided."
+    codeSignals:
+      tables: ["user_passkeys", "sso_providers", "oidc_providers"]
+      envVars: ["OIDC_CLIENT_ID", "OIDC_ISSUER"]
+
+  - id: "backup-restore-ui"
+    title: "Backup and restore UI"
+    category: "security-audit-and-operations"
+    summary: "System Configuration will add scheduled database and storage backups with export and verification status alongside the existing manual backup commands."
+    status: "planned"
+    target: "v1.0.0"
+    shippedIn: ""
+    dependsOn: []
+    codeSignals:
+      tables: ["backup_jobs", "backups"]

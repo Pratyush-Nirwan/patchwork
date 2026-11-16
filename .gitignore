@@ -1,6 +1,6 @@
 node_modules/
 .next/
-.minio-data/
+.minio-/data/
 bin/
 .env
 .env.local
@@ -20,7 +20,7 @@ documentation-dist.tmp-*/
 documentation-dist.bak-*/
 .patchwork-version.json
 .impeccable/
-data/
+/data/
 .patchwork-supervisor.pid
 .patchwork-minio.pid
 dist/

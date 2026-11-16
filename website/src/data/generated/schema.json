@@ -1,0 +1,1436 @@
+{
+  "apiRouteGroups": [
+    "attachments",
+    "auth",
+    "boards",
+    "columns",
+    "commands",
+    "events",
+    "health",
+    "links",
+    "orgs",
+    "projects",
+    "search",
+    "setup",
+    "system",
+    "teams",
+    "tickets",
+    "users",
+    "workspace"
+  ],
+  "tables": [
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "email",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "email",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "password_hash",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "passwordHash",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "must_change_password",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "mustChangePassword",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "is_setup_admin",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "isSetupAdmin",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "is_deactivated",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "isDeactivated",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_login_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastLoginAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "users",
+      "varName": "users"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "csrf_token",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "csrfToken",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "expires_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "expiresAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_active_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "lastActiveAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "sessions",
+      "varName": "sessions"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "slug",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "slug",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "description",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "description",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_by_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "createdById",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "orgs",
+      "varName": "orgs"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "admin_user_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "adminUserId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "current_step",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "currentStep",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "completed_steps",
+          "colType": "jsonb",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "completedSteps",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "skipped_steps",
+          "colType": "jsonb",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "skippedSteps",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "draft_data",
+          "colType": "jsonb",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "draftData",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "is_completed",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "isCompleted",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "completed_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "completedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "setup_state",
+      "varName": "setupState"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ciphertext",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "ciphertext",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "iv",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "iv",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auth_tag",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "authTag",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "key_version",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "keyVersion",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "confirmed_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "confirmedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "consumed_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "consumedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "setup_token",
+      "varName": "setupToken"
+    },
+    {
+      "columns": [
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "ciphertext",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ciphertext",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "iv",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "iv",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auth_tag",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "authTag",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "setup_credentials",
+      "varName": "setupCredentials"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "role",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "role",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "org_members",
+      "varName": "orgMembers"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "slug",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "slug",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "description",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "description",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "teams",
+      "varName": "teams"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "role",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "role",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "sub_role",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "subRole",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "team_members",
+      "varName": "teamMembers"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "key",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "description",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "description",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_counter",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketCounter",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "projects",
+      "varName": "projects"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "project_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "projectId",
+          "references": "projects.id",
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "description",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "description",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "boards",
+      "varName": "boards"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "board_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "boardId",
+          "references": "boards.id",
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "position",
+          "colType": "doublePrecision",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "position",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "wip_limit",
+          "colType": "integer",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "wipLimit",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "color",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "color",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "columns",
+      "varName": "columns"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "project_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "projectId",
+          "references": "projects.id",
+          "unique": false
+        },
+        {
+          "colName": "board_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "boardId",
+          "references": "boards.id",
+          "unique": false
+        },
+        {
+          "colName": "column_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "columnId",
+          "references": "columns.id",
+          "unique": false
+        },
+        {
+          "colName": "number",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "number",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "key",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "title",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "title",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "description",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "description",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "priority",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "priority",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "labels",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "labels",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "labels_text",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "labelsText",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "assignee_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "assigneeId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "reporter_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "reporterId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "due_date",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "dueDate",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "archived_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "archivedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "position",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "position",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "search_vector",
+          "colType": "tsvector",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "searchVector",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "tickets",
+      "varName": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "author_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "authorId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "body",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "body",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "search_vector",
+          "colType": "tsvector",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "searchVector",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "ticket_comments",
+      "varName": "ticketComments"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "actor_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "actorId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "action",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "action",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "details",
+          "colType": "jsonb",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "details",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "ticket_activities",
+      "varName": "ticketActivities"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": "teams.id",
+          "unique": false
+        },
+        {
+          "colName": "uploader_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "uploaderId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "filename",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "filename",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "content_type",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "contentType",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "size_bytes",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "sizeBytes",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "storage_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "storageKey",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "extracted_text",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "extractedText",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "search_vector",
+          "colType": "tsvector",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "searchVector",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "ticket_attachments",
+      "varName": "ticketAttachments"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "created_by_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdById",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "provider",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "provider",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "kind",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "kind",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "url",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "url",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "title",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "title",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "status",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "status",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "external_ref",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "externalRef",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "ticket_links",
+      "varName": "ticketLinks"
+    },
+    {
+      "columns": [
+        {
+          "colName": "key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "key",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "value",
+          "colType": "jsonb",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "value",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_by_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "updatedById",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "system_settings",
+      "varName": "systemSettings"
+    }
+  ]
+}

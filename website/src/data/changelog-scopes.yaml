@@ -1,0 +1,12 @@
+scopes:
+  - "Boards"
+  - "Tickets"
+  - "Search"
+  - "Command bar"
+  - "Setup wizard"
+  - "Installer"
+  - "System Configuration"
+  - "Security"
+  - "Documentation"
+  - "Performance"
+  - "Platform"

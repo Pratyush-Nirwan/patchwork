@@ -1,0 +1,16 @@
+{
+  "channel": "beta",
+  "cloneUrl": "https://github.com/Pratyush-Nirwan/patchwork.git",
+  "displayVersion": "v0.7.1-beta",
+  "docsSiteUrl": "https://pratyush-nirwan.github.io/patchwork/",
+  "license": "AGPL-3.0",
+  "name": "Patchwork",
+  "nodeRequirement": ">=20",
+  "packageName": "patchwork",
+  "repositoryUrl": "https://github.com/Pratyush-Nirwan/patchwork",
+  "supportedOs": [
+    "Windows 10/11",
+    "Linux (Ubuntu 22.04/24.04, Debian 12)"
+  ],
+  "version": "0.7.1-beta"
+}

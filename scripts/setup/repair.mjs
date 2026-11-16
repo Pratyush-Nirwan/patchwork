@@ -4,18 +4,26 @@ import { execFileSync } from "child_process";
 import { detectInstallState } from "./state-detect.mjs";
 import { runPreflightChecks } from "./preflight.mjs";
 import {
+  detectInstallMode,
   parseEnvFile,
   writeEnvFileAtomic,
   generateRandomSecret,
 } from "./env.mjs";
 import { provisionDatabase, runDatabaseMigrations } from "./db.mjs";
-import { setupMinioBucketAndVerify } from "./minio.mjs";
+import { isMinioHealthy, setupMinioBucketAndVerify } from "./minio.mjs";
+import { ensureMinioBinary } from "./download.mjs";
+import { cleanStalePostgresPid, startEmbeddedPostgres } from "./embedded-pg.mjs";
+import { killProcessTree } from "../lib/platform.mjs";
+import { parseDatabaseCredentials } from "../supervisor.mjs";
 
 export async function runRepair(options = {}) {
   const projectDir = options.projectDir || process.cwd();
   const envPath = options.envPath || path.join(projectDir, ".env");
+  const envPre = parseEnvFile(envPath);
+  const mode = options.mode || detectInstallMode(projectDir, envPre.values);
   const minioDataDir =
-    options.minioDataDir || path.join(projectDir, ".minio-data");
+    options.minioDataDir ||
+    path.join(projectDir, mode === "easy" ? "data/minio" : ".minio-data");
   const drizzleDir = options.drizzleDir || path.join(process.cwd(), "drizzle");
   const superuserUrl =
     options.superuserUrl ||
@@ -25,6 +33,131 @@ export async function runRepair(options = {}) {
   const found = [];
   const fixed = [];
   const manualActions = [];
+
+  if (mode === "easy") {
+    const pgDataDir = path.join(projectDir, "data", "postgres");
+    const pidClean = cleanStalePostgresPid(pgDataDir);
+    if (pidClean.removed) {
+      found.push(`Stale PostgreSQL postmaster.pid (${pidClean.pid || "unknown"})`);
+      fixed.push("Removed stale PostgreSQL postmaster.pid");
+    }
+    for (const staleFile of [".patchwork.pid", ".patchwork-minio.pid", ".patchwork-supervisor.pid"]) {
+      const p = path.join(projectDir, staleFile);
+      if (fs.existsSync(p)) {
+        try {
+          const raw = fs.readFileSync(p, "utf8").trim();
+          const pid = /^\d+$/.test(raw) ? Number(raw) : JSON.parse(raw).pid;
+          if (!pid) {
+            fs.rmSync(p, { force: true });
+          }
+        } catch {
+          fs.rmSync(p, { force: true });
+        }
+      }
+    }
+
+    const binCheck = await ensureMinioBinary({
+      projectDir,
+      yes: options.yes ?? true,
+    });
+    if (binCheck.downloaded || binCheck.source === "cache") {
+      found.push("MinIO binary missing or corrupted");
+      fixed.push(`Restored & verified MinIO binary (${binCheck.source})`);
+    }
+
+    const currentValues = { ...envPre.values };
+    if (currentValues.DATABASE_URL) {
+      const creds = parseDatabaseCredentials(currentValues.DATABASE_URL);
+      let tempPg = null;
+      try {
+        tempPg = await startEmbeddedPostgres({
+          dataDir: pgDataDir,
+          port: creds.port,
+          dbUser: creds.dbUser,
+          dbPassword: creds.dbPassword,
+          dbName: creds.dbName,
+        });
+        const migStatus = await detectInstallState({
+          projectDir,
+          envPath,
+          minioDataDir,
+          drizzleDir,
+          databaseUrl: tempPg.databaseUrl,
+        });
+        if (migStatus.migrations.pendingMigrations > 0 || !migStatus.migrations.allTablesPresent) {
+          found.push(`${migStatus.migrations.pendingMigrations} pending migration(s)`);
+          await runDatabaseMigrations(tempPg.databaseUrl, drizzleDir);
+          fixed.push("Applied pending database migrations");
+        }
+      } catch (err) {
+        found.push(`Embedded PostgreSQL issue: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        if (tempPg) await tempPg.stop().catch(() => {});
+      }
+    }
+
+    const s3Endpoint = currentValues.S3_ENDPOINT || "http://127.0.0.1:19000";
+    let tempMinioPid = null;
+    try {
+      if (!(await isMinioHealthy(s3Endpoint))) {
+        const u = new URL(s3Endpoint);
+        const { spawn } = await import("child_process");
+        fs.mkdirSync(minioDataDir, { recursive: true });
+        const mProc = spawn(
+          binCheck.path,
+          [
+            "server",
+            minioDataDir,
+            "--address",
+            `${u.hostname}:${u.port || 19000}`,
+            "--console-address",
+            `127.0.0.1:${currentValues.MINIO_CONSOLE_PORT || 19001}`,
+          ],
+          {
+            cwd: projectDir,
+            env: {
+              ...process.env,
+              MINIO_ROOT_USER: currentValues.S3_ACCESS_KEY || "patchwork",
+              MINIO_ROOT_PASSWORD: currentValues.S3_SECRET_KEY || "minioadmin",
+            },
+            stdio: "ignore",
+            windowsHide: true,
+            shell: false,
+          }
+        );
+        tempMinioPid = mProc.pid;
+        for (let i = 0; i < 40; i++) {
+          if (await isMinioHealthy(s3Endpoint)) break;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+      await setupMinioBucketAndVerify({
+        projectDir,
+        dataDir: minioDataDir,
+        endpoint: s3Endpoint,
+        consolePort: Number(currentValues.MINIO_CONSOLE_PORT || 19001),
+        region: currentValues.S3_REGION || "us-east-1",
+        accessKeyId: currentValues.S3_ACCESS_KEY || "patchwork",
+        secretAccessKey: currentValues.S3_SECRET_KEY || "minioadmin",
+        bucket: currentValues.S3_BUCKET || "patchwork",
+      });
+      fixed.push(`Verified MinIO data directory and bucket '${currentValues.S3_BUCKET || "patchwork"}'`);
+    } finally {
+      if (tempMinioPid) {
+        killProcessTree(tempMinioPid);
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    }
+
+    const finalState = await detectInstallState({
+      projectDir,
+      envPath,
+      minioDataDir,
+      drizzleDir,
+      checkMinioAnyway: true,
+    });
+    return { found, fixed, manualActions, envBackupPath: null, state: finalState };
+  }
 
   const preflight = await runPreflightChecks({
     projectDir,
@@ -193,18 +326,11 @@ export async function runRepair(options = {}) {
   }
 
   // 4b. Embedded documentation build check
-  const docsSitePkg = path.join(projectDir, "docs-site", "package.json");
-  const astroBin = path.join(projectDir, "docs-site", "node_modules", "astro", "astro.js");
-  const copyDistScript = path.join(projectDir, "scripts", "docs", "copy-dist.mjs");
-  if (!initialState.docs?.built && fs.existsSync(docsSitePkg) && fs.existsSync(astroBin) && fs.existsSync(copyDistScript)) {
+  const webPkg = path.join(projectDir, "website", "package.json");
+  const buildEmbeddedScript = path.join(projectDir, "scripts", "docs", "build-embedded.mjs");
+  if (!initialState.docs?.built && fs.existsSync(webPkg) && fs.existsSync(buildEmbeddedScript) && process.env.SKIP_DOCS_BUILD !== "1") {
     found.push("Embedded documentation bundle (documentation-dist/) is missing");
-    execFileSync(process.execPath, [astroBin, "build"], {
-      cwd: path.join(projectDir, "docs-site"),
-      env: { ...process.env, DOCS_BASE: "/documentation" },
-      stdio: "pipe",
-      windowsHide: true,
-    });
-    execFileSync(process.execPath, [copyDistScript], {
+    execFileSync(process.execPath, [buildEmbeddedScript], {
       cwd: projectDir,
       stdio: "pipe",
       windowsHide: true,

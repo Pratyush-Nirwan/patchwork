@@ -13,7 +13,7 @@ Thank you for contributing to Patchwork.
 
 ```bash
 npm install
-npm --prefix docs-site install
+npm --prefix website install
 cp .env.example .env
 npm run db:reset:test
 npm run seed -- --size small
@@ -25,7 +25,9 @@ npm run dev
 Run the full check suite:
 
 ```bash
+npm run docs:export
 npm run docs:generate
+npm run isolation:check
 npm run docs:check
 npm run docs:build
 npm run lint
@@ -36,7 +38,8 @@ npm run build
 
 ## Documentation & Changelog Rules
 
-- Every user-visible change must update the matching page in `docs-site/`, run `npm run docs:generate`, and add an entry under `## [Unreleased]` in `CHANGELOG.md`.
+- The public website and documentation live in `website/` as a standalone package (`@patchwork/website`). Run `npm run docs:export` after changing commands, settings, env vars, permissions, schema, installer flags, or version.
+- Every user-visible change must update the matching page in `website/src/content/docs/documentation/`, run `npm run docs:generate`, and add one entry under `## [Unreleased]` in `CHANGELOG.md` starting with a bold scope tag from `website/src/data/changelog-scopes.yaml` (plain language, under 140 characters, `[docs](/path/)` link when useful; `**Breaking:**` entries repeated in `### Upgrade notes`). Verify with `npm run changelog:check`. See [Writing Changelog Entries](website/src/content/docs/documentation/development/writing-changelog-entries.mdx).
 - Never hardcode version strings; read them from `src/lib/version.ts` or `scripts/lib/version.mjs` and display as `v` + SemVer (for example `v0.7.0-beta`).
 - To prepare a release bump, run `npm run release:prepare -- <version>` (updates `package.json`, `docs-site/package.json`, lockfiles, `README.md` badge, and `CHANGELOG.md`, runs `version:check`/`docs:check`, and prints the git commands without running git). Verify anytime with `npm run version:check`.
 - See `AGENTS.md` for standing cross-platform and documentation rules.

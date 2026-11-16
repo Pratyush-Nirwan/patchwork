@@ -1,0 +1,47 @@
+---
+title: "Attachments & Links"
+description: "Uploading files to MinIO via presigned URLs, supported types and limits, and linking GitHub or GitLab pull requests, issues, and commits."
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+This guide is for workspace members (`admin`, `lead`, `member`; `viewer` can download attachments and view links).
+
+{/* ROADMAP_ADMONITION_START:inbound-git-webhooks,personal-api-tokens */}
+<Aside type="note" title="Planned for v1.0.0">
+Not available in v0.7.1-beta: [Inbound GitHub and GitLab webhooks](/documentation/project/roadmap/#inbound-git-webhooks), [Personal API tokens](/documentation/project/roadmap/#personal-api-tokens). See the [v1.0.0 Roadmap](/documentation/project/roadmap/).
+</Aside>
+{/* ROADMAP_ADMONITION_END */}
+
+<Aside type="note">
+**Role note**: Uploading attachments (`attachment.upload`) and adding or removing forge links (`link.manage`) require `member` or higher.
+</Aside>
+
+## Attachments
+
+Patchwork stores attachments in MinIO using browser-direct presigned URLs:
+
+1. Open a ticket and drag a file into the **Attachments** dropzone or click **Upload**.
+2. Default allowed file types: `.txt`, `.md`, `.markdown`, `.csv`, `.json`, `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif` (configurable by Admins in **Storage & Files**).
+3. Default max file size: `5 MB` in System Configuration (`MAX_ATTACHMENT_BYTES` in `.env` sets the server upload ceiling, `10 MB` by default).
+4. Text from `.pdf`, `.txt`, `.md`, `.csv`, and `.json` files is extracted and indexed for Full-Text Search.
+
+## GitHub & GitLab Links
+
+1. In the ticket panel under **External Links**, paste a GitHub or GitLab PR, MR, issue, or commit URL.
+2. Patchwork validates the host against **Allowed Forge Hosts** (default: `github.com`, `gitlab.com`) and fetches live status metadata.
+3. Admins can configure optional `GITHUB_TOKEN` / `GITLAB_TOKEN` credentials for higher API rate limits or private repositories.
+
+## Expected Result
+
+Uploaded files appear with size and MIME metadata and download via short-lived presigned URLs; forge links display live PR/MR/issue state.
+
+## Troubleshooting
+
+- **Upload blocked by browser or `SignatureDoesNotMatch`**: Verify `MINIO_PUBLIC_URL` matches the reachable MinIO host (`https://files.<domain>` in production).
+- **Forge link host rejected**: Ask an Admin to add your self-hosted GitLab/GitHub Enterprise domain in **System Configuration -> Integrations**.
+
+## Related Pages
+
+- [Search & Filters](/documentation/user-guide/search-and-filters/)
+- [Domain & HTTPS](/documentation/getting-started/domain-and-https/)

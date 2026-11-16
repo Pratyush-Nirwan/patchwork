@@ -2,16 +2,37 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_REPO_ROOT, getVersionInfo } from "../lib/version.mjs";
+import { loadRoadmap } from "../../website/scripts/roadmap.mjs";
+
+function renderReadmeRoadmapSection(roadmap, versionInfo, docsSiteUrl) {
+  const lines = [
+    `Planned for **${roadmap.targetVersion}** (not yet available in ${versionInfo.displayVersion}). This roadmap describes planned work. Scope and timing may change.`,
+    "",
+  ];
+  for (const cat of roadmap.categories || []) {
+    const titles = (roadmap.items || [])
+      .filter((it) => it.category === cat.id)
+      .map((it) => it.title)
+      .join(", ");
+    lines.push(`- **${cat.title}**: ${titles}`);
+  }
+  lines.push(
+    "",
+    "- **Out of scope**: Docker / container images, native desktop and mobile apps.",
+    `- **Full details**: [Patchwork ${roadmap.targetVersion} Roadmap](${docsSiteUrl}documentation/project/roadmap/)`
+  );
+  return lines.join("\n");
+}
 
 const TREE_ANNOTATIONS = {
   deploy: "Caddy, Nginx, and systemd service templates",
   docs: "Specs, README template/assets, and internal reports",
-  "docs-site": "Astro Starlight documentation site",
   drizzle: "Plain SQL database migrations",
   e2e: "Playwright end-to-end tests",
   scripts: "Node.js CLI installer, seeder, and docs/version tooling",
   src: "Next.js App Router pages, API routes, components, and lib",
   tests: "Vitest unit and integration suites",
+  website: "Self-contained public website and Starlight docs package",
 };
 
 const TREE_EXCLUDES = new Set([
@@ -58,18 +79,6 @@ function buildFeaturesList() {
   ].join("\n");
 }
 
-function readOutOfScopeFromRoadmap(repoRoot) {
-  const roadmapPath = path.join(repoRoot, "docs-site/src/content/docs/project/roadmap.mdx");
-  if (!fs.existsSync(roadmapPath)) return [];
-  const text = fs.readFileSync(roadmapPath, "utf8");
-  const bullets = [];
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^- \*\*([^*]+)\*\*:\s*(.+)$/);
-    if (m) bullets.push(`- **${m[1]}**: ${m[2]}`);
-  }
-  return bullets;
-}
-
 export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
   const templatePath = path.join(repoRoot, "docs/README.template.md");
   const template = fs.readFileSync(templatePath, "utf8").replace(/\r\n/g, "\n");
@@ -91,6 +100,7 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
     `![Node ${nodeReq}](https://img.shields.io/badge/node-${badgeNode}-339933?style=flat-square)`,
     `![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square)`,
     `![Status ${channel}](https://img.shields.io/badge/status-${encodeURIComponent(channel)}-D97706?style=flat-square)`,
+    `[![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)`,
   ].join(" ");
 
   const quickLinks = [
@@ -100,7 +110,12 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
     "[Contributing](CONTRIBUTING.md)",
   ].join(" · ");
 
-  const outOfScope = readOutOfScopeFromRoadmap(repoRoot).join("\n");
+  const roadmap = loadRoadmap(path.join(repoRoot, "website"));
+  const roadmapSection = renderReadmeRoadmapSection(
+    roadmap,
+    { displayVersion, channel },
+    docsSiteUrl
+  );
 
   const replacements = {
     "{{GENERATED_NOTICE}}":
@@ -112,7 +127,7 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
     "{{DOCS_SITE_URL}}": docsSiteUrl,
     "{{FEATURES_LIST}}": buildFeaturesList(),
     "{{PROJECT_TREE}}": buildProjectTree(repoRoot),
-    "{{OUT_OF_SCOPE}}": outOfScope,
+    "{{ROADMAP_SECTION}}": roadmapSection,
     "{{DISPLAY_VERSION}}": displayVersion,
     "{{LICENSE}}": license,
   };

@@ -23,7 +23,7 @@ async function waitForUrl(url, timeoutMs = 45000) {
 
 async function main() {
   const repoRoot = findRepoRoot();
-  const outDir = path.join(repoRoot, "docs-site/src/assets/screenshots");
+  const outDir = path.join(repoRoot, "website/src/assets/screenshots");
   fs.mkdirSync(outDir, { recursive: true });
 
   const env = {

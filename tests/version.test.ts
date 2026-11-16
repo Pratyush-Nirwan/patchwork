@@ -24,13 +24,15 @@ function createTempRepoCopy({ includeLocksAndBuildInfo = true } = {}): string {
     "package.json",
     "README.md",
     "CHANGELOG.md",
-    "docs-site/package.json",
-    "docs-site/src/content/docs/project/changelog.mdx",
+    "website/package.json",
+    "website/src/data/generated/app-meta.json",
+    "website/src/data/generated/CHANGELOG.md",
+    "website/src/content/docs/documentation/project/roadmap.mdx",
   ];
   if (includeLocksAndBuildInfo) {
     files.push(
       "package-lock.json",
-      "docs-site/package-lock.json",
+      "website/package-lock.json",
       "documentation-dist/.build-info.json"
     );
   }
@@ -131,11 +133,11 @@ describe("Single-Source Versioning (v0.7.0-beta)", () => {
     try {
       expect(checkVersionConsistency(tmp)).toEqual([]);
 
-      // Mismatched docs-site/package.json
-      const docsPkgPath = path.join(tmp, "docs-site/package.json");
+      // Mismatched website/package.json
+      const docsPkgPath = path.join(tmp, "website/package.json");
       const docsPkg = JSON.parse(fs.readFileSync(docsPkgPath, "utf8"));
       fs.writeFileSync(docsPkgPath, JSON.stringify({ ...docsPkg, version: "0.6.0" }, null, 2));
-      expect(checkVersionConsistency(tmp).some((e) => e.includes("docs-site/package.json"))).toBe(true);
+      expect(checkVersionConsistency(tmp).some((e) => e.includes("website/package.json"))).toBe(true);
       fs.writeFileSync(docsPkgPath, JSON.stringify(docsPkg, null, 2));
 
       // Missing CHANGELOG.md section
@@ -181,7 +183,7 @@ describe("Single-Source Versioning (v0.7.0-beta)", () => {
       expect(res.commands.some((c) => c.includes("git tag -a v0.8.0-beta.1"))).toBe(true);
 
       const rootPkg = JSON.parse(fs.readFileSync(path.join(tmp, "package.json"), "utf8"));
-      const docsPkg = JSON.parse(fs.readFileSync(path.join(tmp, "docs-site/package.json"), "utf8"));
+      const docsPkg = JSON.parse(fs.readFileSync(path.join(tmp, "website/package.json"), "utf8"));
       expect(rootPkg.version).toBe("0.8.0-beta.1");
       expect(docsPkg.version).toBe("0.8.0-beta.1");
 

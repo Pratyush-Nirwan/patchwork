@@ -1,0 +1,87 @@
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+:root {
+  --pw-bg: #f6f5f2;
+  --pw-surface: #ffffff;
+  --pw-surface-muted: #eceae4;
+  --pw-ink: #141619;
+  --pw-ink-secondary: #434b56;
+  --pw-ink-muted: #5c6673;
+  --pw-border: #d8d6d0;
+  --pw-accent: #c84317;
+  --pw-accent-hover: #af3810;
+  --pw-accent-soft: #fcece6;
+  --pw-rail-bg: #141920;
+  --pw-rail-ink: #eaeef3;
+
+  --pw-font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --pw-font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --pw-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --pw-radius-sm: 4px;
+  --pw-radius-md: 8px;
+  --pw-max-w: 1180px;
+  --pw-measure: 68ch;
+
+  /* Starlight token bridge */
+  --sl-color-accent-low: var(--pw-accent-soft);
+  --sl-color-accent: var(--pw-accent);
+  --sl-color-accent-high: #7c2409;
+  --sl-color-bg: var(--pw-bg);
+  --sl-color-bg-nav: var(--pw-surface);
+  --sl-color-bg-sidebar: var(--pw-surface);
+  --sl-color-hairline-light: var(--pw-border);
+  --sl-color-hairline: var(--pw-border);
+  --sl-color-text: var(--pw-ink);
+  --sl-color-text-accent: var(--pw-accent-hover);
+  --sl-font: var(--pw-font-body);
+  --sl-font-mono: var(--pw-font-mono);
+}
+
+:root[data-theme="dark"] {
+  --pw-bg: #0d1014;
+  --pw-surface: #13181e;
+  --pw-surface-muted: #1a2129;
+  --pw-ink: #ebf0f5;
+  --pw-ink-secondary: #a6b2c0;
+  --pw-ink-muted: #8a97a8;
+  --pw-border: #222a35;
+  --pw-accent: #f05a28;
+  --pw-accent-hover: #ff6e3d;
+  --pw-accent-soft: #2d1a14;
+
+  --sl-color-accent-low: var(--pw-accent-soft);
+  --sl-color-accent: var(--pw-accent);
+  --sl-color-accent-high: #ffbfa8;
+  --sl-color-bg: var(--pw-bg);
+  --sl-color-bg-nav: var(--pw-surface);
+  --sl-color-bg-sidebar: var(--pw-surface);
+  --sl-color-hairline-light: var(--pw-border);
+  --sl-color-hairline: var(--pw-border);
+  --sl-color-text: var(--pw-ink);
+  --sl-color-text-accent: #ff8a61;
+}
+
+.pw-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  header,
+  nav,
+  .pw-back-to-app,
+  .pw-site-footer {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}

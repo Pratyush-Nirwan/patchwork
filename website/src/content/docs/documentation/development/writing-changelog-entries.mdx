@@ -1,0 +1,29 @@
+---
+title: "Writing Changelog Entries"
+description: "How to write clear, scannable changelog entries in CHANGELOG.md and validate them with npm run changelog:check."
+---
+
+This guide is for contributors adding user-visible changes to `CHANGELOG.md`.
+
+## Format Rules
+
+1. Add entries under `## [Unreleased]` in `CHANGELOG.md` using Keep a Changelog categories: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
+2. Start every entry with a bold product scope from `docs-site/src/data/changelog-scopes.yaml`:
+   `Boards`, `Tickets`, `Search`, `Command bar`, `Setup wizard`, `Installer`, `System Configuration`, `Security`, `Documentation`, `Performance`, `Platform`.
+3. Write for end users and administrators in plain language (target under `140` characters, hard cap `200`).
+4. Never include commit hashes, internal file paths, or internal function names. Link to documentation with `[docs](/path/)` when helpful.
+5. Sort entries inside each category by scope order, then alphabetically.
+6. Mark breaking changes with `**Breaking:**` at the start of the entry and repeat numbered migration steps in `### Upgrade notes`.
+
+## Good vs. Bad Examples
+
+- **Good**: `- **Boards:** Added WIP capacity gauges to Kanban column headers ([docs](/documentation/user-guide/workspace-and-boards/)).`
+- **Bad**: `- Added WIP gauge in src/components/PatchworkApp.tsx (a1b2c3d).` (cites file path, commit hash, and lacks scope tag)
+- **Bad**: `- Fixed bug.` (too vague, missing scope tag)
+
+## Validation & Generation
+
+```bash
+npm run docs:generate
+npm run changelog:check
+```

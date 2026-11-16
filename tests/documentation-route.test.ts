@@ -8,7 +8,7 @@ import {
   sanitizeDocsSegments,
   serveDocsRequest,
 } from "@/lib/docs-server";
-import { copyDocsDist } from "../scripts/docs/copy-dist.mjs";
+import { buildEmbeddedDocs } from "../scripts/docs/build-embedded.mjs";
 import { detectInstallState, formatStateTable } from "../scripts/setup/state-detect.mjs";
 
 const REPO_ROOT = process.cwd();
@@ -196,28 +196,9 @@ describe("Embedded Documentation Route & Security", () => {
     }
   });
 
-  it("copyDocsDist atomically copies docs-site output and writes .build-info.json", () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pw-copy-dist-"));
-    try {
-      const src = path.join(tmp, "dist");
-      const dst = path.join(tmp, "documentation-dist");
-      fs.mkdirSync(src, { recursive: true });
-      fs.writeFileSync(path.join(src, "index.html"), "<h1>Hi</h1>", "utf8");
-      fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ version: "1.2.3" }));
-
-      const info = copyDocsDist({
-        repoRoot: tmp,
-        sourceDir: src,
-        targetDir: dst,
-        base: "/documentation",
-      });
-      expect(info.version).toBe("1.2.3");
-      expect(info.base).toBe("/documentation");
-      expect(fs.existsSync(path.join(dst, "index.html"))).toBe(true);
-      expect(fs.existsSync(path.join(dst, ".build-info.json"))).toBe(true);
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
+  it("buildEmbeddedDocs honors SKIP_DOCS_BUILD=1 cleanly", () => {
+    const res = buildEmbeddedDocs({ repoRoot: REPO_ROOT, skip: true });
+    expect(res.skipped).toBe(true);
   });
 
   it("middleware.ts bypasses auth/setup redirects for /documentation", () => {

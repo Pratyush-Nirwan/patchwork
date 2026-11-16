@@ -1,0 +1,132 @@
+/* Patchwork design tokens mapped cleanly for Starlight light & dark themes (WCAG AA contrast) */
+
+:root {
+  --sl-color-accent-low: #fcece6;
+  --sl-color-accent: #c84317;
+  --sl-color-accent-high: #7c2409;
+
+  --sl-color-bg: #f6f5f2;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: #ffffff;
+  --sl-color-hairline-light: #d8d6d0;
+  --sl-color-hairline: #d8d6d0;
+  --sl-color-text: #141619;
+  --sl-color-text-accent: #af3810;
+  --sl-font-mono: "Berkeley Mono", "Commit Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #2d1a14;
+  --sl-color-accent: #f05a28;
+  --sl-color-accent-high: #ffbfa8;
+
+  --sl-color-bg: #0d1014;
+  --sl-color-bg-nav: #13181e;
+  --sl-color-bg-sidebar: #13181e;
+  --sl-color-hairline-light: #222a35;
+  --sl-color-hairline: #222a35;
+  --sl-color-text: #ebf0f5;
+  --sl-color-text-accent: #ff8a61;
+}
+
+.pw-version-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+  font-size: 0.8125rem;
+  color: var(--sl-color-gray-2);
+}
+
+.pw-version-badge {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--sl-color-hairline-light);
+  background: var(--sl-color-bg-nav);
+}
+
+/* Changelog layout, filter chips, scope badges, and mobile responsiveness */
+.pw-cl-measure {
+  max-width: 70ch;
+  line-height: 1.65;
+}
+
+.pw-cl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.pw-cl-date {
+  color: var(--sl-color-gray-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.pw-cl-release-card {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: var(--sl-color-bg-nav);
+}
+
+.pw-cl-release-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.pw-cl-release-header h2 {
+  margin: 0;
+}
+
+.pw-cl-counts {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--sl-color-gray-2);
+}
+
+.pw-cl-list {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pw-cl-list li {
+  margin: 0;
+}
+
+.pw-cl-scope {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--sl-color-hairline);
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+  margin-right: 0.35rem;
+  vertical-align: baseline;
+}
+
+.pw-cl-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+}

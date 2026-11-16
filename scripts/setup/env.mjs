@@ -82,8 +82,18 @@ export function backupEnvFileIfExists(envPath, timestamp = Date.now()) {
   return backupPath;
 }
 
+export function detectInstallMode(projectDir = process.cwd(), values = {}) {
+  const explicit = String(values.PATCHWORK_INSTALL_MODE || "").trim().toLowerCase();
+  if (explicit === "easy" || explicit === "advanced") return explicit;
+  if (fs.existsSync(path.join(projectDir, "data", "postgres", "PG_VERSION"))) {
+    return "easy";
+  }
+  return "advanced";
+}
+
 export function formatEnvContent(values) {
   const orderedKeys = [
+    "PATCHWORK_INSTALL_MODE",
     "DATABASE_URL",
     "PORT",
     "APP_URL",
@@ -97,6 +107,8 @@ export function formatEnvContent(values) {
     "S3_BUCKET",
     "MAX_ATTACHMENT_BYTES",
     "MINIO_PUBLIC_URL",
+    "MINIO_CONSOLE_PORT",
+    "MINIO_BIND_HOST",
     "GITHUB_TOKEN",
     "GITLAB_TOKEN",
   ];
@@ -178,6 +190,7 @@ export function buildFreshEnvValues(options = {}) {
     ...(options.minioPublicUrl
       ? { MINIO_PUBLIC_URL: options.minioPublicUrl }
       : {}),
+    ...(options.extraValues || {}),
   };
 }
 

@@ -20,6 +20,9 @@ documentation-dist.tmp-*/
 documentation-dist.bak-*/
 .patchwork-version.json
 .impeccable/
+data/
+.patchwork-supervisor.pid
+.patchwork-minio.pid
 dist/
 build/
 .turbo/

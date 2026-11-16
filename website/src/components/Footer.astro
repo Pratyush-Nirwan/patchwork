@@ -1,0 +1,10 @@
+---
+import Default from "@astrojs/starlight/components/Footer.astro";
+import appMeta from "../data/generated/app-meta.json";
+---
+
+<Default {...Astro.props} />
+<div class="pw-version-footer">
+  <span>Patchwork — Self-hosted engineering ticketing ({appMeta.license})</span>
+  <span class="pw-version-badge" data-testid="docs-footer-version">{appMeta.displayVersion}</span>
+</div>

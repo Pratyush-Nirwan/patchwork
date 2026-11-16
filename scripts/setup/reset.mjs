@@ -3,17 +3,28 @@ import fs from "fs";
 import path from "path";
 import pg from "pg";
 import {
+  getEmbeddedPgToolPath,
+  killProcessTree,
+} from "../lib/platform.mjs";
+import {
   parseEnvFile,
   backupEnvFileIfExists,
   buildFreshEnvValues,
+  detectInstallMode,
   writeEnvFileAtomic,
   generateStrongPassword,
+  generateRandomSecret,
 } from "./env.mjs";
 import { provisionDatabase, runDatabaseMigrations } from "./db.mjs";
 import {
   emptyAndRemoveMinioBucket,
+  isMinioHealthy,
   setupMinioBucketAndVerify,
+  verifyPresignedUrlsWork,
 } from "./minio.mjs";
+import { ensureMinioBinary } from "./download.mjs";
+import { findFreeHighPort, startEmbeddedPostgres } from "./embedded-pg.mjs";
+import { parseDatabaseCredentials, stopSupervisorFromPidFile } from "../supervisor.mjs";
 import {
   createAndStoreAdminToken,
   generateTokenEncryptionKeyHex,
@@ -38,6 +49,7 @@ export function getDeletionTargetsSummary({
 }
 
 export async function performBackup({
+  projectDir = process.cwd(),
   databaseUrl,
   minioDataDir,
   backupsDir = path.join(process.cwd(), "backups"),
@@ -52,14 +64,18 @@ export async function performBackup({
 
   if (backupDb && databaseUrl) {
     const sqlPath = path.join(backupsDir, `patchwork-${timestamp}.sql`);
+    const pgDumpBin =
+      getEmbeddedPgToolPath("pg_dump", { projectDir }) ||
+      "pg_dump";
     try {
-      const dumpOut = execFileSync("pg_dump", [databaseUrl], {
+      const dumpOut = execFileSync(pgDumpBin, [databaseUrl], {
         stdio: ["ignore", "pipe", "ignore"],
+        shell: false,
       });
       fs.writeFileSync(sqlPath, dumpOut);
       result.dbBackupPath = sqlPath;
     } catch {
-      // Fallback SQL snapshot if pg_dump is not on PATH
+      // Fallback SQL snapshot if pg_dump is unavailable
       fs.writeFileSync(
         sqlPath,
         `-- Patchwork backup snapshot created at ${new Date(timestamp).toISOString()}\n`,
@@ -76,6 +92,169 @@ export async function performBackup({
   }
 
   return result;
+}
+
+export async function runEasyInstall(options = {}) {
+  const projectDir = options.projectDir || process.cwd();
+  const envPath = options.envPath || path.join(projectDir, ".env");
+  const drizzleDir = options.drizzleDir || path.join(process.cwd(), "drizzle");
+  const pgDataDir = options.pgDataDir || path.join(projectDir, "data", "postgres");
+  const minioDataDir = options.minioDataDir || path.join(projectDir, "data", "minio");
+
+  const minioDl = await ensureMinioBinary({
+    projectDir,
+    yes: Boolean(options.yes),
+    confirmDownload: options.confirmDownload,
+    onProgress: options.onDownloadProgress,
+  });
+
+  const dbPort = Number(options.dbPort || (await findFreeHighPort(15432, "127.0.0.1")));
+  const dbName = options.dbName || "patchwork";
+  const dbUser = options.dbUser || "patchwork";
+  const dbPassword = options.dbPassword || generateStrongPassword(20);
+
+  const appPort = Number(options.appPort || process.env.SETUP_APP_PORT || 3000);
+  const appUrl = options.appUrl || process.env.SETUP_APP_URL || `http://localhost:${appPort}`;
+
+  const s3BindHost = options.minioBindHost || "127.0.0.1";
+  const s3Port = Number(options.s3Port || (await findFreeHighPort(19000, s3BindHost)));
+  const s3ConsolePort = Number(
+    options.s3ConsolePort || (await findFreeHighPort(Math.max(s3Port + 1, 19001), "127.0.0.1"))
+  );
+  const s3Endpoint = `http://${s3BindHost}:${s3Port}`;
+  const minioPublicUrl = options.minioPublicUrl || `http://localhost:${s3Port}`;
+  const s3Region = options.s3Region || "us-east-1";
+  const s3AccessKey = options.s3AccessKey || "patchwork";
+  const s3SecretKey = options.s3SecretKey || generateStrongPassword(24);
+  const s3Bucket = options.s3Bucket || "patchwork";
+
+  const tokenEncryptionKey =
+    options.tokenEncryptionKey || generateTokenEncryptionKeyHex();
+
+  // Start embedded Postgres, initialize ./data/postgres, run migrations
+  const pgHandle = await startEmbeddedPostgres({
+    dataDir: pgDataDir,
+    port: dbPort,
+    dbUser,
+    dbPassword,
+    dbName,
+  });
+
+  let minioRes = null;
+  let minioPidToStop = null;
+  try {
+    const migrationStatus = await runDatabaseMigrations(pgHandle.databaseUrl, drizzleDir);
+
+    // Start MinIO temporarily to create bucket & verify presigned URLs
+    const { spawn } = await import("child_process");
+    fs.mkdirSync(minioDataDir, { recursive: true });
+    if (!(await isMinioHealthy(s3Endpoint))) {
+      const mProc = spawn(
+        minioDl.path,
+        [
+          "server",
+          minioDataDir,
+          "--address",
+          `${s3BindHost}:${s3Port}`,
+          "--console-address",
+          `127.0.0.1:${s3ConsolePort}`,
+        ],
+        {
+          cwd: projectDir,
+          env: {
+            ...process.env,
+            MINIO_ROOT_USER: s3AccessKey,
+            MINIO_ROOT_PASSWORD: s3SecretKey,
+          },
+          stdio: "ignore",
+          windowsHide: true,
+          shell: false,
+        }
+      );
+      minioPidToStop = mProc.pid;
+      for (let i = 0; i < 40; i++) {
+        if (await isMinioHealthy(s3Endpoint)) break;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+
+    minioRes = await setupMinioBucketAndVerify({
+      projectDir,
+      dataDir: minioDataDir,
+      endpoint: s3Endpoint,
+      consolePort: s3ConsolePort,
+      region: s3Region,
+      accessKeyId: s3AccessKey,
+      secretAccessKey: s3SecretKey,
+      bucket: s3Bucket,
+    });
+
+    await verifyPresignedUrlsWork({
+      publicUrl: minioPublicUrl,
+      region: s3Region,
+      accessKeyId: s3AccessKey,
+      secretAccessKey: s3SecretKey,
+      bucket: s3Bucket,
+    });
+
+    const envValues = buildFreshEnvValues({
+      databaseUrl: pgHandle.databaseUrl,
+      appPort,
+      appUrl,
+      tokenEncryptionKey,
+      s3Endpoint,
+      minioPublicUrl,
+      s3Region,
+      s3AccessKey,
+      s3SecretKey,
+      s3Bucket,
+      extraValues: {
+        PATCHWORK_INSTALL_MODE: "easy",
+        MINIO_CONSOLE_PORT: String(s3ConsolePort),
+        MINIO_BIND_HOST: s3BindHost,
+        SESSION_SECRET: generateRandomSecret(32),
+        CSRF_SECRET: generateRandomSecret(32),
+      },
+    });
+    const envWriteRes = writeEnvFileAtomic(envPath, envValues, { backup: true });
+
+    const tokenRes = await createAndStoreAdminToken({
+      databaseUrl: pgHandle.databaseUrl,
+      encryptionKey: tokenEncryptionKey,
+      keyVersion: 1,
+      confirmed: options.tokenConfirmed ?? true,
+    });
+
+    if (typeof options.onBeforeStop === "function") {
+      await options.onBeforeStop({
+        databaseUrl: pgHandle.databaseUrl,
+        tokenBuffer: tokenRes.tokenBuffer,
+        envValues,
+      });
+    }
+
+    return {
+      mode: "easy",
+      envPath,
+      envBackupPath: envWriteRes.backupPath,
+      databaseUrl: pgHandle.databaseUrl,
+      dbPort,
+      dbName,
+      dbUser,
+      pgDataDir,
+      minio: { ...minioRes, binary: minioDl, publicUrl: minioPublicUrl, consolePort: s3ConsolePort },
+      migrationStatus,
+      tokenBuffer: tokenRes.tokenBuffer,
+      encryptedToken: tokenRes.encrypted,
+      tokenEncryptionKey,
+    };
+  } finally {
+    if (minioPidToStop) {
+      killProcessTree(minioPidToStop);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    await pgHandle.stop().catch(() => {});
+  }
 }
 
 export async function runFreshInstall(options = {}) {
@@ -221,6 +400,7 @@ export async function runReset(options = {}) {
     "postgres://postgres:postgres@localhost:5432/postgres";
 
   const envParsed = parseEnvFile(envPath);
+  const mode = options.mode || detectInstallMode(projectDir, envParsed.values);
   const existingDbUrl =
     options.databaseUrl ||
     envParsed.values.DATABASE_URL ||
@@ -240,6 +420,79 @@ export async function runReset(options = {}) {
   }
   if (options.secondConfirmation !== true) {
     throw new Error("Reset aborted: second yes/no confirmation was not accepted");
+  }
+
+  await stopSupervisorFromPidFile(projectDir);
+
+  if (mode === "easy") {
+    const pgDataDir = path.join(projectDir, "data", "postgres");
+    const easyMinioDir = path.join(projectDir, "data", "minio");
+    let tempPg = null;
+    let backupDbUrl = existingDbUrl;
+    if (options.backupDb && fs.existsSync(path.join(pgDataDir, "PG_VERSION"))) {
+      const creds = parseDatabaseCredentials(existingDbUrl);
+      tempPg = await startEmbeddedPostgres({
+        dataDir: pgDataDir,
+        port: creds.port,
+        dbUser: creds.dbUser,
+        dbPassword: creds.dbPassword,
+        dbName: creds.dbName,
+      }).catch(() => null);
+      if (tempPg) backupDbUrl = tempPg.databaseUrl;
+    }
+
+    const backupResult = await performBackup({
+      projectDir,
+      databaseUrl: backupDbUrl,
+      minioDataDir: easyMinioDir,
+      backupsDir,
+      backupDb: Boolean(options.backupDb),
+      backupMinio: Boolean(options.backupMinio),
+    });
+
+    if (tempPg) {
+      await tempPg.stop().catch(() => {});
+    }
+
+    const envBackupPath = backupEnvFileIfExists(envPath);
+    if (fs.existsSync(envPath)) fs.unlinkSync(envPath);
+
+    for (const dirToWipe of [pgDataDir, easyMinioDir]) {
+      if (fs.existsSync(dirToWipe)) {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
+            fs.rmSync(dirToWipe, { recursive: true, force: true });
+            break;
+          } catch {
+            await new Promise((r) => setTimeout(r, 350));
+          }
+        }
+      }
+    }
+
+    if (options.reinstall === false) {
+      return {
+        resetCompleted: true,
+        mode: "easy",
+        backupResult,
+        envBackupPath,
+        reinstalled: null,
+      };
+    }
+
+    const freshEasy = await runEasyInstall({
+      ...options,
+      projectDir,
+      envPath,
+      tokenEncryptionKey: generateTokenEncryptionKeyHex(),
+    });
+    return {
+      resetCompleted: true,
+      mode: "easy",
+      backupResult,
+      envBackupPath,
+      reinstalled: freshEasy,
+    };
   }
 
   // Optional backup before destructive reset

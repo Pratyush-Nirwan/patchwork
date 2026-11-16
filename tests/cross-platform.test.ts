@@ -93,7 +93,7 @@ describe("Cross-Platform Static & Runtime Suite", () => {
     const winMinio = win.binPath("minio");
     expect(winMinio.file).toBe("minio.exe");
     expect(winMinio.downloadUrl).toBe(
-      "https://dl.min.io/server/minio/release/windows-amd64/minio.exe"
+      "https://github.com/minio/minio/releases/download/RELEASE.2025-09-07T16-13-09Z/minio.windows-amd64.RELEASE.2025-09-07T16-13-09Z.exe"
     );
     expect(winMinio.installCommand).toContain("Invoke-WebRequest");
 
@@ -103,19 +103,19 @@ describe("Cross-Platform Static & Runtime Suite", () => {
     const linuxX64Minio = linuxX64.binPath("minio");
     expect(linuxX64Minio.file).toBe("minio");
     expect(linuxX64Minio.downloadUrl).toBe(
-      "https://dl.min.io/server/minio/release/linux-amd64/minio"
+      "https://github.com/minio/minio/releases/download/RELEASE.2025-09-07T16-13-09Z/minio.linux-amd64.RELEASE.2025-09-07T16-13-09Z"
     );
     expect(linuxX64Minio.installCommand).toContain("chmod +x");
 
     const linuxArm64 = createPlatformHelper({ platform: "linux", arch: "arm64" });
     expect(linuxArm64.binPath("minio").downloadUrl).toBe(
-      "https://dl.min.io/server/minio/release/linux-arm64/minio"
+      "https://github.com/minio/minio/releases/download/RELEASE.2025-09-07T16-13-09Z/minio.linux-arm64.RELEASE.2025-09-07T16-13-09Z"
     );
 
     const macArm64 = createPlatformHelper({ platform: "darwin", arch: "arm64" });
     expect(macArm64.isMac).toBe(true);
     expect(macArm64.binPath("minio").downloadUrl).toBe(
-      "https://dl.min.io/server/minio/release/darwin-arm64/minio"
+      "https://github.com/minio/minio/releases/download/RELEASE.2025-09-07T16-13-09Z/minio.darwin-arm64.RELEASE.2025-09-07T16-13-09Z"
     );
   });
 

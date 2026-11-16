@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Patchwork Changelog</title>
+    <link>https://pratyush-nirwan.github.io/patchwork/documentation/changelog/</link>
+    <description>Release notes for Patchwork.</description>
+    <language>en-us</language>
+    <item>
+      <title>Patchwork v0.7.1-beta</title>
+      <link>https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-1-beta/</link>
+      <guid isPermaLink="true">https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-1-beta/</guid>
+      <pubDate>Mon, 16 Nov 2026 00:00:00 GMT</pubDate>
+      <description>You can now install Patchwork with only Node.js and git using the new Easy mode default. You can now manage PostgreSQL, MinIO, and the app together via `npm run start`, `npm run stop`, and `npm run status`.</description>
+    </item>
+    <item>
+      <title>Patchwork v0.7.0-beta</title>
+      <link>https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-0-beta/</link>
+      <guid isPermaLink="true">https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-0-beta/</guid>
+      <pubDate>Sun, 15 Nov 2026 00:00:00 GMT</pubDate>
+      <description>You can now run Patchwork natively on Windows and Linux with multi-team Kanban boards, Calendar view, and real-time sync. You can now use the Spotlight command bar (`Ctrl+K` / `Cmd+K`) with slash commands, inline ghost hints, and scoped full-text search. You can now browse official documentation directly inside the app at `/documentation`.</description>
+    </item>
+  </channel>
+</rss>

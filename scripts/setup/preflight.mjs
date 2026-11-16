@@ -2,7 +2,12 @@ import fs from "fs";
 import net from "net";
 import path from "path";
 import pg from "pg";
-import { isWindows, binPath } from "../lib/platform.mjs";
+import {
+  isWindows,
+  binPath,
+  getFreeDiskBytes,
+  getMinioDownloadInfo,
+} from "../lib/platform.mjs";
 
 export function checkNodeVersion(minMajor = 20) {
   const version = process.versions.node;
@@ -172,6 +177,97 @@ export function checkWriteAccess(projectDir = process.cwd(), dataDir) {
       fixHint: `Grant write permissions to current user on ${projectDir} and ${targetDataDir}`,
     };
   }
+}
+
+export function checkDiskSpace(projectDir = process.cwd(), minBytes = 600 * 1024 * 1024) {
+  const freeBytes = getFreeDiskBytes(projectDir);
+  if (freeBytes === null) {
+    return {
+      id: "disk-space",
+      label: "Free disk space (~600 MB recommended)",
+      passed: true,
+      detail: "Unable to query free disk space; continuing",
+      fixHint: "",
+    };
+  }
+  const freeMb = Math.round(freeBytes / (1024 * 1024));
+  const minMb = Math.round(minBytes / (1024 * 1024));
+  const passed = freeBytes >= minBytes;
+  return {
+    id: "disk-space",
+    label: `Free disk space (minimum ${minMb} MB for PostgreSQL + MinIO + build)`,
+    passed,
+    detail: `${freeMb} MB free at ${projectDir}`,
+    fixHint: passed ? "" : `Free at least ${minMb} MB of disk space in ${projectDir} before continuing.`,
+  };
+}
+
+export async function checkDownloadNetwork(projectDir = process.cwd()) {
+  const info = getMinioDownloadInfo();
+  const cachedPath = path.join(projectDir, "data", "cache", info.assetName);
+  const binInfo = binPath("minio", { projectDir });
+  if ((binInfo.exists && binInfo.executable) || fs.existsSync(cachedPath)) {
+    return {
+      id: "network",
+      label: "MinIO download availability",
+      passed: true,
+      detail: binInfo.exists
+        ? `Local MinIO binary present at ${binInfo.path}`
+        : `Cached MinIO binary present at ${cachedPath}`,
+      fixHint: "",
+    };
+  }
+  try {
+    const res = await fetch(info.checksumUrl, {
+      method: "GET",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return {
+      id: "network",
+      label: "Network access for MinIO binary download",
+      passed: true,
+      detail: `Reachable: ${info.checksumUrl}`,
+      fixHint: "",
+    };
+  } catch (err) {
+    return {
+      id: "network",
+      label: "Network access for MinIO binary download",
+      passed: false,
+      detail: err instanceof Error ? err.message : String(err),
+      fixHint: [
+        `Offline/network error. Download manually and place in ${path.join(projectDir, "data", "cache")}:`,
+        `  Binary:   ${info.downloadUrl}`,
+        `  Checksum: ${info.checksumUrl}`,
+      ].join("\n"),
+    };
+  }
+}
+
+export async function runEasyPreflightChecks(options = {}) {
+  const projectDir = options.projectDir || process.cwd();
+  const dataDir = options.dataDir || path.join(projectDir, "data");
+  const checks = [
+    checkNodeVersion(20),
+    checkDiskSpace(projectDir, options.minDiskBytes || 600 * 1024 * 1024),
+    await checkPorts({
+      appPort: options.appPort || 3000,
+      minioApiPort: options.minioApiPort || 19000,
+      minioConsolePort: options.minioConsolePort || 19001,
+      allowRunningMinio: options.allowRunningMinio ?? true,
+      allowRunningApp: options.allowRunningApp ?? false,
+    }),
+    checkWriteAccess(projectDir, dataDir),
+    await checkDownloadNetwork(projectDir),
+  ];
+
+  return {
+    passed: checks.every((c) => c.passed),
+    checks,
+  };
 }
 
 export async function runPreflightChecks(options = {}) {

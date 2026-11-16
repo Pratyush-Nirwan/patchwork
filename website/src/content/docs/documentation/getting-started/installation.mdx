@@ -1,0 +1,55 @@
+---
+title: "Installation"
+description: "Easy vs Advanced install modes, data layout, network exposure, offline installs, and uninstalling."
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Patchwork `v0.7.0-beta` runs natively on Windows 10/11 and Linux (Ubuntu 22.04/24.04, Debian 12; x64 and arm64) without Docker.
+
+<Aside type="note">
+**Beta software (`v0.7.0-beta`)**: Patchwork is pre-1.0 software. Features and data formats may change between releases—back up your database and MinIO data before upgrading, and report issues on GitHub.
+</Aside>
+
+## Easy vs Advanced
+
+| Feature | Easy Mode (Default) | Advanced Mode |
+|---|---|---|
+| **Prerequisites** | Node.js 20+ and `git` only | System PostgreSQL 16+ and MinIO binary |
+| **PostgreSQL** | Managed PostgreSQL 18 in `./data/postgres` (high port, `127.0.0.1` only) | External / system PostgreSQL (`localhost:5432` or remote) |
+| **MinIO** | Auto-downloaded `RELEASE.2025-09-07T16-13-09Z` binary (`./bin/minio`), SHA-256 verified | Bring your own MinIO or let the installer download it |
+| **Process model** | Single `npm run start` supervisor (`scripts/supervisor.mjs`) | Separate system services (`patchwork.service`, `minio.service`, `postgresql`) |
+| **Best for** | Small/medium teams, evaluation, local dev | Large production deployments, managed DBs |
+
+For larger production deployments, use **Advanced mode** with a managed or system PostgreSQL instance. You can move from Easy to Advanced at any time—see [Backups & Upgrades](/documentation/operations/backups-and-upgrades/).
+
+## Where Data Lives (Easy Mode)
+
+- `./data/postgres/` — PostgreSQL 18 cluster (pinned major version; never auto-upgraded across majors)
+- `./data/minio/` — MinIO object storage data directory
+- `./data/cache/` — Cached MinIO binary and `.sha256sum` for fast offline repairs/reinstalls
+- `./bin/` — Verified `minio` / `minio.exe` executable
+- `.env` — Generated ports, credentials, and encryption keys (`0600` on Linux, user-only ACL on Windows)
+
+## Serving Patchwork to Other People
+
+During Easy setup, Patchwork asks whether only you or other people will connect:
+
+- **Only me**: MinIO binds to `127.0.0.1` and `MINIO_PUBLIC_URL` is `http://localhost:<port>`.
+- **Other people (Domain + HTTPS, recommended)**: Generates reverse-proxy configs ([Domain & HTTPS](/documentation/getting-started/domain-and-https/)) with a dedicated `files.<domain>` host for MinIO so browser presigned uploads/downloads work over HTTPS.
+- **Other people (Trusted LAN)**: Binds MinIO API to your LAN IP with `MINIO_PUBLIC_URL=http://<lan-ip>:<port>` and prints an unencrypted HTTP warning. The MinIO admin console always stays bound to `127.0.0.1`.
+
+## Offline Install Route
+
+If the target machine has no internet access:
+
+1. On a connected machine, download the official `RELEASE.2025-09-07T16-13-09Z` MinIO binary and its `.sha256sum` from `https://github.com/minio/minio/releases/tag/RELEASE.2025-09-07T16-13-09Z`.
+2. Place both files in `./data/cache/` inside your Patchwork directory.
+3. Run `npm run setup -- --easy` — the installer verifies the cached file against its SHA-256 checksum and installs it into `./bin/` without network access.
+
+## Repair, Check, Reset, and Uninstalling
+
+- Inspect without changes: `npm run setup -- --check`
+- Repair missing config, stale PID/lock files, or corrupt binaries: `npm run setup -- --action=repair`
+- Wipe state and start over (offers `pg_dump` + MinIO backup first): `npm run setup -- --action=reset`
+- **Uninstall**: Run `npm run stop`, then delete the `patchwork` directory (if you installed a Linux systemd unit, first run `sudo systemctl disable --now patchwork.service` and remove `/etc/systemd/system/patchwork.service`).

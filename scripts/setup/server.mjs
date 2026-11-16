@@ -2,7 +2,7 @@ import { execFileSync, spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import { isPortFree } from "./preflight.mjs";
-import { parseEnvFile, writeEnvFileAtomic } from "./env.mjs";
+import { detectInstallMode, parseEnvFile, writeEnvFileAtomic } from "./env.mjs";
 import {
   getSystemInfo,
   killProcessTree,
@@ -136,26 +136,12 @@ export async function runBuildWithSpinner({
   }, 120);
 
   try {
-    const astroBin = path.join(appRootDir, "docs-site", "node_modules", "astro", "astro.js");
-    const copyDistScript = path.join(appRootDir, "scripts", "docs", "copy-dist.mjs");
-    if (fs.existsSync(astroBin) && fs.existsSync(copyDistScript)) {
+    const buildEmbeddedScript = path.join(appRootDir, "scripts", "docs", "build-embedded.mjs");
+    if (fs.existsSync(buildEmbeddedScript) && process.env.SKIP_DOCS_BUILD !== "1") {
       await new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [astroBin, "build"], {
-          cwd: path.join(appRootDir, "docs-site"),
-          env: { ...process.env, NODE_ENV: "production", DOCS_BASE: "/documentation" },
-          stdio: ["ignore", "pipe", "pipe"],
-          windowsHide: true,
-        });
-        const errLines = [];
-        child.stderr.on("data", (d) => errLines.push(d.toString()));
-        child.on("close", (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`docs build exited with ${code}:\n${errLines.join("")}`));
-        });
-      });
-      await new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [copyDistScript], {
+        const child = spawn(process.execPath, [buildEmbeddedScript], {
           cwd: appRootDir,
+          env: { ...process.env, NODE_ENV: "production" },
           stdio: ["ignore", "pipe", "pipe"],
           windowsHide: true,
         });
@@ -163,7 +149,7 @@ export async function runBuildWithSpinner({
         child.stderr.on("data", (d) => errLines.push(d.toString()));
         child.on("close", (code) => {
           if (code === 0) resolve();
-          else reject(new Error(`copy-dist exited with ${code}:\n${errLines.join("")}`));
+          else reject(new Error(`embedded docs build exited with ${code}:\n${errLines.join("")}`));
         });
       });
     }
@@ -289,6 +275,7 @@ export async function startApplicationServer({
   }
 
   const parsedEnv = envPath ? parseEnvFile(envPath).values : {};
+  const installMode = detectInstallMode(projectDir, parsedEnv);
   const nextBin = path.join(
     appRootDir,
     "node_modules",
@@ -297,7 +284,12 @@ export async function startApplicationServer({
     "bin",
     "next"
   );
+  const supervisorBin = path.join(appRootDir, "scripts", "supervisor.mjs");
   const subcommand = devMode ? "dev" : "start";
+  const spawnArgs =
+    installMode === "easy" && fs.existsSync(supervisorBin)
+      ? [supervisorBin, ...(devMode ? ["--dev"] : [])]
+      : [nextBin, subcommand, "-p", String(activePort)];
 
   const serverLogPath = path.join(projectDir, ".patchwork-server.log");
   let logFd = null;
@@ -307,7 +299,7 @@ export async function startApplicationServer({
 
   const child = spawn(
     process.execPath,
-    [nextBin, subcommand, "-p", String(activePort)],
+    spawnArgs,
     {
       cwd: appRootDir,
       env: {

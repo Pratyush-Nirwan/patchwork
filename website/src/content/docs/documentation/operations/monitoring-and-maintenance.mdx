@@ -1,0 +1,34 @@
+---
+title: "Monitoring & Maintenance"
+description: "Health checks, log redaction, search index rebuilding, MinIO orphan cleanup, and performance tuning."
+---
+
+This guide is for operators and administrators maintaining a running Patchwork server.
+
+## Health Checks & Diagnostics
+
+- **HTTP endpoint**: `GET /api/health` returns service liveness (`200 OK`).
+- **System Diagnostics**: Visit **System Configuration -> Health & Diagnostics** (`/dashboard/system/health`) for PostgreSQL, MinIO bucket, and migration diagnostics.
+- **CLI check**: Run `node scripts/setup.mjs --check` to inspect installation state without modifying files.
+
+## Logs & Secret Redaction
+
+The installer and server redact known secrets (`SESSION_SECRET`, `CSRF_SECRET`, `TOKEN_ENCRYPTION_KEY`, `S3_SECRET_KEY`, database passwords) before writing logs under `logs/`. Never log command arguments or ticket content.
+
+## Search Reindexing
+
+If full-text search results appear stale after manual database edits, open **System Configuration -> Search Index** (`/dashboard/system/search`) and run **Rebuild Search Index** to recompute PostgreSQL `tsvector` columns across tickets, comments, and extracted attachment text.
+
+## Orphaned File Cleanup
+
+If a browser upload fails after requesting a presigned URL or after ticket deletion, clean unreferenced MinIO objects from **System Configuration -> Storage & Files** (`/dashboard/system/storage`).
+
+## Performance Tuning
+
+- Keep PostgreSQL `GIN` indexes healthy (`VACUUM ANALYZE` on `tickets`, `comments`, `attachments`).
+- Ensure `cacheDurationSec` in **Integrations** is tuned (default `300` seconds) to avoid redundant GitHub/GitLab API calls.
+
+## Related Pages
+
+- [Backups & Upgrades](/documentation/operations/backups-and-upgrades/)
+- [Troubleshooting & FAQ](/documentation/operations/troubleshooting/)

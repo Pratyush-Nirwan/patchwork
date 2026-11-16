@@ -1,0 +1,48 @@
+---
+title: "Architecture"
+description: "Deep dive into Patchwork data model, PostgreSQL LISTEN/NOTIFY real-time SSE, full-text search, RBAC model, and installer flow."
+---
+
+This page is for contributors and architects inspecting Patchwork internals.
+
+## Data Model
+
+Patchwork uses Drizzle ORM (`src/db/schema.ts`) over PostgreSQL 16+ with plain SQL migrations (`drizzle/`). See [Database Schema & API Route Groups](/documentation/reference/database-schema/) for the generated table and column catalog.
+
+## Real-Time Updates (`LISTEN/NOTIFY` + SSE)
+
+1. Server mutations emit `NOTIFY` payloads on PostgreSQL channels (`src/lib/realtime.ts`).
+2. `GET /api/events` streams events over HTTP Server-Sent Events to subscribed clients.
+3. Clients update board state immediately and show an inline status indicator only after consecutive SSE failures.
+
+## Full-Text Search
+
+`src/lib/search.ts` queries PostgreSQL `tsvector` + `GIN` indexes across ticket titles/descriptions, comments, and extracted attachment text (`.pdf`, `.txt`, `.md`, `.csv`, `.json`), returning ranked snippets filtered by RBAC permissions.
+
+## Permissions Model
+
+`src/lib/rbac.ts` resolves organization role (`admin`) and team role (`lead`, `member`, `viewer`, plus `developer`/`tester` sub-roles) on every server route. Client UI hints mirror these permissions but never replace server enforcement.
+
+## Setup & Installer Flow
+
+1. `scripts/setup.mjs` provisions PostgreSQL, `.env`, MinIO bucket, and an `AES-256-GCM` encrypted Admin Setup Token (`src/lib/setup-token.ts`).
+2. `/setup` (`src/components/SetupWizard.tsx` and `src/lib/setup.ts`) verifies the token, deletes the ciphertext, autosaves steps to `setup_state`, and locks permanently on completion.
+
+## Related Pages
+
+- [Overview & Concepts](/documentation/introduction/overview/)
+- [Security](/documentation/operations/security/)
+
+## Easy Mode Supervisor & Data Layout
+
+In Easy mode (`PATCHWORK_INSTALL_MODE=easy`), `npm run start` launches `scripts/supervisor.mjs`, which manages the full stack in one process tree:
+
+```text
+scripts/supervisor.mjs (npm run start)
+  ├── 1. Embedded PostgreSQL 18 (./data/postgres, 127.0.0.1:<high-port>)
+  ├── 2. Drizzle SQL migrations (drizzle/*.sql)
+  ├── 3. Official MinIO Server (./bin/minio, ./data/minio, console 127.0.0.1:<port>)
+  └── 4. Next.js Server (PORT, /api/health, /documentation)
+```
+
+On `SIGINT`, `SIGTERM`, or Windows `SIGBREAK`, the supervisor shuts down services in reverse order (`Next.js -> MinIO -> PostgreSQL`) and removes `.patchwork*.pid` files. If PostgreSQL or MinIO exits unexpectedly, the supervisor restarts it with exponential backoff.

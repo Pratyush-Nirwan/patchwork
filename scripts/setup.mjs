@@ -2,12 +2,22 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { runPreflightChecks } from "./setup/preflight.mjs";
+import {
+  checkMinioBinary,
+  runEasyPreflightChecks,
+  runPreflightChecks,
+} from "./setup/preflight.mjs";
 import {
   provisionDatabase,
   runDatabaseMigrations,
 } from "./setup/db.mjs";
 import { setupMinioBucketAndVerify } from "./setup/minio.mjs";
+import { ensureMinioBinary } from "./setup/download.mjs";
+import {
+  getLanIpAddresses,
+  getSystemInfo,
+} from "./lib/platform.mjs";
+import { execFileSync } from "child_process";
 import {
   buildFreshEnvValues,
   writeEnvFileAtomic,
@@ -24,6 +34,7 @@ import { handleDomainConfiguration } from "./setup/domain.mjs";
 import { detectInstallState, formatStateTable } from "./setup/state-detect.mjs";
 import { runRepair } from "./setup/repair.mjs";
 import {
+  runEasyInstall,
   runReset,
   getDeletionTargetsSummary,
 } from "./setup/reset.mjs";
@@ -42,10 +53,13 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     help: false,
     yes: false,
     nonInteractive: false,
+    easy: false,
+    advanced: false,
     check: false,
     dev: false,
     noStart: false,
     noOpen: false,
+    noDocs: false,
     action: process.env.SETUP_ACTION || "",
   };
 
@@ -54,11 +68,21 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     if (arg === "--help" || arg === "-h") flags.help = true;
     else if (arg === "--yes" || arg === "-y") flags.yes = true;
     else if (arg === "--non-interactive") flags.nonInteractive = true;
+    else if (arg === "--easy") flags.easy = true;
+    else if (arg === "--advanced") flags.advanced = true;
     else if (arg === "--check") flags.check = true;
     else if (arg === "--dev") flags.dev = true;
     else if (arg === "--no-start") flags.noStart = true;
     else if (arg === "--no-open") flags.noOpen = true;
+    else if (arg === "--no-docs") {
+      flags.noDocs = true;
+      process.env.SKIP_DOCS_BUILD = "1";
+    }
     else if (arg.startsWith("--action=")) flags.action = arg.split("=")[1];
+  }
+
+  if (flags.easy && flags.advanced) {
+    throw new Error("Cannot pass both --easy and --advanced.");
   }
 
   return flags;
@@ -74,12 +98,15 @@ Usage:
 
 Options:
   --help, -h          Show this help message and exit
+  --easy              Use Easy mode (managed PostgreSQL + downloaded MinIO)
+  --advanced          Use Advanced mode (external PostgreSQL + MinIO)
   --check             Detect and print current installation status and exit (no changes)
   --yes, -y           Accept default values for all questions
-  --non-interactive   Read all configuration from environment variables without interactive input
+  --non-interactive   Run without prompts (defaults to Easy mode unless --advanced is passed)
   --dev               Start the server with 'npm run dev' instead of 'npm run build && npm run start'
   --no-start          Skip starting the server after installation completes
   --no-open           Do not open the default browser automatically
+  --no-docs           Skip building the embedded documentation bundle (sets SKIP_DOCS_BUILD=1)
   --action=<mode>     Action for existing installs in non-interactive mode (repair | reset | status)
 `);
 }
@@ -517,6 +544,294 @@ export async function runCliSetup(rawArgs = process.argv.slice(2), io = {}) {
       }
 
       // ─── FRESH INSTALL FLOW (No status table printed on fresh install) ──────────
+      let installMode = flags.easy
+        ? "easy"
+        : flags.advanced
+          ? "advanced"
+          : !interactive || !isInteractiveTty
+            ? "easy"
+            : null;
+
+      if (!installMode) {
+        installMode = await sharedInputSession.promptSelect({
+          message: "How do you want to install Patchwork?",
+          options: [
+            {
+              value: "easy",
+              label: "Easy (recommended) — Patchwork sets up PostgreSQL and MinIO for you inside this folder",
+            },
+            {
+              value: "advanced",
+              label: "Advanced — Use my own PostgreSQL and MinIO",
+            },
+          ],
+          initialValue: "easy",
+          summaryLabel: "Install mode",
+          outputStream,
+        });
+      }
+
+      if (installMode === "easy") {
+        const sysInfo = getSystemInfo();
+        if (sysInfo.isLinux && sysInfo.isRoot) {
+          writeLine(
+            `${RED}✖ Running Easy mode as root is not supported (PostgreSQL refuses to run as root).${RESET}`
+          );
+          let createUser = false;
+          if (interactive && isInteractiveTty) {
+            createUser = await sharedInputSession.promptConfirm({
+              message: "Create a dedicated 'patchwork' system user and transfer folder ownership?",
+              initialValue: false,
+              summaryLabel: "Create patchwork user",
+              outputStream,
+            });
+          }
+          if (createUser) {
+            execFileSync("useradd", ["--system", "--create-home", "--shell", "/bin/bash", "patchwork"], {
+              stdio: "inherit",
+              shell: false,
+            });
+            execFileSync("chown", ["-R", "patchwork:patchwork", projectDir], {
+              stdio: "inherit",
+              shell: false,
+            });
+            writeLine(
+              `${GREEN}✔ Created 'patchwork' user. Re-run setup as that user:${RESET}\n  sudo -u patchwork npm run setup -- --easy`
+            );
+            return { exitCode: 0, mode: "root-handoff" };
+          }
+          throw new Error(
+            "PostgreSQL refuses to run as root. Re-run as a normal user (or create a dedicated 'patchwork' user)."
+          );
+        }
+
+        writeLine(`${CYAN}==> [Step 1/5] Running Easy mode preflight checks...${RESET}`);
+        const appPortDefault = Number(process.env.SETUP_APP_PORT || 3000);
+        const easyPre = await runEasyPreflightChecks({
+          projectDir,
+          appPort: appPortDefault,
+        });
+        for (const check of easyPre.checks) {
+          if (check.passed) {
+            writeLine(`  ${GREEN}✔${RESET} ${check.label} — ${check.detail}`);
+          } else {
+            writeLine(`  ${RED}✖${RESET} ${check.label} — ${check.detail}`);
+            writeLine(`    ${YELLOW}Fix:${RESET} ${check.fixHint}`);
+          }
+        }
+        if (!easyPre.passed) {
+          throw new Error("Preflight checks failed. Resolve the issues above and re-run `npm run setup`.");
+        }
+
+        let exposure = "only-me";
+        let minioBindHost = "127.0.0.1";
+        let minioPublicUrl = null;
+        let appUrl = process.env.SETUP_APP_URL || `http://localhost:${appPortDefault}`;
+
+        if (interactive && isInteractiveTty) {
+          exposure = await sharedInputSession.promptSelect({
+            message: "Will other people reach Patchwork over the network, or only you on this computer?",
+            options: [
+              { value: "only-me", label: "Only me on this computer (localhost)" },
+              { value: "other-people", label: "Other people over the network" },
+            ],
+            initialValue: "only-me",
+            summaryLabel: "Network exposure",
+            outputStream,
+          });
+        }
+
+        if (exposure === "other-people") {
+          const connectType = await sharedInputSession.promptSelect({
+            message: "How will other people connect?",
+            options: [
+              { value: "domain", label: "Domain + HTTPS reverse proxy (recommended)" },
+              { value: "lan", label: "Trusted LAN IP (unencrypted HTTP)" },
+            ],
+            initialValue: "domain",
+            summaryLabel: "Network mode",
+            outputStream,
+          });
+
+          if (connectType === "domain") {
+            const domainName = await sharedInputSession.promptText({
+              message: "Enter your domain name",
+              defaultValue: "tickets.example.com",
+              summaryLabel: "Domain name",
+              outputStream,
+            });
+            const proxyType = await sharedInputSession.promptSelect({
+              message: "Choose reverse proxy configuration",
+              options: [
+                { value: "caddy", label: "Caddy (deploy/Caddyfile)" },
+                { value: "nginx", label: "Nginx + Certbot (deploy/nginx.conf)" },
+              ],
+              initialValue: "caddy",
+              summaryLabel: "Reverse proxy",
+              outputStream,
+            });
+            const domainRes = handleDomainConfiguration({
+              choice: "yes",
+              domainName,
+              proxyType,
+              appPort: appPortDefault,
+              s3Port: 19000,
+              projectDir,
+              appRootDir: process.cwd(),
+            });
+            appUrl = domainRes.appUrl;
+            minioPublicUrl = domainRes.minioPublicUrl;
+          } else {
+            const lanIps = getLanIpAddresses();
+            const defaultIp = lanIps[0] || "192.168.1.10";
+            const lanIp = await sharedInputSession.promptText({
+              message: "Enter your LAN IP address for Patchwork and MinIO",
+              defaultValue: defaultIp,
+              summaryLabel: "LAN IP",
+              outputStream,
+            });
+            writeLine(
+              `  ${YELLOW}⚠ Warning: LAN HTTP (${lanIp}) is unencrypted. Use a reverse proxy with HTTPS for untrusted networks.${RESET}`
+            );
+            minioBindHost = lanIp.trim();
+            appUrl = `http://${minioBindHost}:${appPortDefault}`;
+          }
+        }
+
+        writeLine(`\n${CYAN}==> [Step 2/5] Provisioning PostgreSQL & MinIO in ./data/...${RESET}`);
+        const requireTokenConfirm =
+          (interactive && isInteractiveTty) ||
+          process.env.SETUP_REQUIRE_TOKEN_CONFIRM === "true";
+
+        const easyRes = await runEasyInstall({
+          projectDir,
+          envPath,
+          drizzleDir,
+          appPort: appPortDefault,
+          appUrl,
+          minioBindHost,
+          minioPublicUrl,
+          yes: !interactive,
+          tokenConfirmed: !requireTokenConfirm,
+          confirmDownload: async ({ name, sizeLabel, url }) => {
+            if (!interactive || !isInteractiveTty) return true;
+            return sharedInputSession.promptConfirm({
+              message: `Download official MinIO binary?\n  Name: ${name}\n  Size: ${sizeLabel}\n  URL : ${url}`,
+              initialValue: true,
+              summaryLabel: "Download MinIO",
+              outputStream,
+            });
+          },
+          onDownloadProgress: ({ received, total }) => {
+            if (!outputStream.isTTY) return;
+            const mb = (received / (1024 * 1024)).toFixed(1);
+            const pct = total > 0 ? ` (${Math.round((received / total) * 100)}%)` : "";
+            outputStream.write(`\r  Downloading MinIO: ${mb} MB${pct}   `);
+          },
+          onBeforeStop: async ({ databaseUrl, tokenBuffer }) => {
+            if (outputStream.isTTY) outputStream.write("\n");
+            writeLine(`\n${CYAN}==> [Step 3/5] One-time Admin Setup Token...${RESET}`);
+            await displayAndConfirmAdminToken({
+              tokenBuffer,
+              databaseUrl,
+              inputSession: sharedInputSession,
+              inputStream,
+              outputStream,
+              isTTY: requireTokenConfirm,
+              nonInteractive: !requireTokenConfirm,
+              ansiSupported: isInteractiveTty || Boolean(outputStream.isTTY),
+            });
+          },
+        });
+
+        try {
+          fs.writeFileSync(
+            path.join(projectDir, ".patchwork-version.json"),
+            `${JSON.stringify({ version, displayVersion, installedAt: new Date().toISOString() }, null, 2)}\n`,
+            "utf8"
+          );
+        } catch {}
+
+        writeLine(`\n${CYAN}==> [Step 4/5] Installation Summary (${displayVersion}, Easy mode)${RESET}`);
+        writeLine(`  ${GREEN}✔${RESET} Version:          Patchwork ${displayVersion}`);
+        writeLine(`  ${GREEN}✔${RESET} PostgreSQL 18:    ${easyRes.pgDataDir} (port ${easyRes.dbPort})`);
+        writeLine(`  ${GREEN}✔${RESET} MinIO Bucket:     ${easyRes.minio.bucket} (${easyRes.minio.publicUrl})`);
+        writeLine(`  ${GREEN}✔${RESET} Setup Log:        ${logger.logPath}`);
+        writeLine(`  ${GREEN}✔${RESET} Documentation:    ${appUrl}/documentation`);
+
+        writeLine(`\n${CYAN}==> [Step 5/5] Starting Patchwork supervisor...${RESET}`);
+        const serverRes = await startApplicationServer({
+          projectDir,
+          appRootDir: process.cwd(),
+          envPath,
+          desiredPort: appPortDefault,
+          devMode: flags.dev,
+          noStart: flags.noStart,
+          noOpen: flags.noOpen,
+          nonInteractive: !interactive,
+          interactive,
+          healthTimeoutMs: 90000,
+          skipBuildIfAlreadyBuilt:
+            process.env.SETUP_SKIP_BUILD_IF_BUILT === "true" || Boolean(process.env.VITEST),
+          confirmPortChange: async (busyPort, nextPort) => {
+            if (!interactive || !isInteractiveTty) return true;
+            return sharedInputSession.promptConfirm({
+              message: `Port ${busyPort} is in use. Retry on ${nextPort} and update .env?`,
+              initialValue: true,
+              summaryLabel: `Retry on port ${nextPort}`,
+              outputStream,
+            });
+          },
+          confirmLinuxSystemd: async () => {
+            if (!interactive || !isInteractiveTty) return false;
+            return sharedInputSession.promptConfirm({
+              message: "Install, enable, and start patchwork.service (supervises PG + MinIO + App)?",
+              initialValue: true,
+              summaryLabel: "Install systemd service",
+              outputStream,
+            });
+          },
+          outputStream,
+        });
+
+        return {
+          exitCode: 0,
+          mode: "easy-install",
+          envPath,
+          databaseUrl: easyRes.databaseUrl,
+          logPath: logger.logPath,
+          server: serverRes,
+        };
+      }
+
+      // Advanced mode: offer "Install MinIO for me" if binary is missing
+      const advMinioCheck = checkMinioBinary(projectDir);
+      if (!advMinioCheck.passed && interactive && isInteractiveTty) {
+        const minioChoice = await sharedInputSession.promptSelect({
+          message: "MinIO binary not found in ./bin. How would you like to provide MinIO?",
+          options: [
+            { value: "install", label: "Install MinIO for me (verified SHA-256 download)" },
+            { value: "manual", label: "I already have MinIO / will install it manually" },
+          ],
+          initialValue: "install",
+          summaryLabel: "MinIO binary",
+          outputStream,
+        });
+        if (minioChoice === "install") {
+          await ensureMinioBinary({
+            projectDir,
+            yes: false,
+            confirmDownload: async ({ name, sizeLabel, url }) =>
+              sharedInputSession.promptConfirm({
+                message: `Download MinIO (${name}, ${sizeLabel}) from ${url}?`,
+                initialValue: true,
+                summaryLabel: "Download MinIO",
+                outputStream,
+              }),
+          });
+        }
+      }
+
       writeLine(`${CYAN}==> [Step 1/9] Running preflight checks...${RESET}`);
       const superuserUrl =
         process.env.SETUP_PG_SUPERUSER_URL ||

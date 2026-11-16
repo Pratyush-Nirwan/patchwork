@@ -2,9 +2,10 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import pg from "pg";
-import { getSystemInfo } from "../lib/platform.mjs";
+import { getMinioDownloadInfo, getSystemInfo, isPidAlive } from "../lib/platform.mjs";
 import { compareSemver, getVersionInfo, DEFAULT_REPO_ROOT } from "../lib/version.mjs";
-import { parseEnvFile, validateEnvValues } from "./env.mjs";
+import { detectInstallMode, parseEnvFile, validateEnvValues } from "./env.mjs";
+import { parseSha256Sum, sha256File } from "./download.mjs";
 import { getMigrationStatus } from "./db.mjs";
 import { checkMinioBinary } from "./preflight.mjs";
 import { checkMinioBucketReachable } from "./minio.mjs";
@@ -46,13 +47,15 @@ function checkLinuxServices() {
 export async function detectInstallState(options = {}) {
   const projectDir = options.projectDir || process.cwd();
   const envPath = options.envPath || path.join(projectDir, ".env");
+  const envParsed = parseEnvFile(envPath);
+  const mode = detectInstallMode(projectDir, envParsed.values);
   const minioDataDir =
-    options.minioDataDir || path.join(projectDir, ".minio-data");
+    options.minioDataDir ||
+    path.join(projectDir, mode === "easy" ? "data/minio" : ".minio-data");
   const drizzleDir =
     options.drizzleDir || path.join(process.cwd(), "drizzle");
 
   // 1. .env check
-  const envParsed = parseEnvFile(envPath);
   const envValidation = envParsed.exists
     ? validateEnvValues(envParsed.values)
     : { valid: false, missing: [], validEncryptionKey: false };
@@ -251,8 +254,60 @@ export async function detectInstallState(options = {}) {
       ? "complete"
       : "partial";
 
+  // Easy-mode specific status
+  const pgDataDir = path.join(projectDir, "data", "postgres");
+  const pgVersionFile = path.join(pgDataDir, "PG_VERSION");
+  const pgMajorVersion = fs.existsSync(pgVersionFile)
+    ? fs.readFileSync(pgVersionFile, "utf8").trim()
+    : null;
+  const supPidPath = path.join(projectDir, ".patchwork-supervisor.pid");
+  let supervisorAlive = false;
+  let supervisorPid = null;
+  if (fs.existsSync(supPidPath)) {
+    try {
+      const parsedSup = JSON.parse(fs.readFileSync(supPidPath, "utf8"));
+      supervisorPid = parsedSup.pid || null;
+      supervisorAlive = supervisorPid ? isPidAlive(supervisorPid) : false;
+    } catch {}
+  }
+
+  let minioChecksumStatus = "unverified";
+  const dlInfo = getMinioDownloadInfo();
+  const cachedSumPath = path.join(projectDir, "data", "cache", `${dlInfo.assetName}.sha256sum`);
+  if (minioBinaryCheck.passed && fs.existsSync(cachedSumPath)) {
+    try {
+      const expected = parseSha256Sum(fs.readFileSync(cachedSumPath, "utf8"));
+      const actual = await sha256File(minioBinaryCheck.binaryPath);
+      minioChecksumStatus = actual === expected ? "verified" : "mismatch";
+    } catch {
+      minioChecksumStatus = "unverified";
+    }
+  }
+
+  const calcDirBytes = (dir) => {
+    if (!fs.existsSync(dir)) return 0;
+    let total = 0;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) total += calcDirBytes(p);
+      else if (entry.isFile()) total += fs.statSync(p).size;
+    }
+    return total;
+  };
+  const dataDiskBytes = mode === "easy" ? calcDirBytes(path.join(projectDir, "data")) : 0;
+
   return {
+    mode,
     overallState,
+    easy: {
+      pgDataDir,
+      pgMajorVersion,
+      minioDataDir,
+      minioChecksumStatus,
+      dataDiskBytes,
+      supervisorPid,
+      supervisorAlive,
+    },
     env: {
       path: envPath,
       exists: envParsed.exists,
@@ -305,6 +360,7 @@ export function formatStateTable(state) {
       ? `✔ ${state.diskDisplayVersion} (installed ${state.installedDisplayVersion})`
       : `${state.diskDisplayVersion || "unknown"}`;
   const rows = [
+    ["Install mode", state.mode === "easy" ? "Easy (managed PostgreSQL + MinIO)" : "Advanced (external services)"],
     ["App version (disk / installed)", versionSummary],
     [
       ".env configuration",
@@ -352,6 +408,17 @@ export function formatStateTable(state) {
     ],
     ["Systemd services (Linux)", state.services.summary],
   ];
+  if (state.mode === "easy" && state.easy) {
+    const mb = (state.easy.dataDiskBytes / (1024 * 1024)).toFixed(1);
+    rows.push([
+      "Easy mode PG & MinIO checksum",
+      `PG ${state.easy.pgMajorVersion || "uninitialized"} | MinIO SHA-256: ${state.easy.minioChecksumStatus} | ./data: ${mb} MB`,
+    ]);
+    rows.push([
+      "Supervisor status",
+      state.easy.supervisorAlive ? `✔ Running (PID ${state.easy.supervisorPid})` : "Stopped",
+    ]);
+  }
 
   const width = 36;
   const lines = [

@@ -1,0 +1,77 @@
+---
+title: "Roadmap & Known Limitations"
+description: "Planned features for Patchwork v1.0.0 and known scope boundaries in v0.7.1-beta."
+---
+
+{/* Generated file, do not edit. Run `npm run generate` to update. */}
+
+import { Aside } from "@astrojs/starlight/components";
+
+Current release: **v0.7.1-beta** · Target release: **v1.0.0**
+
+This roadmap describes planned work. Scope and timing may change.
+
+<Aside type="note" title="Status Legend">
+**Planned**: Intended for v1.0.0; not available in v0.7.1-beta. · **In progress**: Actively under development; not yet released. · **Shipped**: Released and documented in the main guides.
+</Aside>
+
+Looking for what works today? See the [Feature Overview](/documentation/introduction/overview/).
+
+## Ticketing and Workflow
+
+| Item | Summary | Status | Depends on |
+| --- | --- | --- | --- |
+| <span id="ticket-dependencies-subtasks"></span>**Ticket dependencies and subtasks** | Tickets will support blocked-by and blocks relations, checklist subtasks, and blocked badges on Kanban cards. Slash commands for managing dependencies and subtasks are planned (command names to be decided; /link remains reserved for Git/GitLab URLs). | Planned (v1.0.0) | — |
+| <span id="sprints-cycles"></span>**Sprints and cycles** | Boards will support time-boxed iterations with active, upcoming, and completed states, burndown and velocity tracking, and a sprint filter. | Planned (v1.0.0) | — |
+| <span id="ticket-templates-recurring"></span>**Ticket templates and recurring tickets** | Teams will be able to define reusable field and markdown templates (for example Bug Report, Incident, Release Checklist) and schedule recurring tickets via a background worker (details to be decided). | Planned (v1.0.0) | — |
+| <span id="bulk-actions-multiselect"></span>**Bulk actions and multi-select** | Users will be able to Shift-click or Cmd/Ctrl-click cards on a board to bulk move, assign, label, or archive tickets in one action. | Planned (v1.0.0) | — |
+| <span id="saved-views-filters"></span>**Saved views and custom filters** | Users will be able to save filter queries as pinned views in the sidebar for quick access. | Planned (v1.0.0) | — |
+
+## Collaboration and Notifications
+
+| Item | Summary | Status | Depends on |
+| --- | --- | --- | --- |
+| <span id="in-app-notifications-mentions"></span>**In-app notification center and @mentions** | A bell inbox will surface @mentions, ticket assignments, and updates to watched tickets on top of the existing real-time update channel. | Planned (v1.0.0) | [Ticket watchers](#collaboration-and-notifications) |
+| <span id="ticket-watchers"></span>**Ticket watchers** | Users will be able to follow a ticket without being its assignee, including toggling watch state via a slash command (command name to be decided). | Planned (v1.0.0) | — |
+| <span id="outbound-email-webhooks"></span>**Outbound email and webhook alerts** | Administrators will be able to configure optional SMTP digests and mention emails, plus signed outbound webhooks (Slack, Discord, Mattermost, generic HTTP) in System Configuration (details to be decided). | Planned (v1.0.0) | — |
+| <span id="presence-typing-indicators"></span>**Presence and typing indicators** | Ticket panels will show who is currently viewing or typing on a ticket in real time. | Planned (v1.0.0) | — |
+
+## Views and Analytics
+
+| Item | Summary | Status | Depends on |
+| --- | --- | --- | --- |
+| <span id="list-table-view"></span>**List and table view** | Boards will include a sortable, inline-editable table view alongside the existing Kanban board and Calendar views. | Planned (v1.0.0) | — |
+| <span id="my-work"></span>**My Work** | A cross-board personal view will gather tickets assigned to you, created by you, and due soon. | Planned (v1.0.0) | — |
+| <span id="cycle-time-wip-metrics"></span>**Cycle time and WIP metrics** | Teams will be able to view lead time, cycle time per column, throughput, and bottleneck charts derived from existing activity history. | Planned (v1.0.0) | — |
+
+## Git and Developer Integrations
+
+| Item | Summary | Status | Depends on |
+| --- | --- | --- | --- |
+| <span id="inbound-git-webhooks"></span>**Inbound GitHub and GitLab webhooks** | Patchwork will automatically link commits, pull requests, and merge requests that mention a ticket key, with optional column transitions (for example to In Review on PR open and Done on merge; details to be decided). | Planned (v1.0.0) | — |
+| <span id="email-to-ticket-intake"></span>**Email-to-ticket and public intake form** | Organizations will be able to accept external bug reports via a token-protected intake form or an email/webhook bridge (details to be decided). | Planned (v1.0.0) | — |
+| <span id="personal-api-tokens"></span>**Personal API tokens** | Users will be able to create scoped personal access tokens for scripts and CI pipelines to call a REST API. | Planned (v1.0.0) | — |
+
+## Security, Audit, and Operations
+
+| Item | Summary | Status | Depends on |
+| --- | --- | --- | --- |
+| <span id="audit-log-viewer"></span>**Audit log viewer** | System Configuration will add a searchable, exportable admin log of authentication events, role changes, exports, and destructive actions. | Planned (v1.0.0) | — |
+| <span id="two-factor-passkeys-sso"></span>**Two-factor authentication, passkeys, and SSO** | Authentication will add optional TOTP two-factor authentication, WebAuthn passkeys, and OIDC single sign-on (for example Authentik, Keycloak, GitHub, Google; details to be decided). | Planned (v1.0.0) | — |
+| <span id="backup-restore-ui"></span>**Backup and restore UI** | System Configuration will add scheduled database and storage backups with export and verification status alongside the existing manual backup commands. | Planned (v1.0.0) | — |
+
+## Known Limitations in v0.7.1-beta
+
+The following capabilities are **not yet available in v0.7.1-beta**, are **planned for v1.0.0**, and are tracked in the tables above:
+
+- **Email notifications and SMTP delivery**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#collaboration-and-notifications).
+- **In-app notification inbox**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#collaboration-and-notifications).
+- **Standalone audit log viewer**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#security-audit-and-operations).
+- **Personal API tokens (PATs) and public REST API**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#git-and-developer-integrations).
+- **Inbound and outbound webhooks**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#git-and-developer-integrations).
+- **2FA, passkeys, and SSO / OAuth login**: Not yet available in v0.7.1-beta. Planned for v1.0.0. See the [Roadmap](#security-audit-and-operations).
+
+### Out of Scope (Not on the Roadmap)
+
+- **Docker / container images**: Patchwork is intentionally native-only on Windows and Linux.
+- **Native desktop or mobile apps**: Patchwork is a responsive web application for desktop and mobile browsers.

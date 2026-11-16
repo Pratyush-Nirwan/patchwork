@@ -25,6 +25,11 @@ const PROHIBITED_AS_FEATURE = [
   "audit log",
   "API tokens",
   "SSO",
+  "sprints",
+  "subtasks",
+  "passkeys",
+  "2FA",
+  "email-to-ticket",
 ];
 
 function slugifyHeading(text) {

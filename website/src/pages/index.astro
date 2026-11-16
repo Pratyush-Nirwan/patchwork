@@ -1,0 +1,597 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import { Image } from "astro:assets";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+import InteractivePreview from "../components/marketing/InteractivePreview.astro";
+import appMeta from "../data/generated/app-meta.json";
+import boardLight from "../assets/screenshots/board-light.png";
+import boardDark from "../assets/screenshots/board-dark.png";
+import ticketLight from "../assets/screenshots/ticket-panel-light.png";
+import ticketDark from "../assets/screenshots/ticket-panel-dark.png";
+import cmdLight from "../assets/screenshots/command-palette-light.png";
+import cmdDark from "../assets/screenshots/command-palette-dark.png";
+import sysLight from "../assets/screenshots/system-config-light.png";
+import sysDark from "../assets/screenshots/system-config-dark.png";
+
+const rawBase = process.env.SITE_BASE || "/";
+const basePrefix = rawBase === "/" ? "" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
+const repoUrl = process.env.REPO_URL || appMeta.repositoryUrl;
+const href = (p: string) => `${basePrefix}${p}`;
+
+// Read roadmap categories from src/data/roadmap.yaml
+const roadmapRaw = fs.readFileSync(path.resolve("src/data/roadmap.yaml"), "utf8");
+const roadmapCategories = [...roadmapRaw.matchAll(/^\s*title:\s*"([^"]+)"/gm)]
+  .slice(0, 5)
+  .map((m) => m[1]);
+---
+
+<MarketingLayout
+  title={`Patchwork (${appMeta.displayVersion}) — Self-hosted engineering ticketing`}
+  description="Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boards. Runs natively on Windows and Linux with Node.js, PostgreSQL, and MinIO."
+  canonicalPath="/"
+>
+  <section class="pw-hero pw-patch-bg">
+    <div class="pw-container pw-hero-grid">
+      <div>
+        <div class="pw-beta-pill pw-tabular">{appMeta.displayVersion} · Native Windows &amp; Linux · No Docker</div>
+        <h1>Ticketing for engineering orgs that run their own stack.</h1>
+        <p class="pw-lead">
+          Self-hosted boards, tickets, scoped full-text search, and a keyboard-first command bar.
+          Installed in three steps with Node.js and git.
+        </p>
+        <div class="pw-cta-row">
+          <a class="pw-btn pw-btn-primary" href={href("/documentation/getting-started/quick-start/")}>Get started</a>
+          <a class="pw-btn pw-btn-secondary" href={href("/documentation/")}>Read the docs</a>
+          <a class="pw-btn pw-btn-ghost" href={repoUrl}>View on GitHub</a>
+        </div>
+      </div>
+
+      <div class="pw-terminal" aria-label="Three-step install commands">
+        <div class="pw-terminal-head">
+          <span>Three-step install (Easy mode)</span>
+          <span class="pw-tabular">Node.js {appMeta.nodeRequirement} + git</span>
+        </div>
+        <div class="pw-os-grid">
+          <div>
+            <div class="pw-os-label">Windows (PowerShell)</div>
+            <pre><code>git clone {appMeta.cloneUrl}
+cd patchwork
+npm ci
+npm run setup</code></pre>
+          </div>
+          <div>
+            <div class="pw-os-label">Linux (bash)</div>
+            <pre><code>git clone {appMeta.cloneUrl}
+cd patchwork
+npm ci
+npm run setup</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pw-container pw-hero-shot">
+      <div class="pw-frame">
+        <Image src={boardLight} alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (light)" class="pw-img-light" fetchpriority="high" />
+        <Image src={boardDark} alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (dark)" class="pw-img-dark" fetchpriority="high" />
+      </div>
+    </div>
+  </section>
+
+  <section class="pw-section" data-pw-reveal>
+    <div class="pw-container pw-three-col">
+      <div>
+        <h2>Clear org boundaries</h2>
+        <p>
+          Work maps to <strong>Organization &rarr; Teams &rarr; Projects &rarr; Boards &rarr; Tickets</strong>.
+          Team leads and members see only the projects they belong to, enforced on every API route.
+        </p>
+      </div>
+      <div>
+        <h2>Workflows per team</h2>
+        <p>
+          Each team defines its own Kanban columns, WIP capacity gauges, and optional developer/tester
+          transition rules without forcing one board layout on the whole company.
+        </p>
+      </div>
+      <div>
+        <h2>Zero container tax</h2>
+        <p>
+          Runs natively on Windows 10/11 and Linux with Node.js, PostgreSQL, and the official MinIO
+          binary. No Docker daemon or container registry required.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pw-section pw-section-alt" data-pw-reveal>
+    <div class="pw-container">
+      <div class="pw-section-head">
+        <h2>Inside the workspace</h2>
+        <a href={href("/features/")}>See all verified features &rarr;</a>
+      </div>
+
+      <div class="pw-tour-list">
+        <article class="pw-tour-item">
+          <div class="pw-tour-copy">
+            <h3>Kanban boards with live updates</h3>
+            <p>
+              Drag tickets across custom columns, switch to Calendar view for due dates, and watch
+              board edits arrive live over PostgreSQL <code>LISTEN/NOTIFY</code> and Server-Sent Events.
+            </p>
+          </div>
+          <div class="pw-frame">
+            <Image src={boardLight} alt="Patchwork Kanban board view (light)" class="pw-img-light" loading="lazy" />
+            <Image src={boardDark} alt="Patchwork Kanban board view (dark)" class="pw-img-dark" loading="lazy" />
+          </div>
+        </article>
+
+        <article class="pw-tour-item pw-tour-reverse">
+          <div class="pw-tour-copy">
+            <h3>Tickets, attachments, and forge links</h3>
+            <p>
+              Write markdown descriptions and comments, inspect full activity history, attach files directly
+              to MinIO via presigned URLs, and link GitHub or GitLab PRs and commits.
+            </p>
+          </div>
+          <div class="pw-frame">
+            <Image src={ticketLight} alt="Patchwork ticket detail side panel (light)" class="pw-img-light" loading="lazy" />
+            <Image src={ticketDark} alt="Patchwork ticket detail side panel (dark)" class="pw-img-dark" loading="lazy" />
+          </div>
+        </article>
+
+        <article class="pw-tour-item">
+          <div class="pw-tour-copy">
+            <h3>Spotlight command bar and scoped search</h3>
+            <p>
+              Press <code>Ctrl+K</code> (<code>Cmd+K</code> on macOS) to search across tickets, comments,
+              and extracted attachment text, or run slash commands like <code>/new</code>, <code>/move</code>, and <code>/assign</code> with inline ghost hints.
+            </p>
+          </div>
+          <div class="pw-frame">
+            <Image src={cmdLight} alt="Patchwork Spotlight command bar with slash commands (light)" class="pw-img-light" loading="lazy" />
+            <Image src={cmdDark} alt="Patchwork Spotlight command bar with slash commands (dark)" class="pw-img-dark" loading="lazy" />
+          </div>
+        </article>
+
+        <article class="pw-tour-item pw-tour-reverse">
+          <div class="pw-tour-copy">
+            <h3>Admin control in System Configuration</h3>
+            <p>
+              Manage users, CSV imports, RBAC roles, password and session policies, MinIO storage limits,
+              search index rebuilds, and health diagnostics from one 12-section dashboard.
+            </p>
+          </div>
+          <div class="pw-frame">
+            <Image src={sysLight} alt="Patchwork System Configuration dashboard (light)" class="pw-img-light" loading="lazy" />
+            <Image src={sysDark} alt="Patchwork System Configuration dashboard (dark)" class="pw-img-dark" loading="lazy" />
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="pw-section" data-pw-reveal>
+    <div class="pw-container">
+      <div class="pw-section-head">
+        <h2>Try the board and command bar</h2>
+        <span>Drag cards or press <code>Ctrl+K</code></span>
+      </div>
+      <InteractivePreview />
+    </div>
+  </section>
+
+  <section class="pw-section pw-section-alt" data-pw-reveal>
+    <div class="pw-container pw-split">
+      <div>
+        <h2>Self-hosted in minutes</h2>
+        <p>
+          <code>npm run setup</code> checks prerequisites, downloads and SHA-256 verifies MinIO, initializes
+          PostgreSQL 18 in <code>./data/postgres</code>, runs migrations, and issues an encrypted one-time
+          Admin Setup Token for the browser Setup Wizard.
+        </p>
+        <p>
+          <strong>Easy vs. Advanced mode:</strong> Easy mode needs only Node.js and git. Use
+          <code>npm run setup -- --advanced</code> if your team already runs PostgreSQL 16+ and MinIO.
+        </p>
+        <a href={href("/get-started/")}>Read the install guide &rarr;</a>
+      </div>
+
+      <div>
+        <h2>Built for admins</h2>
+        <ul class="pw-plain-list">
+          <li><strong>No public signup:</strong> Accounts are created via the Setup Wizard or by an Admin.</li>
+          <li><strong>Server-enforced RBAC:</strong> Admin, Team Lead, Member (developer/tester), and Viewer.</li>
+          <li><strong>Encrypted setup token:</strong> Single-use <code>AES-256-GCM</code> token protects initial setup.</li>
+          <li><strong>Cross-platform operations:</strong> <code>npm run start</code>, <code>stop</code>, <code>status</code>, and <code>repair</code> on Windows and Linux.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="pw-section" data-pw-reveal>
+    <div class="pw-container">
+      <h2>Under the hood</h2>
+      <p class="pw-measure">
+        Next.js App Router, Drizzle ORM, PostgreSQL (<code>LISTEN/NOTIFY</code> for live updates and
+        <code>tsvector</code> + GIN full-text search), and MinIO S3-compatible attachment storage.
+      </p>
+      <div class="pw-arch-box">
+        <svg viewBox="0 0 820 190" width="820" height="190" role="img" aria-label="Patchwork native architecture diagram: Browser connects to Next.js App Router, which connects to PostgreSQL and MinIO">
+          <rect x="16" y="45" width="175" height="90" rx="6" class="arch-node" />
+          <text x="103" y="84" text-anchor="middle" class="arch-title">Browser</text>
+          <text x="103" y="106" text-anchor="middle" class="arch-sub">Kanban + SSE + Ctrl+K</text>
+
+          <rect x="295" y="45" width="210" height="90" rx="6" class="arch-node arch-node-accent" />
+          <text x="400" y="84" text-anchor="middle" class="arch-title">Next.js App Router</text>
+          <text x="400" y="106" text-anchor="middle" class="arch-sub">API + RBAC + Drizzle ORM</text>
+
+          <rect x="605" y="14" width="200" height="70" rx="6" class="arch-node" />
+          <text x="705" y="45" text-anchor="middle" class="arch-title">PostgreSQL 16+</text>
+          <text x="705" y="65" text-anchor="middle" class="arch-sub">LISTEN/NOTIFY + FTS</text>
+
+          <rect x="605" y="106" width="200" height="70" rx="6" class="arch-node" />
+          <text x="705" y="137" text-anchor="middle" class="arch-title">MinIO Storage</text>
+          <text x="705" y="157" text-anchor="middle" class="arch-sub">Presigned Uploads</text>
+
+          <line x1="191" y1="90" x2="295" y2="90" class="arch-line" />
+          <line x1="505" y1="75" x2="605" y2="49" class="arch-line" />
+          <line x1="505" y1="105" x2="605" y2="141" class="arch-line" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP_TEASER_START -->
+  <section class="pw-section pw-section-alt" data-pw-reveal>
+    <div class="pw-container">
+      <h2>Planned for v1.0.0</h2>
+      <p class="pw-measure">
+        This roadmap describes planned work. Scope and timing may change. Planned areas include:
+        <strong>{roadmapCategories.join(" · ")}</strong>.
+      </p>
+      <a href={href("/documentation/project/roadmap/")}>View the full v1.0.0 Roadmap &rarr;</a>
+    </div>
+  </section>
+  <!-- ROADMAP_TEASER_END -->
+
+  <section class="pw-section" data-pw-reveal>
+    <div class="pw-container pw-split">
+      <div>
+        <h2>Open source under AGPL-3.0</h2>
+        <p>
+          Patchwork is licensed under AGPL-3.0: if you run a modified version as a hosted network
+          service, you must make the modified source available under AGPL-3.0.
+        </p>
+        <div class="pw-inline-links">
+          <a href={repoUrl}>GitHub</a>
+          <a href={href("/license/")}>License</a>
+          <a href={href("/security/")}>Security</a>
+        </div>
+      </div>
+
+      <div>
+        <h2>Frequently asked questions</h2>
+        <div class="pw-faq">
+          <details>
+            <summary>Does Patchwork need Docker?</summary>
+            <p>No. Everything runs natively on Windows 10/11 and Linux using Node.js, PostgreSQL, and the official MinIO binary.</p>
+          </details>
+          <details>
+            <summary>Is it ready for production ({appMeta.displayVersion})?</summary>
+            <p>Patchwork is currently pre-1.0 beta software. Features and data schemas may evolve before v1.0.0; back up PostgreSQL, <code>.env</code>, and MinIO data before upgrading.</p>
+          </details>
+          <details>
+            <summary>Which operating systems are supported?</summary>
+            <p>Windows 10/11 (x64) and Linux (Ubuntu 22.04/24.04, Debian 12 on x64 and arm64).</p>
+          </details>
+          <details>
+            <summary>What does AGPL-3.0 mean for my company?</summary>
+            <p>Internal use is unrestricted. If you modify Patchwork and offer it to external users over a network, you must share the modified source under AGPL-3.0.</p>
+          </details>
+          <details>
+            <summary>Where is my data stored?</summary>
+            <p>All structured data lives in PostgreSQL and all file attachments live in MinIO under your own directories.</p>
+          </details>
+          <details>
+            <summary>How do I upgrade?</summary>
+            <p>Back up your database, <code>.env</code>, and MinIO directory, pull the release, run <code>npm ci</code>, run <code>npm run db:migrate</code>, rebuild, and restart.</p>
+          </details>
+          <details>
+            <summary>Is there a hosted SaaS version?</summary>
+            <p>No. Patchwork is self-hosted software only.</p>
+          </details>
+          <details>
+            <summary>How do I report a bug or vulnerability?</summary>
+            <p>Open a bug report on GitHub, or follow <a href={href("/security/")}>Security</a> for private vulnerability disclosure.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pw-section pw-closing">
+    <div class="pw-container">
+      <h2>Ready to run it locally?</h2>
+      <p>Clone the repository and run <code>npm run setup</code>.</p>
+      <div class="pw-cta-row">
+        <a class="pw-btn pw-btn-primary" href={href("/documentation/getting-started/quick-start/")}>Quick start guide</a>
+        <a class="pw-btn pw-btn-secondary" href={href("/documentation/")}>Browse documentation</a>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .pw-patch-bg {
+    background-image:
+      linear-gradient(to right, var(--pw-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--pw-border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: top center;
+  }
+  .pw-hero {
+    padding: 3.5rem 0 2.5rem;
+    border-bottom: 1px solid var(--pw-border);
+  }
+  .pw-hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  .pw-hero-grid > * {
+    min-width: 0;
+  }
+  @media (max-width: 960px) {
+    .pw-hero-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pw-beta-pill {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--pw-radius-sm);
+    background: var(--pw-surface);
+    border: 1px solid var(--pw-border);
+    margin-bottom: 1rem;
+  }
+  h1 {
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    margin: 0 0 1rem;
+  }
+  .pw-lead {
+    font-size: 1.125rem;
+    color: var(--pw-ink-secondary);
+    max-width: 54ch;
+    margin: 0 0 1.5rem;
+  }
+  .pw-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .pw-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--pw-radius-sm);
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .pw-btn-primary {
+    background: var(--pw-accent);
+    color: #ffffff;
+  }
+  :root[data-theme="dark"] .pw-btn-primary {
+    color: #0d1014;
+  }
+  .pw-btn-secondary {
+    background: var(--pw-surface);
+    color: var(--pw-ink);
+    border-color: var(--pw-border);
+  }
+  .pw-btn-ghost {
+    color: var(--pw-ink);
+  }
+  .pw-terminal {
+    background: var(--pw-rail-bg);
+    color: var(--pw-rail-ink);
+    border-radius: var(--pw-radius-md);
+    border: 1px solid #28313e;
+    padding: 1rem;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .pw-terminal-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: #9aa6b5;
+    margin-bottom: 0.75rem;
+  }
+  .pw-os-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .pw-os-grid > * {
+    min-width: 0;
+  }
+  .pw-os-label {
+    font-size: 0.75rem;
+    color: #9aa6b5;
+    margin-bottom: 0.25rem;
+  }
+  .pw-terminal pre {
+    margin: 0;
+    padding: 0.65rem;
+    background: #090c10;
+    border-radius: var(--pw-radius-sm);
+    font-size: 0.8rem;
+    overflow-x: auto;
+  }
+  .pw-hero-shot {
+    margin-top: 2.5rem;
+  }
+  .pw-frame {
+    border: 1px solid var(--pw-border);
+    border-radius: var(--pw-radius-md);
+    overflow: hidden;
+    background: var(--pw-surface);
+  }
+  .pw-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  :root[data-theme="light"] .pw-img-dark,
+  :root[data-theme="dark"] .pw-img-light {
+    display: none;
+  }
+  .pw-section {
+    padding: 3.5rem 0;
+  }
+  .pw-section-alt {
+    background: var(--pw-surface);
+    border-top: 1px solid var(--pw-border);
+    border-bottom: 1px solid var(--pw-border);
+  }
+  .pw-three-col {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+  @media (max-width: 820px) {
+    .pw-three-col {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pw-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .pw-tour-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .pw-tour-item {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 2rem;
+    align-items: center;
+  }
+  .pw-tour-reverse {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+  .pw-tour-reverse .pw-tour-copy {
+    order: 2;
+  }
+  @media (max-width: 860px) {
+    .pw-tour-item,
+    .pw-tour-reverse {
+      grid-template-columns: 1fr;
+    }
+    .pw-tour-reverse .pw-tour-copy {
+      order: 0;
+    }
+  }
+  .pw-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  @media (max-width: 820px) {
+    .pw-split {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pw-plain-list {
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .pw-measure {
+    max-width: var(--pw-measure);
+  }
+  .pw-arch-box {
+    margin-top: 1.5rem;
+    border: 1px solid var(--pw-border);
+    border-radius: var(--pw-radius-md);
+    background: var(--pw-surface);
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  .pw-arch-box svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .arch-node {
+    fill: var(--pw-bg);
+    stroke: var(--pw-border);
+    stroke-width: 1.5;
+  }
+  .arch-node-accent {
+    stroke: var(--pw-accent);
+  }
+  .arch-title {
+    fill: var(--pw-ink);
+    font-family: var(--pw-font-display);
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .arch-sub {
+    fill: var(--pw-ink-secondary);
+    font-family: var(--pw-font-mono);
+    font-size: 12px;
+  }
+  .arch-line {
+    stroke: var(--pw-ink-secondary);
+    stroke-width: 1.75;
+  }
+  .pw-inline-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .pw-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .pw-faq details {
+    border: 1px solid var(--pw-border);
+    border-radius: var(--pw-radius-sm);
+    background: var(--pw-surface);
+    padding: 0.65rem 0.9rem;
+  }
+  .pw-faq summary {
+    cursor: pointer;
+    font-weight: 600;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+  }
+  .pw-faq p {
+    margin: 0.5rem 0 0;
+    color: var(--pw-ink-secondary);
+  }
+  .pw-closing {
+    border-top: 1px solid var(--pw-border);
+  }
+</style>

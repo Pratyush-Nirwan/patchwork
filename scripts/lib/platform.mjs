@@ -73,13 +73,23 @@ export function createPlatformHelper({
   }
 
   function getMinioDownloadInfo() {
+    const releaseTag = "RELEASE.2025-09-07T16-13-09Z";
     let osSlug = "linux";
     if (isWindows) osSlug = "windows";
     else if (isMac) osSlug = "darwin";
 
     const archSlug = normalizedArch === "arm64" ? "arm64" : "amd64";
-    const file = isWindows ? "minio.exe" : "minio";
-    const downloadUrl = `https://dl.min.io/server/minio/release/${osSlug}-${archSlug}/${file}`;
+    const ext = isWindows ? ".exe" : "";
+    const assetName = `minio.${osSlug}-${archSlug}.${releaseTag}${ext}`;
+    const baseUrl = `https://github.com/minio/minio/releases/download/${releaseTag}`;
+    const downloadUrl = `${baseUrl}/${assetName}`;
+    const checksumUrl = `${downloadUrl}.sha256sum`;
+    const sizeMap = {
+      "windows-amd64": 113115136,
+      "linux-amd64": 110989496,
+      "linux-arm64": 105251000,
+    };
+    const expectedBytes = sizeMap[`${osSlug}-${archSlug}`] || null;
     const installCommand = isWindows
       ? `New-Item -ItemType Directory -Force -Path .\\bin; Invoke-WebRequest -Uri "${downloadUrl}" -OutFile .\\bin\\minio.exe`
       : `mkdir -p ./bin && curl -fsSL "${downloadUrl}" -o ./bin/minio && chmod +x ./bin/minio`;
@@ -87,7 +97,77 @@ export function createPlatformHelper({
       ? installCommand
       : `mkdir -p ./bin && wget -q "${downloadUrl}" -O ./bin/minio && chmod +x ./bin/minio`;
 
-    return { downloadUrl, installCommand, altInstallCommand };
+    return {
+      releaseTag,
+      assetName,
+      downloadUrl,
+      checksumUrl,
+      expectedBytes,
+      installCommand,
+      altInstallCommand,
+    };
+  }
+
+  function makeExecutable(filePath) {
+    if (!isWindows && fs.existsSync(filePath)) {
+      fs.chmodSync(filePath, 0o755);
+    }
+  }
+
+  function getEmbeddedPgPackageName() {
+    const osSlug = isWindows ? "windows" : isMac ? "darwin" : "linux";
+    return `@embedded-postgres/${osSlug}-${normalizedArch}`;
+  }
+
+  function getEmbeddedPgToolPath(toolName, { projectDir = process.cwd() } = {}) {
+    const file = isWindows ? `${toolName}.exe` : toolName;
+    const pkgName = getEmbeddedPgPackageName();
+    const candidate = path.join(projectDir, "node_modules", pkgName, "native", "bin", file);
+    if (fs.existsSync(candidate)) return candidate;
+    return null;
+  }
+
+  function getFreeDiskBytes(targetPath = process.cwd()) {
+    try {
+      let checkPath = path.resolve(targetPath);
+      while (!fs.existsSync(checkPath)) {
+        const parent = path.dirname(checkPath);
+        if (parent === checkPath) break;
+        checkPath = parent;
+      }
+      if (typeof fs.statfsSync === "function") {
+        const stats = fs.statfsSync(checkPath);
+        return Number(stats.bavail) * Number(stats.bsize);
+      }
+    } catch {
+      // Fallback below
+    }
+    return null;
+  }
+
+  function getLanIpAddresses() {
+    const out = [];
+    const ifaces = os.networkInterfaces();
+    for (const entries of Object.values(ifaces)) {
+      if (!entries) continue;
+      for (const entry of entries) {
+        if (entry.family === "IPv4" && !entry.internal) {
+          out.push(entry.address);
+        }
+      }
+    }
+    return [...new Set(out)];
+  }
+
+  function isPidAlive(pid) {
+    const n = Number(pid);
+    if (!Number.isInteger(n) || n <= 0) return false;
+    try {
+      process.kill(n, 0);
+      return true;
+    } catch (err) {
+      return err && err.code === "EPERM";
+    }
   }
 
   function binPath(name, { projectDir = process.cwd() } = {}) {
@@ -373,6 +453,12 @@ export function createPlatformHelper({
     npmBin,
     hasCommand,
     binPath,
+    getMinioDownloadInfo,
+    makeExecutable,
+    getEmbeddedPgToolPath,
+    getFreeDiskBytes,
+    getLanIpAddresses,
+    isPidAlive,
     findPostgresTools,
     setSecureFileMode,
     killProcessTree,
@@ -425,6 +511,12 @@ export const {
   npmBin,
   hasCommand,
   binPath,
+  getMinioDownloadInfo,
+  makeExecutable,
+  getEmbeddedPgToolPath,
+  getFreeDiskBytes,
+  getLanIpAddresses,
+  isPidAlive,
   findPostgresTools,
   setSecureFileMode,
   killProcessTree,

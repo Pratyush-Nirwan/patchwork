@@ -13,7 +13,7 @@ const INVALID_VARIANT_PATTERNS = [
   { name: '"0.7.0beta" (missing hyphen)', regex: /\b0\.7\.0beta\b/i },
 ];
 
-const SCAN_DIRS = ["src", "scripts", "docs-site/src", "tests", "e2e"];
+const SCAN_DIRS = ["src", "scripts", "website/src", "tests", "e2e"];
 const SCAN_EXTS = new Set([".ts", ".tsx", ".js", ".mjs", ".astro", ".md", ".mdx", ".json"]);
 
 function walkFiles(dir, out = []) {
@@ -70,31 +70,43 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     }
   }
 
-  // 2. docs-site/package.json & docs-site/package-lock.json
-  const docsPkgPath = path.join(repoRoot, "docs-site/package.json");
-  if (fs.existsSync(docsPkgPath)) {
+  // 2. website/package.json, website/package-lock.json & website/src/data/generated/app-meta.json
+  const webPkgPath = path.join(repoRoot, "website/package.json");
+  if (fs.existsSync(webPkgPath)) {
     try {
-      const docsPkg = JSON.parse(fs.readFileSync(docsPkgPath, "utf8"));
-      if (docsPkg.version !== version) {
-        errors.push(`docs-site/package.json version "${docsPkg.version}" != "${version}"`);
+      const webPkg = JSON.parse(fs.readFileSync(webPkgPath, "utf8"));
+      if (webPkg.version !== version) {
+        errors.push(`website/package.json version "${webPkg.version}" != "${version}"`);
       }
     } catch {
-      errors.push("docs-site/package.json is not valid JSON.");
+      errors.push("website/package.json is not valid JSON.");
     }
   }
 
-  const docsLockPath = path.join(repoRoot, "docs-site/package-lock.json");
-  if (fs.existsSync(docsLockPath)) {
+  const webLockPath = path.join(repoRoot, "website/package-lock.json");
+  if (fs.existsSync(webLockPath)) {
     try {
-      const docsLock = JSON.parse(fs.readFileSync(docsLockPath, "utf8"));
-      if (docsLock.version !== version) {
-        errors.push(`docs-site/package-lock.json version "${docsLock.version}" != "${version}"`);
+      const webLock = JSON.parse(fs.readFileSync(webLockPath, "utf8"));
+      if (webLock.version !== version) {
+        errors.push(`website/package-lock.json version "${webLock.version}" != "${version}"`);
       }
-      if (docsLock.packages?.[""]?.version && docsLock.packages[""].version !== version) {
-        errors.push(`docs-site/package-lock.json packages[""].version "${docsLock.packages[""].version}" != "${version}"`);
+      if (webLock.packages?.[""]?.version && webLock.packages[""].version !== version) {
+        errors.push(`website/package-lock.json packages[""].version "${webLock.packages[""].version}" != "${version}"`);
       }
     } catch {
-      errors.push("docs-site/package-lock.json is not valid JSON.");
+      errors.push("website/package-lock.json is not valid JSON.");
+    }
+  }
+
+  const appMetaPath = path.join(repoRoot, "website/src/data/generated/app-meta.json");
+  if (fs.existsSync(appMetaPath)) {
+    try {
+      const appMeta = JSON.parse(fs.readFileSync(appMetaPath, "utf8"));
+      if (appMeta.version !== version || appMeta.displayVersion !== displayVersion) {
+        errors.push(`website/src/data/generated/app-meta.json version mismatch.`);
+      }
+    } catch {
+      errors.push("website/src/data/generated/app-meta.json is not valid JSON.");
     }
   }
 
@@ -122,15 +134,15 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     }
   }
 
-  const docsChangelogPath = path.join(
+  const webChangelogCopy = path.join(
     repoRoot,
-    "docs-site/src/content/docs/project/changelog.mdx"
+    "website/src/data/generated/CHANGELOG.md"
   );
-  if (fs.existsSync(docsChangelogPath)) {
-    const docsChangelog = fs.readFileSync(docsChangelogPath, "utf8");
+  if (fs.existsSync(webChangelogCopy)) {
+    const docsChangelog = fs.readFileSync(webChangelogCopy, "utf8");
     if (!docsChangelog.includes(`## [${displayVersion}] - `)) {
       errors.push(
-        `docs-site/src/content/docs/project/changelog.mdx missing section "## [${displayVersion}] - <YYYY-MM-DD>".`
+        `website/src/data/generated/CHANGELOG.md missing section "## [${displayVersion}] - <YYYY-MM-DD>".`
       );
     }
   }
@@ -142,6 +154,15 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     const escapedForBadge = displayVersion.replace(/-/g, "--");
     if (!readme.includes(displayVersion) && !readme.includes(escapedForBadge)) {
       errors.push(`README.md does not reference ${displayVersion}.`);
+    }
+  }
+
+  // 5b. Roadmap page current release check
+  const roadmapMdxPath = path.join(repoRoot, "website/src/content/docs/documentation/project/roadmap.mdx");
+  if (fs.existsSync(roadmapMdxPath)) {
+    const roadmapMdx = fs.readFileSync(roadmapMdxPath, "utf8");
+    if (!roadmapMdx.includes(`Current release: **${displayVersion}**`)) {
+      errors.push(`website/src/content/docs/documentation/project/roadmap.mdx must show Current release: **${displayVersion}**.`);
     }
   }
 

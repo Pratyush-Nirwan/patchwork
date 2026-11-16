@@ -67,7 +67,7 @@ async function frameAndSaveWebp(sharp, pngBuffer, outPath) {
 
 async function main() {
   const repoRoot = findRepoRoot();
-  const require = createRequire(path.join(repoRoot, "docs-site/package.json"));
+  const require = createRequire(path.join(repoRoot, "website/package.json"));
   const sharp = require("sharp");
 
   const outDir = path.join(repoRoot, "docs/assets/readme");

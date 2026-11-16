@@ -1444,7 +1444,7 @@ startxref
       const installOutStream = new PassThrough();
       installOutStream.on("data", (c) => installChunks.push(c.toString("utf8")));
 
-      const installRes = await runCliSetup(["--non-interactive", "--no-start"], {
+      const installRes = await runCliSetup(["--advanced", "--non-interactive", "--no-start"], {
         outputStream: installOutStream,
       });
       expect(installRes.mode).toBe("fresh-install");
@@ -1876,7 +1876,7 @@ startxref
 
       const devInstallOut = new PassThrough();
       const devInstallRes = await runCliSetup(
-        ["--non-interactive", "--dev", "--no-start"],
+        ["--advanced", "--non-interactive", "--dev", "--no-start"],
         { outputStream: devInstallOut }
       );
       expect(devInstallRes.testDbCreated).toBe(true);
@@ -1914,7 +1914,7 @@ startxref
         startOut.on("data", (c) => startChunks.push(c.toString("utf8")));
 
         const autoStartRes = await runCliSetup(
-          ["--non-interactive", "--no-open"],
+          ["--advanced", "--non-interactive", "--no-open"],
           { outputStream: startOut }
         );
         expect(autoStartRes.server?.started).toBe(true);
@@ -2015,7 +2015,7 @@ startxref
       // 6. Type 'saved' to confirm Admin Setup Token -> "saved\r"
       simTtyIn.end("\r\r\r\r\x1b[B\x1b[B\x1b[A\x1b[B\rsaved\r");
 
-      const simTtyRes = await runCliSetup(["--no-start"], {
+      const simTtyRes = await runCliSetup(["--advanced", "--no-start"], {
         inputStream: simTtyIn,
         outputStream: simTtyOut,
         isTTY: true,

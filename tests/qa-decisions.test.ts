@@ -318,10 +318,11 @@ describe("QA Open Decisions (QA-10 & QA-11)", () => {
       const domainDoc = fs.readFileSync(
         path.join(
           process.cwd(),
-          "docs-site",
+          "website",
           "src",
           "content",
           "docs",
+          "documentation",
           "getting-started",
           "domain-and-https.mdx"
         ),

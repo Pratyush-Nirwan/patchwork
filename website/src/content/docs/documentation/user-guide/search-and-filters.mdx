@@ -1,0 +1,53 @@
+---
+title: "Search & Filters"
+description: "Full-text search across tickets, comments, and attachment text using PostgreSQL tsvector and structured filter tokens."
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+This guide is for all signed-in workspace users (`admin`, `lead`, `member`, `viewer`).
+
+{/* ROADMAP_ADMONITION_START:saved-views-filters,my-work */}
+<Aside type="note" title="Planned for v1.0.0">
+Not available in v0.7.1-beta: [Saved views and custom filters](/documentation/project/roadmap/#saved-views-filters), [My Work](/documentation/project/roadmap/#my-work). See the [v1.0.0 Roadmap](/documentation/project/roadmap/).
+</Aside>
+{/* ROADMAP_ADMONITION_END */}
+
+<Aside type="note">
+**Role note**: Search results are strictly scoped server-side to teams and projects you have permission to view.
+</Aside>
+
+## Opening Search
+
+Press `Ctrl+K` (Windows/Linux) or `Cmd+K` (macOS), or click the search bar in the top header.
+
+## What Search Indexes
+
+Patchwork searches across:
+
+- Ticket keys (`TELE-1`), titles, and descriptions
+- Ticket comments
+- Extracted text inside `.pdf`, `.txt`, `.md`, `.csv`, and `.json` attachments
+
+Results return ranked matches with highlighted snippets.
+
+## Structured Filter Tokens
+
+Combine free-text queries with filter tokens in Search mode:
+
+- `in:<PROJECT_KEY>` — Scope to a project (e.g., `in:TELE`)
+- `status:"In Progress"` — Match column name
+- `priority:urgent` — Filter by priority (`urgent`, `high`, `medium`, `low`, `none`)
+- `assignee:me` or `assignee:@name` — Filter by assignee
+- `label:bug` — Filter by label
+- `due:overdue` — Tickets past their due date
+- `has:attachments` — Tickets with uploaded files
+
+## Expected Result
+
+Typing any query or filter token immediately returns matching tickets, boards, projects, teams, people, and labels.
+
+## Related Pages
+
+- [Command Palette & Slash Commands](/documentation/user-guide/command-palette/)
+- [System Configuration](/documentation/admin-guide/system-configuration/)

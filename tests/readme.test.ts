@@ -10,7 +10,7 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 function createTempRepoFixture() {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-readme-test-"));
   fs.mkdirSync(path.join(tmpRoot, "docs", "assets", "readme"), { recursive: true });
-  fs.mkdirSync(path.join(tmpRoot, "docs-site", "src", "content", "docs", "reference"), {
+  fs.mkdirSync(path.join(tmpRoot, "website", "src", "content", "docs", "documentation", "reference"), {
     recursive: true,
   });
 
@@ -23,7 +23,7 @@ function createTempRepoFixture() {
     "AGENTS.md",
     "LICENSE",
     "docs/README.template.md",
-    "docs-site/src/content/docs/project/roadmap.mdx",
+    "website/src/content/docs/documentation/project/roadmap.mdx",
   ]) {
     const src = path.join(REPO_ROOT, rel);
     if (fs.existsSync(src)) {
@@ -49,19 +49,21 @@ function createTempRepoFixture() {
     fs.mkdirSync(path.join(tmpRoot, dir), { recursive: true });
   }
 
-  // Copy docs-site pages referenced in README.md
+  // Copy roadmap.yaml single source of truth
+  const roadmapYamlDst = path.join(tmpRoot, "website", "src", "data", "roadmap.yaml");
+  fs.mkdirSync(path.dirname(roadmapYamlDst), { recursive: true });
+  fs.copyFileSync(
+    path.join(REPO_ROOT, "website", "src", "data", "roadmap.yaml"),
+    roadmapYamlDst
+  );
+
+  // Copy website docs pages referenced in README.md
   for (const rel of [
-    "docs-site/src/content/docs/getting-started/installation.mdx",
-    "docs-site/src/content/docs/getting-started/configuration.mdx",
-    "docs-site/src/content/docs/getting-started/first-run.mdx",
-    "docs-site/src/content/docs/admin-guide/system-configuration.mdx",
-    "docs-site/src/content/docs/reference/command-palette.mdx",
-    "docs-site/src/content/docs/operations/troubleshooting.mdx",
-    "docs-site/src/content/docs/operations/upgrade.mdx",
-    "docs-site/src/content/docs/operations/backup-restore.mdx",
-    "docs-site/src/content/docs/development/contributing-and-extending.mdx",
-    "docs-site/src/content/docs/reference/architecture.mdx",
-    "docs-site/src/content/docs/reference/known-limitations.mdx",
+    "website/src/content/docs/documentation/getting-started/installation.mdx",
+    "website/src/content/docs/documentation/admin-guide/system-configuration.mdx",
+    "website/src/content/docs/documentation/reference/command-palette.mdx",
+    "website/src/content/docs/documentation/operations/troubleshooting.mdx",
+    "website/src/content/docs/documentation/development/contributing-and-extending.mdx",
   ]) {
     const dst = path.join(tmpRoot, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });

@@ -1,0 +1,106 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+import appMeta from "../data/generated/app-meta.json";
+
+const raw = fs.readFileSync(path.resolve("src/data/features.yaml"), "utf8");
+// Lightweight parser for features.yaml areas & items
+const areas: Array<{ id: string; title: string; description: string; items: Array<{ id: string; title: string; summary: string }> }> = [];
+let curArea: any = null;
+let curItem: any = null;
+for (const line of raw.split(/\r?\n/)) {
+  const mAreaId = line.match(/^\s{2}-\s*id:\s*"([^"]+)"/);
+  if (mAreaId) {
+    curArea = { id: mAreaId[1], title: "", description: "", items: [] };
+    areas.push(curArea);
+    curItem = null;
+    continue;
+  }
+  const mItemId = line.match(/^\s{6}-\s*id:\s*"([^"]+)"/);
+  if (mItemId && curArea) {
+    curItem = { id: mItemId[1], title: "", summary: "" };
+    curArea.items.push(curItem);
+    continue;
+  }
+  const kv = line.match(/^\s+(title|description|summary):\s*"([^"]+)"/);
+  if (kv) {
+    if (curItem && (kv[1] === "title" || kv[1] === "summary")) curItem[kv[1]] = kv[2];
+    else if (curArea) curArea[kv[1]] = kv[2];
+  }
+}
+
+const rawBase = process.env.SITE_BASE || "/";
+const basePrefix = rawBase === "/" ? "" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
+const href = (p: string) => `${basePrefix}${p}`;
+---
+
+<MarketingLayout
+  title={`Features — Patchwork ${appMeta.displayVersion}`}
+  description="Verified capabilities available today in Patchwork: Kanban boards, tickets, scoped search, command bar, RBAC, and native install."
+  canonicalPath="/features/"
+>
+  <div class="pw-container pw-page-body">
+    <h1>Features in {appMeta.displayVersion}</h1>
+    <p class="pw-measure">
+      Every capability below is verified against the codebase. For upcoming v1.0.0 work, see the
+      <a href={href("/documentation/project/roadmap/")}>Roadmap</a>.
+    </p>
+
+    {
+      areas.map((area) => (
+        <section class="pw-feature-area" id={area.id}>
+          <h2>{area.title}</h2>
+          <p class="pw-area-desc">{area.description}</p>
+          <div class="pw-feature-grid">
+            {area.items.map((item) => (
+              <article class="pw-feature-card">
+                <h3>{item.title}</h3>
+                <p>{item.summary}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</MarketingLayout>
+
+<style>
+  .pw-page-body {
+    padding: 3rem 1.25rem;
+  }
+  .pw-measure {
+    max-width: var(--pw-measure);
+    color: var(--pw-ink-secondary);
+  }
+  .pw-feature-area {
+    margin-top: 2.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--pw-border);
+  }
+  .pw-area-desc {
+    color: var(--pw-ink-secondary);
+  }
+  .pw-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .pw-feature-card {
+    background: var(--pw-surface);
+    border: 1px solid var(--pw-border);
+    border-radius: var(--pw-radius-md);
+    padding: 1rem 1.15rem;
+  }
+  .pw-feature-card h3 {
+    margin: 0 0 0.45rem;
+    font-size: 1.05rem;
+  }
+  .pw-feature-card p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--pw-ink-secondary);
+  }
+</style>

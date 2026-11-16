@@ -96,7 +96,7 @@ export function syncPackageVersions(
     throw new Error(`Invalid SemVer version: "${targetVersion}"`);
   }
 
-  for (const rel of ["package.json", "docs-site/package.json"]) {
+  for (const rel of ["package.json", "website/package.json"]) {
     const filePath = path.join(repoRoot, rel);
     if (!fs.existsSync(filePath)) continue;
     const pkg = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -112,7 +112,7 @@ export function syncPackageVersions(
       stdio: "inherit",
       shell: useShell,
     });
-    const docsDir = path.join(repoRoot, "docs-site");
+    const docsDir = path.join(repoRoot, "website");
     if (fs.existsSync(path.join(docsDir, "package.json"))) {
       execFileSync(npm, ["install", "--package-lock-only", "--ignore-scripts"], {
         cwd: docsDir,

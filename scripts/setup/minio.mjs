@@ -12,6 +12,7 @@ import {
   ListObjectsV2Command,
   DeleteBucketCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { checkMinioBinary } from "./preflight.mjs";
 
 export async function isMinioHealthy(endpoint = "http://127.0.0.1:9000") {
@@ -85,7 +86,7 @@ export async function ensureMinioServerRunning({
 
   const parsedUrl = new URL(endpoint);
   const apiHostPort = `${parsedUrl.hostname}:${parsedUrl.port || 9000}`;
-  const consoleHostPort = `${parsedUrl.hostname}:${consolePort}`;
+  const consoleHostPort = `127.0.0.1:${consolePort}`;
 
   const child = spawn(
     binCheck.binaryPath,
@@ -181,25 +182,78 @@ export async function setupMinioBucketAndVerify({
     );
   }
 
-  const sys = getSystemInfo();
-  const systemdStatus = sys.isLinux
-    ? {
-        supported: true,
-        message:
-          "Linux detected: systemd unit available at deploy/minio.service",
-      }
-    : {
-        supported: false,
-        message: `Skipped systemd minio.service installation (detected ${sys.platform}, Linux-only step).`,
-      };
-
   return {
     endpoint,
     bucket,
     dataDir: dataDir || path.join(projectDir, ".minio-data"),
     verifiedReadWrite: true,
-    systemdStatus,
+    systemdStatus: (() => {
+      const sys = getSystemInfo();
+      return sys.isLinux
+        ? {
+            supported: true,
+            message:
+              "Linux detected: systemd unit available at deploy/minio.service",
+          }
+        : {
+            supported: false,
+            message: `Skipped systemd minio.service installation (detected ${sys.platform}, Linux-only step).`,
+          };
+    })(),
   };
+}
+
+export async function verifyPresignedUrlsWork({
+  publicUrl,
+  region = "us-east-1",
+  accessKeyId,
+  secretAccessKey,
+  bucket = "patchwork",
+}) {
+  const publicClient = createS3Client({
+    endpoint: publicUrl,
+    region,
+    accessKeyId,
+    secretAccessKey,
+  });
+  const key = `.patchwork-presign-probe-${Date.now()}.txt`;
+  const payload = `presign-${Date.now()}`;
+
+  const putUrl = await getSignedUrl(
+    publicClient,
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: "text/plain",
+    }),
+    { expiresIn: 120 }
+  );
+  const getUrl = await getSignedUrl(
+    publicClient,
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+    { expiresIn: 120 }
+  );
+
+  // If publicUrl is locally reachable (localhost/127.0.0.1/LAN IP), execute live PUT + GET
+  const parsed = new URL(publicUrl);
+  if (parsed.protocol === "http:") {
+    const putRes = await fetch(putUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: payload,
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!putRes.ok) {
+      throw new Error(`Presigned PUT failed (${putRes.status}) against ${publicUrl}`);
+    }
+    const getRes = await fetch(getUrl, { signal: AbortSignal.timeout(5000) });
+    if (!getRes.ok || (await getRes.text()) !== payload) {
+      throw new Error(`Presigned GET failed against ${publicUrl}`);
+    }
+    await publicClient.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+  }
+
+  return { putUrl, getUrl, publicUrl };
 }
 
 export async function emptyAndRemoveMinioBucket({

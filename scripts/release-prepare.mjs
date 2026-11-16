@@ -10,8 +10,11 @@ import {
 } from "./lib/version.mjs";
 import { checkVersionConsistency } from "./check-version.mjs";
 import { renderReadme } from "./docs/readme.mjs";
+import { exportWebsiteData } from "./docs/export-data.mjs";
+import { generateChangelogDocs } from "../website/scripts/changelog.mjs";
+import { generateRoadmapDocs } from "../website/scripts/roadmap.mjs";
 
-const REPO_URL = "https://github.com/owner/patchwork";
+const REPO_URL = "https://github.com/Pratyush-Nirwan/patchwork";
 
 function updateReadmeBadge(repoRoot, displayVersion) {
   const templatePath = path.join(repoRoot, "docs", "README.template.md");
@@ -62,7 +65,7 @@ function rollChangelog(repoRoot, displayVersion, today) {
   const releaseHeading = `## [${displayVersion}] - ${today}`;
   const releaseBlock = unreleasedBody
     ? `${unreleasedHeader}\n\n${releaseHeading}\n\n${unreleasedBody}`
-    : `${unreleasedHeader}\n\n${releaseHeading}\n\n### Changed\n- Version bump to ${displayVersion}.`;
+    : `${unreleasedHeader}\n\n${releaseHeading}\n\n### Changed\n- **System Configuration:** Version bump to ${displayVersion}.`;
 
   let updated = `${content.slice(0, idx)}${releaseBlock}${rest.startsWith("\n") ? rest : `\n${rest}`}`;
 
@@ -82,20 +85,41 @@ function rollChangelog(repoRoot, displayVersion, today) {
 
   fs.writeFileSync(changelogPath, updated, "utf8");
 
-  const docsChangelogPath = path.join(
-    repoRoot,
-    "docs-site/src/content/docs/project/changelog.mdx"
-  );
-  if (fs.existsSync(docsChangelogPath)) {
-    const fm = [
-      "---",
-      'title: "Changelog"',
-      'description: "Notable changes to Patchwork following Keep a Changelog."',
-      "---",
-      "",
-    ].join("\n");
-    const stripped = updated.replace(/^#\s+Changelog\s*\n+/i, "");
-    fs.writeFileSync(docsChangelogPath, `${fm}${stripped}`, "utf8");
+  const websiteRoot = path.join(repoRoot, "website");
+  const hasFullRepo = fs.existsSync(path.join(repoRoot, "src/lib/commands/registry.ts"));
+  if (hasFullRepo && fs.existsSync(path.join(websiteRoot, "src/data/changelog-scopes.yaml"))) {
+    const roadmapYamlPath = path.join(websiteRoot, "src/data/roadmap.yaml");
+    if (fs.existsSync(roadmapYamlPath)) {
+      const rawRm = fs.readFileSync(roadmapYamlPath, "utf8");
+      const updatedRm = rawRm.replace(/^currentVersion:\s*"[^"]*"/m, `currentVersion: "${displayVersion}"`);
+      fs.writeFileSync(roadmapYamlPath, updatedRm, "utf8");
+    }
+    exportWebsiteData(repoRoot);
+    generateChangelogDocs(websiteRoot);
+    if (fs.existsSync(roadmapYamlPath)) {
+      generateRoadmapDocs(websiteRoot);
+    }
+  } else {
+    const appMetaPath = path.join(websiteRoot, "src/data/generated/app-meta.json");
+    if (fs.existsSync(appMetaPath)) {
+      const meta = JSON.parse(fs.readFileSync(appMetaPath, "utf8"));
+      meta.version = displayVersion.replace(/^v/, "");
+      meta.displayVersion = displayVersion;
+      fs.writeFileSync(appMetaPath, `${JSON.stringify(meta, null, 2)}\n`, "utf8");
+    }
+    const genClPath = path.join(websiteRoot, "src/data/generated/CHANGELOG.md");
+    if (fs.existsSync(genClPath)) {
+      fs.writeFileSync(genClPath, updated, "utf8");
+    }
+    const roadmapMdxPath = path.join(websiteRoot, "src/content/docs/documentation/project/roadmap.mdx");
+    if (fs.existsSync(roadmapMdxPath)) {
+      const rawMdx = fs.readFileSync(roadmapMdxPath, "utf8");
+      const updatedMdx = rawMdx.replace(
+        /Current release:\s*\*\*[^*]+\*\*/,
+        `Current release: **${displayVersion}**`
+      );
+      fs.writeFileSync(roadmapMdxPath, updatedMdx, "utf8");
+    }
   }
 }
 
@@ -120,7 +144,7 @@ export function prepareRelease({
   if (runChecks) {
     const npm = npmBin("npm");
     const useShell = npm.endsWith(".cmd");
-    for (const script of ["docs:generate", "docs:check", "version:check"]) {
+    for (const script of ["docs:generate", "changelog:check", "docs:check", "version:check"]) {
       execFileSync(npm, ["run", script], {
         cwd: repoRoot,
         stdio: "inherit",

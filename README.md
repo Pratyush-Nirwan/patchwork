@@ -12,7 +12,7 @@
 
 Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boards — no Docker required.
 
-![Version v0.7.0-beta](https://img.shields.io/badge/version-v0.7.0--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square)
+![Version v0.7.1-beta](https://img.shields.io/badge/version-v0.7.1--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square) [![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)
 
 [Documentation](https://pratyush-nirwan.github.io/patchwork/) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](CONTRIBUTING.md)
 
@@ -79,9 +79,8 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 
 ### Prerequisites
 
-- **Node.js** `>=20`
-- **PostgreSQL 16+** running natively (`localhost:5432`)
-- **Official MinIO binary** placed at `./bin/minio.exe` (Windows) or `./bin/minio` (Linux)
+- **Node.js** `>=20` and **git** only for the default **Easy** install (`winget install OpenJS.NodeJS.LTS Git.Git` on Windows, or `sudo apt install nodejs npm git` on Ubuntu/Debian).
+- Use **Advanced** mode (`npm run setup -- --advanced`) if you prefer your own PostgreSQL 16+ and MinIO.
 
 <details open>
 <summary><strong>Windows (PowerShell)</strong></summary>
@@ -89,8 +88,6 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 ```powershell
 git clone https://github.com/Pratyush-Nirwan/patchwork.git
 cd patchwork
-New-Item -ItemType Directory -Force -Path .\bin
-Invoke-WebRequest -Uri "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" -OutFile .\bin\minio.exe
 npm ci
 npm run setup
 ```
@@ -103,22 +100,19 @@ npm run setup
 ```bash
 git clone https://github.com/Pratyush-Nirwan/patchwork.git
 cd patchwork
-mkdir -p ./bin
-curl -fsSL "https://dl.min.io/server/minio/release/linux-amd64/minio" -o ./bin/minio
-chmod +x ./bin/minio
 npm ci
 npm run setup
 ```
 
 </details>
 
-During a fresh install, `npm run setup` generates an `AES-256-GCM` encrypted **Admin Setup Token** and displays it **once** — it cannot be recovered, and **Reset** (`npm run setup` -> Reset) is the only recovery path. Open `http://localhost:3000/setup` and complete the browser Setup Wizard.
+During a fresh install, `npm run setup` provisions PostgreSQL 18 (`./data/postgres`) and a SHA-256 verified MinIO binary (`./bin/minio`), generates an `AES-256-GCM` encrypted **Admin Setup Token** (displayed **once**), and starts the supervisor. Open `http://localhost:3000/setup` and complete the browser Setup Wizard. Use `npm run status` and `npm run stop` to inspect or stop the stack.
 
 ## Documentation
 
 - **Public docs**: [Patchwork Documentation](https://pratyush-nirwan.github.io/patchwork/)
 - **In-app docs**: `/documentation` (bundled with every install, served on the same origin)
-- **Key guides**: [Installation](docs-site/src/content/docs/getting-started/installation.mdx) · [Admin Guide](docs-site/src/content/docs/admin-guide/system-configuration.mdx) · [Command Reference](docs-site/src/content/docs/reference/command-palette.mdx) · [Troubleshooting](docs-site/src/content/docs/operations/troubleshooting.mdx)
+- **Key guides**: [Installation](website/src/content/docs/documentation/getting-started/installation.mdx) · [Admin Guide](website/src/content/docs/documentation/admin-guide/system-configuration.mdx) · [Command Reference](website/src/content/docs/documentation/reference/command-palette.mdx) · [Troubleshooting](website/src/content/docs/documentation/operations/troubleshooting.mdx)
 
 ---
 
@@ -141,7 +135,7 @@ flowchart LR
 | **Database & Search** | PostgreSQL 16+, Drizzle ORM, `tsvector` + GIN full-text search |
 | **Real-Time** | PostgreSQL `LISTEN/NOTIFY` over Server-Sent Events (`/api/events`) |
 | **Storage** | Official MinIO binary with S3 presigned URLs |
-| **Documentation** | Astro Starlight (`docs-site/`, served at `/documentation`) |
+| **Website & Docs** | Self-contained Astro Starlight site (`website/`, embedded at `/documentation`) |
 
 ## Project Structure
 
@@ -149,12 +143,12 @@ flowchart LR
 patchwork/
 ├── deploy/ # Caddy, Nginx, and systemd service templates
 ├── docs/ # Specs, README template/assets, and internal reports
-├── docs-site/ # Astro Starlight documentation site
 ├── drizzle/ # Plain SQL database migrations
 ├── e2e/ # Playwright end-to-end tests
 ├── scripts/ # Node.js CLI installer, seeder, and docs/version tooling
 ├── src/ # Next.js App Router pages, API routes, components, and lib
-└── tests/ # Vitest unit and integration suites
+├── tests/ # Vitest unit and integration suites
+└── website/ # Self-contained public website and Starlight docs package
 ```
 
 ## Development
@@ -165,24 +159,24 @@ npm run seed -- --size small # Populate local dev database with sample data
 npm run verify              # Run full checks, unit/integration tests, build, and E2E
 ```
 
-See [Contributing & Extending](docs-site/src/content/docs/development/contributing-and-extending.mdx) for local database reset, docs generation, and release workflows.
+See [Contributing & Extending](website/src/content/docs/documentation/development/contributing-and-extending.mdx) for local database reset, website/docs generation, and release workflows.
 
 ---
 
 ## Status & Roadmap
 
-> **Beta software (v0.7.0-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
+> **Beta software (v0.7.1-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
 
-**Not included in v1** (intentionally out of scope):
+Planned for **v1.0.0** (not yet available in v0.7.1-beta). This roadmap describes planned work. Scope and timing may change.
 
-- **No Docker / container images**: Patchwork is intentionally native-only on Windows and Linux.
-- **No email notifications or SMTP delivery**: Password resets and initial credentials are distributed by admins directly.
-- **No in-app notification inbox**: Real-time updates sync active boards via SSE without a persistent notification bell.
-- **No standalone audit log table**: Ticket mutations record activity feeds (`activities`), but there is no global admin audit-log stream.
-- **No Personal Access Tokens (PATs) / public REST API tokens**: Authentication uses browser HTTP-only sessions + CSRF headers.
-- **No inbound or outbound webhooks**: GitHub/GitLab integration fetches link metadata on demand via `/api/links`.
-- **No SSO / OAuth login**: Accounts authenticate with local email and `argon2id` passwords.
-- **No native desktop or mobile apps**: Responsive web UI works in desktop and mobile browsers.
+- **Ticketing and Workflow**: Ticket dependencies and subtasks, Sprints and cycles, Ticket templates and recurring tickets, Bulk actions and multi-select, Saved views and custom filters
+- **Collaboration and Notifications**: In-app notification center and @mentions, Ticket watchers, Outbound email and webhook alerts, Presence and typing indicators
+- **Views and Analytics**: List and table view, My Work, Cycle time and WIP metrics
+- **Git and Developer Integrations**: Inbound GitHub and GitLab webhooks, Email-to-ticket and public intake form, Personal API tokens
+- **Security, Audit, and Operations**: Audit log viewer, Two-factor authentication, passkeys, and SSO, Backup and restore UI
+
+- **Out of scope**: Docker / container images, native desktop and mobile apps.
+- **Full details**: [Patchwork v1.0.0 Roadmap](https://pratyush-nirwan.github.io/patchwork/documentation/project/roadmap/)
 
 ## Contributing, Security & License
 

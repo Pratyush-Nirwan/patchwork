@@ -72,9 +72,8 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 
 ### Prerequisites
 
-- **Node.js** `{{NODE_REQUIREMENT}}`
-- **PostgreSQL 16+** running natively (`localhost:5432`)
-- **Official MinIO binary** placed at `./bin/minio.exe` (Windows) or `./bin/minio` (Linux)
+- **Node.js** `{{NODE_REQUIREMENT}}` and **git** only for the default **Easy** install (`winget install OpenJS.NodeJS.LTS Git.Git` on Windows, or `sudo apt install nodejs npm git` on Ubuntu/Debian).
+- Use **Advanced** mode (`npm run setup -- --advanced`) if you prefer your own PostgreSQL 16+ and MinIO.
 
 <details open>
 <summary><strong>Windows (PowerShell)</strong></summary>
@@ -82,8 +81,6 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 ```powershell
 git clone {{REPO_CLONE_URL}}
 cd patchwork
-New-Item -ItemType Directory -Force -Path .\bin
-Invoke-WebRequest -Uri "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" -OutFile .\bin\minio.exe
 npm ci
 npm run setup
 ```
@@ -96,22 +93,19 @@ npm run setup
 ```bash
 git clone {{REPO_CLONE_URL}}
 cd patchwork
-mkdir -p ./bin
-curl -fsSL "https://dl.min.io/server/minio/release/linux-amd64/minio" -o ./bin/minio
-chmod +x ./bin/minio
 npm ci
 npm run setup
 ```
 
 </details>
 
-During a fresh install, `npm run setup` generates an `AES-256-GCM` encrypted **Admin Setup Token** and displays it **once** — it cannot be recovered, and **Reset** (`npm run setup` -> Reset) is the only recovery path. Open `http://localhost:3000/setup` and complete the browser Setup Wizard.
+During a fresh install, `npm run setup` provisions PostgreSQL 18 (`./data/postgres`) and a SHA-256 verified MinIO binary (`./bin/minio`), generates an `AES-256-GCM` encrypted **Admin Setup Token** (displayed **once**), and starts the supervisor. Open `http://localhost:3000/setup` and complete the browser Setup Wizard. Use `npm run status` and `npm run stop` to inspect or stop the stack.
 
 ## Documentation
 
 - **Public docs**: [Patchwork Documentation]({{DOCS_SITE_URL}})
 - **In-app docs**: `/documentation` (bundled with every install, served on the same origin)
-- **Key guides**: [Installation](docs-site/src/content/docs/getting-started/installation.mdx) · [Admin Guide](docs-site/src/content/docs/admin-guide/system-configuration.mdx) · [Command Reference](docs-site/src/content/docs/reference/command-palette.mdx) · [Troubleshooting](docs-site/src/content/docs/operations/troubleshooting.mdx)
+- **Key guides**: [Installation](website/src/content/docs/documentation/getting-started/installation.mdx) · [Admin Guide](website/src/content/docs/documentation/admin-guide/system-configuration.mdx) · [Command Reference](website/src/content/docs/documentation/reference/command-palette.mdx) · [Troubleshooting](website/src/content/docs/documentation/operations/troubleshooting.mdx)
 
 ---
 
@@ -134,7 +128,7 @@ flowchart LR
 | **Database & Search** | PostgreSQL 16+, Drizzle ORM, `tsvector` + GIN full-text search |
 | **Real-Time** | PostgreSQL `LISTEN/NOTIFY` over Server-Sent Events (`/api/events`) |
 | **Storage** | Official MinIO binary with S3 presigned URLs |
-| **Documentation** | Astro Starlight (`docs-site/`, served at `/documentation`) |
+| **Website & Docs** | Self-contained Astro Starlight site (`website/`, embedded at `/documentation`) |
 
 ## Project Structure
 
@@ -150,7 +144,7 @@ npm run seed -- --size small # Populate local dev database with sample data
 npm run verify              # Run full checks, unit/integration tests, build, and E2E
 ```
 
-See [Contributing & Extending](docs-site/src/content/docs/development/contributing-and-extending.mdx) for local database reset, docs generation, and release workflows.
+See [Contributing & Extending](website/src/content/docs/documentation/development/contributing-and-extending.mdx) for local database reset, website/docs generation, and release workflows.
 
 ---
 
@@ -158,9 +152,7 @@ See [Contributing & Extending](docs-site/src/content/docs/development/contributi
 
 > **Beta software ({{DISPLAY_VERSION}})**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
 
-**Not included in v1** (intentionally out of scope):
-
-{{OUT_OF_SCOPE}}
+{{ROADMAP_SECTION}}
 
 ## Contributing, Security & License
 

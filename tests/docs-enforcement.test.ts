@@ -3,7 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { findRepoRoot } from "../scripts/docs/extract.mjs";
-import { checkCoverage } from "../scripts/docs/coverage.mjs";
+import { exportWebsiteData } from "../scripts/docs/export-data.mjs";
+import { checkCoverage } from "../website/scripts/coverage.mjs";
 import { runDocsChecks } from "../scripts/docs/check.mjs";
 
 describe("Documentation Enforcement & Coverage", () => {
@@ -17,12 +18,15 @@ describe("Documentation Enforcement & Coverage", () => {
     const repoRoot = findRepoRoot();
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-docs-neg-"));
     try {
-      // Mirror minimal files needed by extract.mjs & coverage.mjs
+      // Mirror minimal files needed by extract.mjs & exportWebsiteData
       for (const rel of [
+        "package.json",
+        "CHANGELOG.md",
         ".env.example",
         "src/lib/shortcuts.ts",
         "src/lib/rbac.ts",
         "src/lib/settings.ts",
+        "src/db/schema.ts",
         "scripts/setup.mjs",
       ]) {
         const dst = path.join(tmpRoot, rel);
@@ -39,8 +43,8 @@ describe("Documentation Enforcement & Coverage", () => {
       }
 
       // Copy committed reference docs
-      const refSrc = path.join(repoRoot, "docs-site/src/content/docs/reference");
-      const refDst = path.join(tmpRoot, "docs-site/src/content/docs/reference");
+      const refSrc = path.join(repoRoot, "website/src/content/docs/documentation/reference");
+      const refDst = path.join(tmpRoot, "website/src/content/docs/documentation/reference");
       fs.mkdirSync(refDst, { recursive: true });
       for (const file of fs.readdirSync(refSrc)) {
         fs.copyFileSync(path.join(refSrc, file), path.join(refDst, file));
@@ -65,7 +69,8 @@ describe("Documentation Enforcement & Coverage", () => {
       fs.mkdirSync(path.dirname(regDst), { recursive: true });
       fs.writeFileSync(regDst, regMutated, "utf8");
 
-      const errors = checkCoverage(tmpRoot, refDst);
+      exportWebsiteData(tmpRoot, path.join(tmpRoot, "website/src/data/generated"));
+      const errors = checkCoverage(path.join(tmpRoot, "website"), refDst);
       expect(errors.some((e) => e.includes("/fake-undocumented-cmd"))).toBe(true);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });

@@ -1,0 +1,51 @@
+---
+import Default from "@astrojs/starlight/components/Header.astro";
+
+const isEmbedded = process.env.BUILD_TARGET === "embedded";
+const rawBase = process.env.SITE_BASE || "/";
+const basePrefix = rawBase === "/" ? "" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
+const websiteUrl = process.env.WEBSITE_URL || `${basePrefix}/`;
+---
+
+<div class="pw-header-wrap">
+  <Default {...Astro.props} />
+  {
+    isEmbedded ? (
+      <a href="/" class="pw-back-to-app">
+        Back to Patchwork
+      </a>
+    ) : (
+      <a href={websiteUrl} class="pw-back-to-app">
+        Website
+      </a>
+    )
+  }
+</div>
+
+<style>
+  .pw-header-wrap {
+    display: contents;
+  }
+  .pw-back-to-app {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.875rem;
+    min-height: 44px;
+    border-radius: 6px;
+    border: 1px solid var(--sl-color-hairline-light);
+    background: var(--sl-color-bg-nav);
+    color: var(--sl-color-text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+  .pw-back-to-app:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-text-accent);
+  }
+</style>

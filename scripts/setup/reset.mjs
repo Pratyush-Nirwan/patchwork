@@ -253,7 +253,7 @@ export async function runEasyInstall(options = {}) {
       killProcessTree(minioPidToStop);
       await new Promise((r) => setTimeout(r, 400));
     }
-    await pgHandle.stop().catch(() => {});
+    await pgHandle.stop().catch(() => { });
   }
 }
 
@@ -451,7 +451,7 @@ export async function runReset(options = {}) {
     });
 
     if (tempPg) {
-      await tempPg.stop().catch(() => {});
+      await tempPg.stop().catch(() => { });
     }
 
     const envBackupPath = backupEnvFileIfExists(envPath);
@@ -522,14 +522,14 @@ export async function runReset(options = {}) {
   if (fs.existsSync(domainDocPath)) {
     try {
       fs.unlinkSync(domainDocPath);
-    } catch {}
+    } catch { }
   }
 
   const pidPath = path.join(projectDir, ".patchwork.pid");
   if (fs.existsSync(pidPath)) {
     try {
       fs.unlinkSync(pidPath);
-    } catch {}
+    } catch { }
   }
 
   // Drop target database (and patchwork_test only if it was created in dev mode)

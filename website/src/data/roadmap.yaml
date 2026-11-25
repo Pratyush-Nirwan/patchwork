@@ -1,4 +1,4 @@
-currentVersion: "v0.7.1-beta"
+currentVersion: "v0.8.0-beta"
 targetVersion: "v1.0.0"
 
 categories:
@@ -75,48 +75,45 @@ items:
   - id: "in-app-notifications-mentions"
     title: "In-app notification center and @mentions"
     category: "collaboration-and-notifications"
-    summary: "A bell inbox will surface @mentions, ticket assignments, and updates to watched tickets on top of the existing real-time update channel."
-    status: "planned"
+    summary: "A bell inbox surfaces @mentions, ticket assignments, and updates to watched tickets in real time over SSE."
+    status: "shipped"
     target: "v1.0.0"
-    shippedIn: ""
+    shippedIn: "v0.8.0-beta"
     dependsOn: ["ticket-watchers"]
     codeSignals:
-      tables: ["notifications"]
-      routes: ["notifications"]
+      commands: ["notifications", "read-all"]
+      tables: ["notifications", "user_notification_preferences"]
 
   - id: "ticket-watchers"
     title: "Ticket watchers"
     category: "collaboration-and-notifications"
-    summary: "Users will be able to follow a ticket without being its assignee, including toggling watch state via a slash command (command name to be decided)."
-    status: "planned"
+    summary: "Users can follow a ticket without being its assignee, toggle watching via /watch, /unwatch, and /mute, and filter with watching:me."
+    status: "shipped"
     target: "v1.0.0"
-    shippedIn: ""
+    shippedIn: "v0.8.0-beta"
     dependsOn: []
-    notes: "Watch slash command name to be decided."
     codeSignals:
-      commands: ["watch", "unwatch"]
+      commands: ["watch", "unwatch", "mute"]
       tables: ["ticket_watchers"]
 
   - id: "outbound-email-webhooks"
     title: "Outbound email and webhook alerts"
     category: "collaboration-and-notifications"
-    summary: "Administrators will be able to configure optional SMTP digests and mention emails, plus signed outbound webhooks (Slack, Discord, Mattermost, generic HTTP) in System Configuration (details to be decided)."
-    status: "planned"
+    summary: "Administrators can configure optional SMTP immediate and digest emails plus signed outbound webhooks (Slack, Discord, Mattermost, generic HTTP) in System Configuration."
+    status: "shipped"
     target: "v1.0.0"
-    shippedIn: ""
+    shippedIn: "v0.8.0-beta"
     dependsOn: []
-    notes: "SMTP and webhook delivery/signing details to be decided."
     codeSignals:
-      envVars: ["SMTP_HOST", "SMTP_URL"]
-      tables: ["webhooks", "outbound_webhooks"]
+      tables: ["email_outbox", "webhook_endpoints", "webhook_deliveries"]
 
   - id: "presence-typing-indicators"
     title: "Presence and typing indicators"
     category: "collaboration-and-notifications"
-    summary: "Ticket panels will show who is currently viewing or typing on a ticket in real time."
-    status: "planned"
+    summary: "Ticket panels show viewer avatars and comment typing indicators in real time without transmitting draft text."
+    status: "shipped"
     target: "v1.0.0"
-    shippedIn: ""
+    shippedIn: "v0.8.0-beta"
     dependsOn: []
     codeSignals: {}
 

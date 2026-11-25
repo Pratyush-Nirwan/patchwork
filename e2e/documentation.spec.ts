@@ -119,7 +119,7 @@ test.describe("Embedded Documentation (/documentation)", () => {
 
     // /docs slash command -> navigates to /documentation/user-guide/command-palette
     await input.fill("/docs command-palette");
-    await input.press("Enter");
+    await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/documentation\/user-guide\/command-palette/);
   });
 });

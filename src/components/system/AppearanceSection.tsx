@@ -1,7 +1,9 @@
 "use client";
 
-import React,{ useState,useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { XCircle } from "lucide-react";
+import { SystemSectionSkeleton } from "@/components/skeletons/SystemConfigSkeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
 
 export function AppearanceSection({
   csrfToken,
@@ -23,6 +25,7 @@ export function AppearanceSection({
   >([]);
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#3B82F6");
+  const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -38,6 +41,8 @@ export function AppearanceSection({
       }
     } catch {
       // ignore
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -89,6 +94,18 @@ export function AppearanceSection({
   const handleRemoveLabel = (name: string) => {
     setLabels((prev) => prev.filter((l) => l.name !== name));
   };
+
+  if (loading) {
+    return (
+      <SkeletonRegion
+        isLoading={loading}
+        hasData={false}
+        loadingLabel="Loading appearance settings"
+        readyLabel="Appearance settings loaded"
+        skeleton={<SystemSectionSkeleton variant="section" />}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

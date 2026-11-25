@@ -43,6 +43,7 @@ export interface SearchFilterTokens {
   label?: string;
   due?: "overdue" | "today" | "week" | "none";
   has?: "attachments" | "links" | "comments";
+  watching?: "me";
   textQuery: string;
 }
 
@@ -172,6 +173,57 @@ function findClosestOption(key: string, options: CommandOptionSpec[]): string | 
   return best;
 }
 
+export function getCommandLabels(def?: CommandDefinition): string[] {
+  if (!def) return [];
+  const set = new Set<string>();
+  for (const a of def.args) {
+    set.add(a.label.toLowerCase());
+    set.add(a.name.toLowerCase());
+  }
+  for (const o of def.options || []) {
+    set.add(o.key.toLowerCase());
+  }
+  return Array.from(set);
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function needsCanonicalQuoting(value: string, def?: CommandDefinition): boolean {
+  if (value !== value.trim()) return true;
+  const labels = getCommandLabels(def);
+  if (labels.length === 0) return false;
+  const pattern = new RegExp(`(?:^|\\s)(?:${labels.map(escapeRegExp).join("|")}):`, "i");
+  return pattern.test(value);
+}
+
+export function formatCanonicalValue(value: string, def?: CommandDefinition): string {
+  if (!needsCanonicalQuoting(value, def)) return value;
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+export function serializeSlashCommand(
+  def: Pick<CommandDefinition, "name" | "args" | "options"> & Partial<CommandDefinition>,
+  positionalValues: string[],
+  optionValues: Record<string, string>
+): string {
+  const parts: string[] = [`/${def.name}`];
+  def.args.forEach((arg, idx) => {
+    const val = positionalValues[idx];
+    if (val !== undefined && val !== "") {
+      parts.push(`${arg.label}: ${formatCanonicalValue(val, def as CommandDefinition)}`);
+    }
+  });
+  for (const opt of def.options || []) {
+    const val = optionValues[opt.key];
+    if (val !== undefined && val !== "") {
+      parts.push(`${opt.key}: ${formatCanonicalValue(val, def as CommandDefinition)}`);
+    }
+  }
+  return parts.join(" ");
+}
+
 export function parseSlashCommand(
   input: string,
   def?: CommandDefinition
@@ -196,12 +248,28 @@ export function parseSlashCommand(
 
   const positional: string[] = [];
   const positionalSpans: CommandTokenSpan[] = [];
+  const namedPositional = new Map<number, { value: string; span: CommandTokenSpan }>();
   const allArgSpans: CommandTokenSpan[] = [];
   const flags: Record<string, string> = {};
   const usedOptionKeys: string[] = [];
   const duplicateKeys: string[] = [];
   const optionSpecs = def?.options || [];
-  const optionMap = new Map(optionSpecs.map((o) => [o.key, o]));
+  const optionMap = new Map(optionSpecs.map((o) => [o.key.toLowerCase(), o]));
+  const argLabelMap = new Map<string, number>();
+  (def?.args || []).forEach((a, idx) => {
+    argLabelMap.set(a.label.toLowerCase(), idx);
+    argLabelMap.set(a.name.toLowerCase(), idx);
+  });
+
+  const isRecognizedLabelToken = (span: CommandTokenSpan): boolean => {
+    if (span.quoted) return false;
+    if (span.value.startsWith("--") && span.value.length > 2) return true;
+    const cIdx = span.value.indexOf(":");
+    if (cIdx <= 0) return false;
+    const k = span.value.slice(0, cIdx).toLowerCase();
+    return optionMap.has(k) || argLabelMap.has(k);
+  };
+
   const isGreedyFirstArg = Boolean(def?.args[0]?.greedyText);
   const greedyWords: CommandTokenSpan[] = [];
   let greedyEnded = false;
@@ -232,8 +300,6 @@ export function parseSlashCommand(
     if (token.length > MAX_ARG_LENGTH) {
       overlongValue = true;
     }
-
-    const isLastToken = i === rest.length - 1;
 
     // 1. Legacy --flag syntax
     if (token.startsWith("--") && token.length > 2) {
@@ -275,26 +341,71 @@ export function parseSlashCommand(
       continue;
     }
 
-    // 2. Discord-style key:value optional arguments (when command defines options and token is unquoted)
+    // 2. Canonical `label: value` (positional or option) and legacy `key:value`
     const colonIdx = !span.quoted ? token.indexOf(":") : -1;
-    if (colonIdx > 0 && optionSpecs.length > 0) {
+    if (colonIdx > 0 && (optionSpecs.length > 0 || argLabelMap.size > 0)) {
       const key = token.slice(0, colonIdx).toLowerCase();
-      const val = token.slice(colonIdx + 1);
-      const spec = optionMap.get(key);
-      if (spec) {
+      const afterColon = token.slice(colonIdx + 1);
+      const optSpec = optionMap.get(key);
+      const posIdx = argLabelMap.get(key);
+
+      if (optSpec || posIdx !== undefined) {
         flushGreedyTitle();
         greedyEnded = true;
-        allArgSpans.push(span);
-        if (usedOptionKeys.includes(key) && !duplicateKeys.includes(key)) {
-          duplicateKeys.push(key);
+
+        let val = afterColon;
+        let combinedSpan = span;
+        if (afterColon === "") {
+          // Canonical `label: value` — consume tokens until next recognized label: or --flag
+          const valTokens: CommandTokenSpan[] = [];
+          while (i + 1 < rest.length && !isRecognizedLabelToken(rest[i + 1])) {
+            i += 1;
+            valTokens.push(rest[i]);
+          }
+          if (valTokens.length === 1 && valTokens[0].quoted) {
+            val = valTokens[0].value;
+            combinedSpan = {
+              value: input.slice(span.start, valTokens[0].end),
+              start: span.start,
+              end: valTokens[0].end,
+              quoted: true,
+              closedQuote: valTokens[0].closedQuote,
+            };
+          } else if (valTokens.length > 0) {
+            const firstV = valTokens[0];
+            const lastV = valTokens[valTokens.length - 1];
+            val = input.slice(firstV.start, lastV.end).trim();
+            combinedSpan = {
+              value: input.slice(span.start, lastV.end),
+              start: span.start,
+              end: lastV.end,
+              quoted: false,
+              closedQuote: true,
+            };
+          }
         }
-        usedOptionKeys.push(key);
-        flags[key] = val;
-        if (isLastToken && !hasTrailingSpace) {
-          activeOption = { key, value: val, spec, tokenSpan: span };
+        if (val.length > MAX_ARG_LENGTH) {
+          overlongValue = true;
+        }
+        allArgSpans.push(combinedSpan);
+
+        if (optSpec) {
+          if (usedOptionKeys.includes(optSpec.key) && !duplicateKeys.includes(optSpec.key)) {
+            duplicateKeys.push(optSpec.key);
+          }
+          usedOptionKeys.push(optSpec.key);
+          flags[optSpec.key] = val;
+          if (i === rest.length - 1 && !hasTrailingSpace) {
+            activeOption = { key: optSpec.key, value: val, spec: optSpec, tokenSpan: combinedSpan };
+          }
+        } else if (posIdx !== undefined) {
+          namedPositional.set(posIdx, {
+            value: val,
+            span: combinedSpan,
+          });
         }
         continue;
-      } else if (!/^[a-z]+:\/\//i.test(token)) {
+      } else if (optionSpecs.length > 0 && !/^[a-z]+:\/\//i.test(token)) {
         flushGreedyTitle();
         greedyEnded = true;
         allArgSpans.push(span);
@@ -316,6 +427,25 @@ export function parseSlashCommand(
     }
   }
   flushGreedyTitle();
+
+  if (namedPositional.size > 0 && def) {
+    const mergedPos: string[] = [];
+    const mergedSpans: CommandTokenSpan[] = [];
+    for (let idx = 0; idx < def.args.length; idx += 1) {
+      const named = namedPositional.get(idx);
+      if (named) {
+        mergedPos.push(named.value);
+        mergedSpans.push(named.span);
+      } else if (positional[idx] !== undefined) {
+        mergedPos.push(positional[idx]);
+        mergedSpans.push(positionalSpans[idx]);
+      }
+    }
+    positional.length = 0;
+    positionalSpans.length = 0;
+    positional.push(...mergedPos);
+    positionalSpans.push(...mergedSpans);
+  }
 
   const firstSpaceIdx = afterSlash.search(/\s/);
   const rawArgs = firstSpaceIdx === -1 ? "" : afterSlash.slice(firstSpaceIdx + 1).trim();
@@ -526,6 +656,10 @@ export function parseSearchQuery(rawQuery: string): SearchFilterTokens {
       }
       if (prefix === "has" && VALID_HAS.has(value.toLowerCase())) {
         filters.has = value.toLowerCase() as SearchFilterTokens["has"];
+        continue;
+      }
+      if (prefix === "watching" && value.toLowerCase() === "me") {
+        filters.watching = "me";
         continue;
       }
     }

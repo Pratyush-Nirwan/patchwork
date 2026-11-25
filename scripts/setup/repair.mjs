@@ -156,7 +156,16 @@ export async function runRepair(options = {}) {
       drizzleDir,
       checkMinioAnyway: true,
     });
-    return { found, fixed, manualActions, envBackupPath: null, state: finalState };
+    if (finalState.worker && finalState.worker.deadLetterEvents > 0) {
+    found.push(
+      `Background worker has ${finalState.worker.deadLetterEvents} dead-lettered domain event(s)`
+    );
+    manualActions.push(
+      "Inspect System Configuration -> Health for background worker errors and dead-lettered events."
+    );
+  }
+
+  return { found, fixed, manualActions, envBackupPath: null, state: finalState };
   }
 
   const preflight = await runPreflightChecks({
@@ -380,6 +389,15 @@ export async function runRepair(options = {}) {
         `TOKEN_ENCRYPTION_KEY is missing or wrong and cannot decrypt setup_token. Setup step 1 is blocked; the only fix is to run Reset (\`npm run setup\` -> Reset). See ${troubleshootUrl}`
       );
     }
+  }
+
+  if (finalState.worker && finalState.worker.deadLetterEvents > 0) {
+    found.push(
+      `Background worker has ${finalState.worker.deadLetterEvents} dead-lettered domain event(s)`
+    );
+    manualActions.push(
+      "Inspect System Configuration -> Health for background worker errors and dead-lettered events."
+    );
   }
 
   return {

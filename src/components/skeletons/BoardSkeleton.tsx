@@ -1,20 +1,22 @@
 "use client";
 
 import React from "react";
-import { Skeleton, SkeletonChip, SkeletonCircle, SkeletonText } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonChip, SkeletonCircle, SkeletonText, Surface } from "@/components/ui/skeleton";
 
 const CARD_ROWS_PER_COL = [3, 2, 4, 2];
 
 export function BoardSkeleton() {
   return (
-    <div
+    <Surface
+      variant="page"
       data-testid="board-skeleton"
       aria-hidden="true"
       className="flex h-full gap-4 overflow-x-auto p-4"
     >
       {CARD_ROWS_PER_COL.map((cardCount, colIdx) => (
-        <div
+        <Surface
           key={colIdx}
+          variant="surface"
           className="flex w-72 shrink-0 flex-col rounded-lg border border-[var(--pw-border)] bg-[var(--pw-surface)] p-3"
         >
           <div className="mb-3 flex items-center justify-between">
@@ -27,8 +29,9 @@ export function BoardSkeleton() {
 
           <div className="space-y-2.5">
             {Array.from({ length: cardCount }).map((_, cardIdx) => (
-              <div
+              <Surface
                 key={cardIdx}
+                variant="card"
                 className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2.5 space-y-2"
               >
                 <div className="flex items-center justify-between">
@@ -43,11 +46,11 @@ export function BoardSkeleton() {
                   </div>
                   <SkeletonCircle size={20} />
                 </div>
-              </div>
+              </Surface>
             ))}
           </div>
-        </div>
+        </Surface>
       ))}
-    </div>
+    </Surface>
   );
 }

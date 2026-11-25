@@ -20,6 +20,7 @@ import {
 } from "@/lib/system";
 import { normalizeEmail, isValidEmailFormat, EmailTakenError } from "@/lib/email";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { pruneWatchersForUser } from "@/lib/watchers";
 
 export async function GET(
   req: NextRequest,
@@ -175,6 +176,7 @@ export async function PATCH(
       if (body.isDeactivated) {
         // Revoke active sessions immediately
         await db.delete(sessions).where(eq(sessions.userId, userId));
+        await pruneWatchersForUser(userId);
       }
     }
 
@@ -229,6 +231,9 @@ export async function PATCH(
             })
             .onConflictDoNothing();
         }
+      }
+      for (const tid of orgTeamIds) {
+        await pruneWatchersForUser(userId, tid);
       }
     }
 

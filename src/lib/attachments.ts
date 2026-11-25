@@ -19,6 +19,7 @@ import { AppError, NotFoundError } from "./errors";
 import { recordActivity } from "./tickets";
 import { realtimeHub } from "./realtime";
 import { getSystemSetting } from "./settings";
+import { emitDomainEvent, notifyDomainEventWorker } from "./domain-events";
 import { sanitizeFilename } from "./platform";
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -288,33 +289,56 @@ export async function uploadTicketAttachment(
     input.buffer
   );
 
-  const [attachment] = await db
-    .insert(ticketAttachments)
-    .values({
-      ticketId: ticket.id,
+  const { attachment, domainEvent } = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(ticketAttachments)
+      .values({
+        ticketId: ticket.id,
+        orgId: ticket.orgId,
+        teamId: ticket.teamId,
+        uploaderId: actorId,
+        filename: input.filename.trim(),
+        contentType: input.contentType,
+        sizeBytes: input.buffer.byteLength,
+        storageKey,
+        extractedText,
+      })
+      .returning();
+
+    await recordActivity(
+      {
+        ticketId: ticket.id,
+        actorId,
+        action: "attachment.added",
+        details: {
+          attachmentId: inserted.id,
+          filename: inserted.filename,
+          sizeBytes: inserted.sizeBytes,
+        },
+      },
+      tx
+    );
+
+    const ev = await emitDomainEvent(tx, {
+      eventType: "attachment.added",
+      aggregateId: ticket.id,
       orgId: ticket.orgId,
       teamId: ticket.teamId,
-      uploaderId: actorId,
-      filename: input.filename.trim(),
-      contentType: input.contentType,
-      sizeBytes: input.buffer.byteLength,
-      storageKey,
-      extractedText,
-    })
-    .returning();
+      boardId: ticket.boardId,
+      actorId,
+      metadata: {
+        ticketKey: ticket.key,
+        attachmentId: inserted.id,
+        filename: inserted.filename,
+      },
+    });
+
+    return { attachment: inserted, domainEvent: ev };
+  });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   const downloadUrl = await getAttachmentDownloadUrl(actorId, attachment.id);
-
-  await recordActivity({
-    ticketId: ticket.id,
-    actorId,
-    action: "attachment.added",
-    details: {
-      attachmentId: attachment.id,
-      filename: attachment.filename,
-      sizeBytes: attachment.sizeBytes,
-    },
-  });
 
   await realtimeHub.publish({
     type: "attachment.added",
@@ -385,17 +409,37 @@ export async function deleteAttachment(actorId: string, attachmentId: string) {
     )
     .catch(() => undefined);
 
-  await db.delete(ticketAttachments).where(eq(ticketAttachments.id, attachmentId));
+  const domainEvent = await db.transaction(async (tx) => {
+    await tx.delete(ticketAttachments).where(eq(ticketAttachments.id, attachmentId));
 
-  await recordActivity({
-    ticketId: ticket.id,
-    actorId,
-    action: "attachment.removed",
-    details: {
-      attachmentId: attachment.id,
-      filename: attachment.filename,
-    },
+    await recordActivity(
+      {
+        ticketId: ticket.id,
+        actorId,
+        action: "attachment.removed",
+        details: {
+          attachmentId: attachment.id,
+          filename: attachment.filename,
+        },
+      },
+      tx
+    );
+
+    return emitDomainEvent(tx, {
+      eventType: "attachment.removed",
+      aggregateId: ticket.id,
+      orgId: ticket.orgId,
+      teamId: ticket.teamId,
+      boardId: ticket.boardId,
+      actorId,
+      metadata: {
+        ticketKey: ticket.key,
+        attachmentId: attachment.id,
+      },
+    });
   });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "attachment.removed",

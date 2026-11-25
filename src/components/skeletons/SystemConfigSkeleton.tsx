@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Skeleton, SkeletonChip, SkeletonCircle, SkeletonText } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonChip, SkeletonCircle, SkeletonText, Surface } from "@/components/ui/skeleton";
 
 interface SystemConfigSkeletonProps {
   variant?: "full" | "users" | "hierarchy" | "permissions" | "section";
@@ -14,12 +14,12 @@ export function SystemSectionSkeleton({
 }) {
   if (variant === "users") {
     return (
-      <div data-testid="system-users-skeleton" aria-hidden="true" className="space-y-4">
+      <Surface variant="page" data-testid="system-users-skeleton" aria-hidden="true" className="space-y-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-8 w-28" />
         </div>
-        <div className="rounded-lg border border-[var(--pw-border)] bg-[var(--pw-surface)] overflow-hidden">
+        <Surface variant="surface" className="rounded-lg border border-[var(--pw-border)] bg-[var(--pw-surface)] overflow-hidden">
           {[0, 1, 2, 3, 4].map((row) => (
             <div
               key={row}
@@ -38,25 +38,25 @@ export function SystemSectionSkeleton({
               </div>
             </div>
           ))}
-        </div>
-      </div>
+        </Surface>
+      </Surface>
     );
   }
 
   return (
-    <div data-testid="system-section-skeleton" aria-hidden="true" className="space-y-4">
+    <Surface variant="page" data-testid="system-section-skeleton" aria-hidden="true" className="space-y-4">
       <div className="space-y-1.5">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-3 w-72" />
       </div>
-      <div className="rounded-lg border border-[var(--pw-border)] bg-[var(--pw-surface)] p-4 space-y-3">
+      <Surface variant="surface" className="rounded-lg border border-[var(--pw-border)] bg-[var(--pw-surface)] p-4 space-y-3">
         <SkeletonText lines={3} lineHeightClass="h-3" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
-      </div>
-    </div>
+      </Surface>
+    </Surface>
   );
 }
 
@@ -66,13 +66,16 @@ export function SystemConfigSkeleton({ variant = "full" }: SystemConfigSkeletonP
   }
 
   return (
-    <div
+    <Surface
+      variant="page"
       data-testid="system-config-skeleton"
       aria-label="Loading system configuration"
       aria-busy="true"
       className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--pw-bg)] text-[var(--pw-ink)]"
     >
-      <header
+      <Surface
+        as="header"
+        variant="surface"
         aria-hidden="true"
         className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--pw-border)] bg-[var(--pw-surface)] px-4"
       >
@@ -81,21 +84,23 @@ export function SystemConfigSkeleton({ variant = "full" }: SystemConfigSkeletonP
           <Skeleton className="h-4 w-40" />
         </div>
         <Skeleton className="h-7 w-24" />
-      </header>
+      </Surface>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside
+        <Surface
+          as="aside"
+          variant="surface"
           aria-hidden="true"
           className="hidden md:flex w-60 shrink-0 flex-col gap-1.5 border-r border-[var(--pw-border)] bg-[var(--pw-surface)] p-3"
         >
           {Array.from({ length: 9 }).map((_, idx) => (
             <Skeleton key={idx} className="h-8 w-full" />
           ))}
-        </aside>
+        </Surface>
         <main className="flex-1 overflow-y-auto p-6">
           <SystemSectionSkeleton variant="users" />
         </main>
       </div>
-    </div>
+    </Surface>
   );
 }

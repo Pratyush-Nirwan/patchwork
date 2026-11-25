@@ -1,7 +1,8 @@
 "use client";
 
-import { useState,useEffect } from "react";
-import { Download,Copy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download, Copy } from "lucide-react";
+import { Skeleton, SkeletonRegion, Surface } from "@/components/ui/skeleton";
 import type { BackupCommands } from "./types";
 
 export function DataBackupSection({
@@ -10,12 +11,14 @@ export function DataBackupSection({
   showToast: (m: string) => void;
 }) {
   const [commands, setCommands] = useState<BackupCommands | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/system/data/commands")
       .then((r) => r.json())
       .then((d) => setCommands(d.commands))
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -61,7 +64,30 @@ export function DataBackupSection({
         </div>
 
         {/* Manual Backup Instructions */}
-        {commands && (
+        <SkeletonRegion
+          isLoading={loading}
+          hasData={Boolean(commands)}
+          loadingLabel="Loading backup commands"
+          readyLabel="Backup commands loaded"
+          skeleton={
+            <Surface variant="surface" className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-4 space-y-3" aria-hidden="true">
+              <Skeleton className="h-3.5 w-44" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-48" />
+                <Surface variant="code" className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2">
+                  <Skeleton className="h-4 w-full" />
+                </Surface>
+              </div>
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-40" />
+                <Surface variant="code" className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2">
+                  <Skeleton className="h-4 w-3/4" />
+                </Surface>
+              </div>
+            </Surface>
+          }
+        >
+          {commands && (
           <div className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-4 space-y-3">
             <h3 className="font-semibold text-xs text-[var(--pw-ink)]">
               Manual System Backup Guide
@@ -110,7 +136,8 @@ export function DataBackupSection({
               </div>
             </div>
           </div>
-        )}
+          )}
+        </SkeletonRegion>
       </div>
     </div>
   );

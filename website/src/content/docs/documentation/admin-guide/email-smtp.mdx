@@ -1,0 +1,30 @@
+---
+title: Email & SMTP Setup
+description: Configure optional outbound SMTP for immediate mention/assignment emails and scheduled digests.
+---
+
+Outbound email is **optional**. When SMTP is disabled or unconfigured, all email preferences are hidden from user settings and Patchwork operates normally without errors.
+
+## Configuration (System Configuration → Notifications → Email)
+
+- **Enable outbound SMTP email:** Master toggle.
+- **SMTP Host & Port:** Hostname and TCP port (`587` for STARTTLS, `465` for TLS, `25` or `1025` for local relays).
+- **Security:**
+  - `None (local relay)` — Plain SMTP on localhost/LAN relays (e.g. Postfix relay, Mailpit).
+  - `STARTTLS` — Standard port `587` TLS upgrade.
+  - `TLS / SSL` — Implicit TLS on port `465`.
+- **Username & Password:** Password is encrypted at rest with AES-256-GCM (`TOKEN_ENCRYPTION_KEY`), write-only in the UI, and never returned by any API.
+- **From Name, From Address, Reply-To:** Sender identity headers (sanitized against header injection).
+- **Include ticket text snippets in emails:** Off by default. When off, emails contain only the ticket key, title, and link.
+
+### Provider Examples
+
+- **Local relay / Mailpit:** Host `127.0.0.1`, Port `1025`, Security `None (local relay)`, empty username/password.
+- **Gmail / Google Workspace:** Host `smtp.gmail.com`, Port `587`, Security `STARTTLS`, username = full email, password = 16-character App Password.
+- **Generic SMTP (Postmark, SES, Fastmail):** Use your provider's SMTP host, port `587` (`STARTTLS`) or `465` (`TLS`), and generated SMTP credentials.
+
+## Digests, Unsubscribe, and Troubleshooting
+
+- **Digest time zone:** Scheduled digests use **Org default time zone** (`defaultTimezone`) in **System Configuration → Notifications → General & Privacy** and respect DST transitions. Empty digests and inaccessible tickets are skipped.
+- **One-click unsubscribe:** Every email includes a signed, single-purpose, expiring unsubscribe link for that category.
+- **Test & Delivery Log:** Use **Send test email** to verify connectivity and inspect the masked **Email Delivery Log** for retry/dead-letter status.

@@ -1,8 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execSync } from "child_process";
+import fs from "node:fs";
+import path from "node:path";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.test" });
+
+const PKG = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8")
+) as { version: string };
+const VERSION_LABEL = `v${PKG.version}`;
 
 const DB_URL =
   process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/patchwork_test";
@@ -15,7 +22,7 @@ async function loginAsAdmin(page: Page) {
   await expect(page.getByTestId("kanban-board-canvas")).toBeVisible({ timeout: 15000 });
 }
 
-test.describe("Version Display & Layout Stability (v0.7.0-beta)", () => {
+test.describe("Version Display & Layout Stability", () => {
   test.beforeAll(() => {
     execSync(
       `node scripts/seed.mjs --reset --size small --seed 42 --yes --database-url "${DB_URL}"`,
@@ -23,7 +30,7 @@ test.describe("Version Display & Layout Stability (v0.7.0-beta)", () => {
     );
   });
 
-  test("shows v0.7.0-beta in sidebar and About section in light/dark at 390 and 1440 widths with no layout shift", async ({
+  test("shows current version in sidebar and About section in light/dark at 390 and 1440 widths with no layout shift", async ({
     page,
   }) => {
     await loginAsAdmin(page);
@@ -42,7 +49,7 @@ test.describe("Version Display & Layout Stability (v0.7.0-beta)", () => {
 
         const sidebarVer = page.getByTestId("sidebar-version");
         await expect(sidebarVer).toBeVisible();
-        await expect(sidebarVer).toHaveText("v0.7.0-beta");
+        await expect(sidebarVer).toHaveText(VERSION_LABEL);
 
         const cls = await page.evaluate(() => {
           return performance
@@ -62,12 +69,12 @@ test.describe("Version Display & Layout Stability (v0.7.0-beta)", () => {
     await page.keyboard.press("Enter");
 
     await expect(page.getByTestId("about-patchwork-section")).toBeVisible();
-    await expect(page.getByTestId("about-version")).toHaveText("v0.7.0-beta");
+    await expect(page.getByTestId("about-version")).toHaveText(VERSION_LABEL);
   });
 
-  test("docs site landing badge and footer display v0.7.0-beta", async ({ page }) => {
+  test("docs site landing badge and footer display current version", async ({ page }) => {
     await page.goto("/documentation");
-    await expect(page.getByTestId("docs-landing-version")).toContainText("v0.7.0-beta");
-    await expect(page.getByTestId("docs-footer-version")).toHaveText("v0.7.0-beta");
+    await expect(page.getByTestId("docs-landing-version")).toContainText(VERSION_LABEL);
+    await expect(page.getByTestId("docs-footer-version")).toHaveText(VERSION_LABEL);
   });
 });

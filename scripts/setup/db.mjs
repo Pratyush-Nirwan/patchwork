@@ -23,6 +23,14 @@ export const EXPECTED_TABLES = [
   "setup_token",
   "setup_credentials",
   "system_settings",
+  "domain_events",
+  "ticket_watchers",
+  "user_notification_preferences",
+  "notifications",
+  "email_outbox",
+  "webhook_endpoints",
+  "webhook_deliveries",
+  "worker_health",
 ];
 
 function quoteIdent(ident) {
@@ -344,6 +352,14 @@ export async function getMigrationStatus(
         } else if (file.startsWith("0009") && existingColumns.has("sessions.last_active_at")) {
           appliedCount++;
         } else if (file.startsWith("0010") && existingColumns.has("tickets.archived_at")) {
+          appliedCount++;
+        } else if (
+          file.startsWith("0011") &&
+          existingTables.has("domain_events") &&
+          existingTables.has("ticket_watchers") &&
+          existingTables.has("notifications") &&
+          existingTables.has("worker_health")
+        ) {
           appliedCount++;
         }
       }

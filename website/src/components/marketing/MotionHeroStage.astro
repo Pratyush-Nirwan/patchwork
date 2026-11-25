@@ -1,0 +1,358 @@
+---
+import { Image } from "astro:assets";
+import appMeta from "../../data/generated/app-meta.json";
+import boardLight from "../../assets/screenshots/board-light.png";
+import boardDark from "../../assets/screenshots/board-dark.png";
+
+interface Props {
+  href: (p: string) => string;
+  repoUrl: string;
+}
+
+const { href, repoUrl } = Astro.props;
+const installSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci\nnpm run setup`;
+const heroWords = "Ticketing without the cloud rent, container tax, or seat\u2011tier traps.".split(" ");
+---
+
+<div class="pw-scroll-progress" aria-hidden="true">
+  <div class="pw-scroll-progress-bar" data-pw-scroll-progress></div>
+</div>
+
+<section class="pw-hero pw-hero-cinematic">
+  <div class="pw-hero-ambient" aria-hidden="true">
+    <div class="pw-hero-grid-bg"></div>
+    <div class="pw-hero-glow"></div>
+  </div>
+
+  <div class="pw-container pw-hero-inner">
+    <div class="pw-hero-copy">
+      <p class="pw-eyebrow pw-tabular" data-pw-stagger="0">
+        {appMeta.displayVersion} &middot; AGPL-3.0 &middot; Native Windows &amp; Linux &middot; Zero Docker
+      </p>
+
+      <h1 class="pw-hero-h1" aria-label="Ticketing without the cloud rent, container tax, or seat-tier traps.">
+        {heroWords.map((w, i) => (
+          <span class="pw-h1-clip">
+            <span class="pw-h1-word" style={`--wi:${i}`}>{w}</span>
+          </span>
+        ))}
+      </h1>
+
+      <p class="pw-lead" data-pw-stagger="2">
+        I built Patchwork because engineering teams shouldn&apos;t have to pay per seat for basic workflows
+        or babysit six Docker containers just to track bugs. Self-hosted boards, keyboard-first slash pills,
+        and real-time collaboration running natively on Node.js, PostgreSQL, and MinIO.
+      </p>
+
+      <div class="pw-cta-row" data-pw-stagger="3">
+        <a class="pw-btn pw-btn-primary pw-btn-magnetic" href={href("/documentation/getting-started/quick-start/")}>
+          <span>Get started</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a class="pw-btn pw-btn-secondary" href={href("/documentation/")}>Read the docs</a>
+        <a class="pw-btn pw-btn-ghost" href={repoUrl}>View on GitHub</a>
+      </div>
+    </div>
+
+    <div class="pw-hero-terminal-wrap" data-pw-stagger="3">
+      <div class="pw-terminal" aria-label="Three-step native install commands">
+        <div class="pw-terminal-head">
+          <div class="pw-terminal-dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="pw-terminal-title">Easy mode &middot; Node.js {appMeta.nodeRequirement} + git</span>
+          <button
+            type="button"
+            class="pw-copy-btn"
+            data-copy-text={installSnippet}
+            aria-label="Copy install commands"
+          >
+            <span data-copy-label>Copy</span>
+          </button>
+        </div>
+        <div class="pw-terminal-body">
+          <pre><code><span class="pw-term-line" style="--tl:0"><span class="pw-tok-cmd">git</span> clone {appMeta.cloneUrl}</span>
+<span class="pw-term-line" style="--tl:1"><span class="pw-tok-cmd">cd</span> patchwork</span>
+<span class="pw-term-line" style="--tl:2"><span class="pw-tok-cmd">npm</span> ci</span>
+<span class="pw-term-line" style="--tl:3"><span class="pw-tok-cmd">npm</span> run setup <span class="pw-tok-dim"># PostgreSQL + MinIO + encrypted token</span><span class="pw-term-cursor" aria-hidden="true"></span></span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pw-hero-stage" data-pw-hero-stage>
+      <div class="pw-stage-chrome">
+        <div class="pw-stage-left">
+          <span class="pw-stage-dot"></span>
+          <span class="pw-stage-title pw-tabular">Platform / Core Engineering</span>
+          <span class="pw-stage-live">
+            <span class="pw-pulse-dot" aria-hidden="true"></span>
+            LISTEN/NOTIFY live
+          </span>
+        </div>
+
+        <div class="pw-stage-pill-bar" aria-live="off" aria-label="Live command bar preview" data-pw-stage-bar>
+          <span class="pw-stage-cmd" data-pw-type-cmd>/move</span>
+          <span class="pw-stage-pill">
+            <span class="pw-stage-pill-k" data-pw-type-k1>ticket:</span>
+            <span class="pw-stage-pill-v" data-pw-type-arg1>API-14</span>
+          </span>
+          <span class="pw-stage-pill">
+            <span class="pw-stage-pill-k" data-pw-type-k2>column:</span>
+            <span class="pw-stage-pill-v" data-pw-type-arg2>Done</span>
+          </span>
+          <kbd class="pw-stage-kbd">Ctrl+K</kbd>
+        </div>
+
+        <div class="pw-stage-presence" aria-label="Active ticket viewers">
+          <span class="pw-stage-bell" title="Unread notifications" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="pw-bell-dot"></span>
+          </span>
+          <span class="pw-av pw-av-1" title="Alex Chen">AC</span>
+          <span class="pw-av pw-av-2" title="Maya Haddad">MH</span>
+          <span class="pw-av pw-av-more">+2</span>
+        </div>
+      </div>
+
+      <div class="pw-frame pw-stage-frame">
+        <Image
+          src={boardLight}
+          alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (light)"
+          class="pw-img-light"
+          fetchpriority="high"
+        />
+        <Image
+          src={boardDark}
+          alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (dark)"
+          class="pw-img-dark"
+          fetchpriority="high"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="pw-marquee" aria-label="Patchwork core capabilities">
+    <div class="pw-marquee-track">
+      <span>PostgreSQL LISTEN/NOTIFY</span><span>&middot;</span>
+      <span>GIN Full-Text Search</span><span>&middot;</span>
+      <span>MinIO Presigned Uploads</span><span>&middot;</span>
+      <span>Ctrl+K Labeled Pills</span><span>&middot;</span>
+      <span>AES-256-GCM Setup Token</span><span>&middot;</span>
+      <span>HMAC-SHA256 Webhooks</span><span>&middot;</span>
+      <span>Native Windows &amp; Linux</span><span>&middot;</span>
+      <span>Zero Docker</span><span>&middot;</span>
+      <span>AGPL-3.0</span><span>&middot;</span>
+      <span>PostgreSQL LISTEN/NOTIFY</span><span>&middot;</span>
+      <span>GIN Full-Text Search</span><span>&middot;</span>
+      <span>MinIO Presigned Uploads</span><span>&middot;</span>
+      <span>Ctrl+K Labeled Pills</span><span>&middot;</span>
+      <span>AES-256-GCM Setup Token</span><span>&middot;</span>
+      <span>HMAC-SHA256 Webhooks</span><span>&middot;</span>
+      <span>Native Windows &amp; Linux</span><span>&middot;</span>
+      <span>Zero Docker</span><span>&middot;</span>
+      <span>AGPL-3.0</span><span>&middot;</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pw-scroll-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100; pointer-events: none; }
+  .pw-scroll-progress-bar { height: 100%; width: 100%; background: var(--pw-accent); transform-origin: 0 50%; transform: scaleX(0); will-change: transform; }
+  .pw-hero-cinematic { position: relative; overflow: hidden; padding: clamp(3rem, 6vw, 5.5rem) 0 clamp(2.5rem, 5vw, 4rem); border-bottom: 1px solid var(--pw-border); }
+  .pw-hero-ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .pw-hero-grid-bg { position: absolute; inset: -48px; background-image: linear-gradient(to right, var(--pw-border) 1px, transparent 1px), linear-gradient(to bottom, var(--pw-border) 1px, transparent 1px); background-size: 48px 48px; opacity: 0.55; mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 35%, transparent 100%); animation: pw-grid-drift 28s linear infinite; }
+  .pw-hero-glow { position: absolute; top: -180px; left: 50%; width: min(920px, 110vw); height: 460px; transform: translateX(-50%); background: radial-gradient(circle, color-mix(in oklab, var(--pw-accent) 22%, transparent) 0%, transparent 68%); opacity: 0.85; }
+  @keyframes pw-grid-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(48px, 48px, 0); } }
+  .pw-hero-inner { position: relative; z-index: 1; display: grid; gap: 2rem; }
+  .pw-hero-copy { max-width: 66rem; }
+  .pw-eyebrow { margin: 0 0 1rem; font-family: var(--pw-font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em; color: var(--pw-accent); }
+  .pw-hero-h1 { font-size: clamp(2.45rem, 5.1vw, 4.35rem); line-height: 1.06; letter-spacing: -0.03em; margin: 0 0 1.25rem; max-width: 24ch; display: flex; flex-wrap: wrap; column-gap: 0.28em; row-gap: 0.05em; }
+  .pw-h1-clip { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.06em; }
+  .pw-h1-word { display: inline-block; transform: translate3d(0, 110%, 0); opacity: 0; animation: pw-word-rise 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: calc(80ms + var(--wi, 0) * 45ms); }
+  @keyframes pw-word-rise { to { transform: translate3d(0, 0, 0); opacity: 1; } }
+  .pw-term-line { display: inline-block; opacity: 0; transform: translate3d(-6px, 0, 0); animation: pw-term-in 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: calc(320ms + var(--tl, 0) * 140ms); }
+  @keyframes pw-term-in { to { opacity: 1; transform: translate3d(0, 0, 0); } }
+  .pw-term-cursor { display: inline-block; width: 7px; height: 1em; margin-left: 4px; vertical-align: -2px; background: var(--pw-accent); animation: pw-cursor-blink 1.05s steps(2, start) infinite; }
+  @keyframes pw-cursor-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  .pw-hero-glow { animation: pw-glow-float 9s ease-in-out infinite alternate; }
+  @keyframes pw-glow-float { from { transform: translateX(-50%) scale(1); opacity: 0.75; } to { transform: translateX(-46%) scale(1.08); opacity: 1; } }
+  .pw-hero-stage { transform: perspective(1200px) rotateX(var(--pw-stage-tilt, 3deg)) rotateY(var(--pw-stage-rx, 0deg)) translate3d(0, var(--pw-stage-y, 0px), 0); }
+  .pw-lead { font-size: clamp(1.04rem, 1.35vw, 1.2rem); line-height: 1.6; color: var(--pw-ink-secondary); max-width: 64ch; margin: 0 0 1.75rem; }
+  .pw-cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .pw-btn { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0.6rem 1.2rem; border-radius: var(--pw-radius-sm); font-weight: 600; text-decoration: none; border: 1px solid transparent; transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease, border-color 180ms ease; }
+  .pw-btn:hover { transform: translateY(-1px); }
+  .pw-btn-primary { background: var(--pw-accent); color: #ffffff; }
+  .pw-btn-primary:hover { background: var(--pw-accent-hover); }
+  .pw-btn-primary svg { transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .pw-btn-primary:hover svg { transform: translateX(3px); }
+  :root[data-theme="dark"] .pw-btn-primary { color: #0d1014; }
+  .pw-btn-secondary { background: var(--pw-surface); color: var(--pw-ink); border-color: var(--pw-border); }
+  .pw-btn-ghost { color: var(--pw-ink); }
+  [data-pw-stagger] { opacity: 0; transform: translate3d(0, 18px, 0); filter: blur(6px); animation: pw-rise 780ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  [data-pw-stagger="0"] { animation-delay: 40ms; }
+  [data-pw-stagger="1"] { animation-delay: 110ms; }
+  [data-pw-stagger="2"] { animation-delay: 190ms; }
+  [data-pw-stagger="3"] { animation-delay: 270ms; }
+  @keyframes pw-rise { to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); } }
+  .pw-btn-magnetic { will-change: transform; }
+  .pw-stage-pill-bar.is-swapping .pw-stage-cmd,
+  .pw-stage-pill-bar.is-swapping .pw-stage-pill {
+    animation: pw-pill-swap 340ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes pw-pill-swap {
+    0% { opacity: 0.25; transform: translate3d(0, 5px, 0); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  .pw-hero-terminal-wrap { max-width: 44rem; }
+  .pw-terminal { background: var(--pw-rail-bg); color: var(--pw-rail-ink); border-radius: var(--pw-radius-md); border: 1px solid #28313e; overflow: hidden; }
+  .pw-terminal-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid #222b37; font-size: 0.76rem; color: #9aa6b5; }
+  .pw-terminal-dots { display: inline-flex; gap: 0.35rem; }
+  .pw-terminal-dots span { width: 8px; height: 8px; border-radius: 999px; background: #334050; }
+  .pw-terminal-title { font-family: var(--pw-font-mono); font-size: 0.74rem; }
+  .pw-copy-btn { background: #1d2530; color: #eaeef3; border: 1px solid #2d3847; border-radius: 4px; padding: 0.25rem 0.6rem; font-family: var(--pw-font-mono); font-size: 0.72rem; cursor: pointer; min-height: 28px; }
+  .pw-terminal-body { padding: 0.85rem 1rem; }
+  .pw-terminal pre { margin: 0; font-family: var(--pw-font-mono); font-size: 0.8rem; line-height: 1.55; overflow-x: auto; }
+  .pw-tok-cmd { color: #ff8a61; font-weight: 500; }
+  .pw-tok-dim { color: #7c899b; }
+  .pw-hero-stage { margin-top: 0.75rem; border: 1px solid var(--pw-border); border-radius: var(--pw-radius-md); background: var(--pw-surface); overflow: hidden; box-shadow: 0 24px 60px -28px rgba(13, 16, 20, 0.28); transform: perspective(1200px) rotateX(var(--pw-stage-tilt, 3deg)) translate3d(0, var(--pw-stage-y, 0px), 0); transition: transform 180ms ease-out; will-change: transform; }
+  .pw-stage-chrome { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 1rem; border-bottom: 1px solid var(--pw-border); background: var(--pw-surface-muted); }
+  .pw-stage-left { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; font-weight: 600; }
+  .pw-stage-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--pw-accent); }
+  .pw-stage-live { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--pw-font-mono); font-size: 0.7rem; font-weight: 500; color: var(--pw-ink-secondary); padding: 0.15rem 0.5rem; border: 1px solid var(--pw-border); border-radius: 999px; background: var(--pw-surface); }
+  .pw-pulse-dot { width: 6px; height: 6px; border-radius: 999px; background: #16a34a; animation: pw-pulse 2.2s ease-in-out infinite; }
+  @keyframes pw-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  .pw-stage-pill-bar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.25rem 0.55rem; border-radius: 6px; border: 1px solid var(--pw-border); background: var(--pw-surface); font-family: var(--pw-font-mono); font-size: 0.75rem; }
+  .pw-stage-cmd { color: var(--pw-accent); font-weight: 600; }
+  .pw-stage-pill { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid var(--pw-border); background: var(--pw-surface-muted); }
+  .pw-stage-pill-k { color: var(--pw-ink-muted); }
+  .pw-stage-pill-v { color: var(--pw-ink); font-weight: 500; }
+  .pw-stage-kbd { font-family: var(--pw-font-mono); font-size: 0.68rem; padding: 0.1rem 0.35rem; border: 1px solid var(--pw-border); border-radius: 3px; color: var(--pw-ink-muted); }
+  .pw-stage-presence { display: inline-flex; align-items: center; }
+  .pw-stage-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-right: 0.65rem; color: var(--pw-ink-secondary); animation: pw-bell-ring 5s ease-in-out infinite; transform-origin: 50% 2px; }
+  .pw-bell-dot { position: absolute; top: -1px; right: -1px; width: 6px; height: 6px; border-radius: 999px; background: var(--pw-accent); }
+  @keyframes pw-bell-ring { 0%, 84%, 100% { transform: rotate(0deg); } 87% { transform: rotate(12deg); } 90% { transform: rotate(-10deg); } 93% { transform: rotate(7deg); } 96% { transform: rotate(-4deg); } }
+  .pw-av { width: 24px; height: 24px; border-radius: 999px; border: 2px solid var(--pw-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; margin-left: -6px; }
+  .pw-av:first-of-type { margin-left: 0; }
+  .pw-av-1 { background: #1d4ed8; color: #ffffff; }
+  .pw-av-2 { background: #c84317; color: #ffffff; }
+  .pw-av-more { background: var(--pw-surface); color: var(--pw-ink-secondary); border-color: var(--pw-border); }
+  .pw-stage-frame { border: 0; border-radius: 0; }
+  .pw-stage-frame img { display: block; width: 100%; height: auto; }
+  :global(.pw-img-dark) { display: none !important; }
+  :global(:root[data-theme="dark"] .pw-img-light) { display: none !important; }
+  :global(:root[data-theme="dark"] .pw-img-dark) { display: block !important; }
+  .pw-marquee { margin-top: clamp(2.25rem, 4vw, 3.25rem); border-top: 1px solid var(--pw-border); padding-top: 1rem; overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
+  .pw-marquee-track { display: flex; align-items: center; gap: 1.15rem; width: max-content; font-family: var(--pw-font-mono); font-size: 0.78rem; color: var(--pw-ink-muted); animation: pw-marquee-scroll 34s linear infinite; will-change: transform; }
+  .pw-marquee:hover .pw-marquee-track { animation-play-state: paused; }
+  @keyframes pw-marquee-scroll { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pw-hero-grid-bg, .pw-hero-glow, .pw-pulse-dot, .pw-stage-bell, .pw-marquee-track, .pw-h1-word, .pw-term-line, .pw-term-cursor, [data-pw-stagger] { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+    .pw-hero-stage { transform: none !important; transition: none !important; }
+  }
+</style>
+
+<script>
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll("[data-copy-text]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const text = btn.getAttribute("data-copy-text") || "";
+      const label = btn.querySelector("[data-copy-label]");
+      try {
+        await navigator.clipboard.writeText(text);
+        if (label) { label.textContent = "Copied"; setTimeout(() => { label.textContent = "Copy"; }, 1600); }
+      } catch { if (label) label.textContent = "Select & copy"; }
+    });
+  });
+  const stage = document.querySelector("[data-pw-hero-stage]") as HTMLElement | null;
+  const progressBar = document.querySelector("[data-pw-scroll-progress]") as HTMLElement | null;
+  if ((stage || progressBar) && !reducedMotion) {
+    let curTilt = 3.5;
+    let curY = 10;
+    let curProg = 0;
+    let rafId = 0;
+    const step = () => {
+      let active = false;
+      if (stage) {
+        const rect = stage.getBoundingClientRect();
+        const vh = window.innerHeight || 800;
+        const p = Math.max(0, Math.min(1, 1 - rect.top / (vh * 0.85)));
+        const targetTilt = (1 - p) * 3.5;
+        const targetY = (1 - p) * 10;
+        curTilt += (targetTilt - curTilt) * 0.14;
+        curY += (targetY - curY) * 0.14;
+        stage.style.setProperty("--pw-stage-tilt", `${curTilt.toFixed(2)}deg`);
+        stage.style.setProperty("--pw-stage-y", `${curY.toFixed(2)}px`);
+        if (Math.abs(targetTilt - curTilt) > 0.02 || Math.abs(targetY - curY) > 0.05) active = true;
+      }
+      if (progressBar) {
+        const docH = document.documentElement.scrollHeight - window.innerHeight;
+        const targetProg = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
+        curProg += (targetProg - curProg) * 0.18;
+        progressBar.style.transform = `scaleX(${curProg.toFixed(4)})`;
+        if (Math.abs(targetProg - curProg) > 0.0005) active = true;
+      }
+      rafId = active ? requestAnimationFrame(step) : 0;
+    };
+    const kick = () => { if (!rafId) rafId = requestAnimationFrame(step); };
+    window.addEventListener("scroll", kick, { passive: true });
+    kick();
+  }
+
+  // Interactive subtle 3D Y-tilt on Hero Stage hover
+  if (stage && !reducedMotion) {
+    stage.addEventListener("mousemove", (e) => {
+      const r = stage.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width - 0.5;
+      stage.style.setProperty("--pw-stage-rx", `${(nx * 2.4).toFixed(2)}deg`);
+    });
+    stage.addEventListener("mouseleave", () => {
+      stage.style.setProperty("--pw-stage-rx", "0deg");
+    });
+  }
+
+  // Magnetic CTA micro-interaction
+  const magBtn = document.querySelector(".pw-btn-magnetic") as HTMLElement | null;
+  if (magBtn && !reducedMotion) {
+    magBtn.addEventListener("mousemove", (e) => {
+      const r = magBtn.getBoundingClientRect();
+      const dx = ((e.clientX - r.left) / r.width - 0.5) * 6;
+      const dy = ((e.clientY - r.top) / r.height - 0.5) * 4;
+      magBtn.style.transform = `translate3d(${dx.toFixed(1)}px, ${(dy - 1).toFixed(1)}px, 0)`;
+    });
+    magBtn.addEventListener("mouseleave", () => {
+      magBtn.style.transform = "";
+    });
+  }
+
+  const stageBar = document.querySelector("[data-pw-stage-bar]");
+  const cmdEl = document.querySelector("[data-pw-type-cmd]");
+  const k1El = document.querySelector("[data-pw-type-k1]");
+  const k2El = document.querySelector("[data-pw-type-k2]");
+  const arg1El = document.querySelector("[data-pw-type-arg1]");
+  const arg2El = document.querySelector("[data-pw-type-arg2]");
+  const samples = [
+    { cmd: "/move", k1: "ticket:", a1: "API-14", k2: "column:", a2: "Done" },
+    { cmd: "/new", k1: "title:", a1: "Fix SSE backoff", k2: "priority:", a2: "high" },
+    { cmd: "/watch", k1: "ticket:", a1: "CORE-8", k2: "mode:", a2: "subscribed" },
+    { cmd: "/assign", k1: "ticket:", a1: "WEB-21", k2: "user:", a2: "@maya" },
+  ];
+  let idx = 0;
+  if (cmdEl && k1El && k2El && arg1El && arg2El && !reducedMotion) {
+    setInterval(() => {
+      idx = (idx + 1) % samples.length;
+      const next = samples[idx];
+      if (stageBar) {
+        stageBar.classList.remove("is-swapping");
+        void (stageBar as HTMLElement).offsetWidth;
+        stageBar.classList.add("is-swapping");
+      }
+      cmdEl.textContent = next.cmd;
+      k1El.textContent = next.k1;
+      arg1El.textContent = next.a1;
+      k2El.textContent = next.k2;
+      arg2El.textContent = next.a2;
+    }, 2600);
+  }
+</script>

@@ -27,8 +27,42 @@ All keyframes and transitions animate **`transform` and `opacity` only** — nev
 ## Shared Primitives
 
 - `src/components/ui/motion.tsx`: `Presence`, `Fade`, `Slide`, `Scale`, `Collapse` (via `grid-template-rows`), `RouteProgressBar`, and `RegionErrorBoundary`.
-- `src/components/ui/skeleton.tsx`: `Skeleton`, `SkeletonText`, `SkeletonCircle`, `SkeletonChip`, `SkeletonRegion`, and `RevalidateBar`.
+- `src/components/ui/skeleton.tsx`: `Surface`, `Skeleton`, `SkeletonText`, `SkeletonCircle`, `SkeletonChip`, `SkeletonRegion`, and `RevalidateBar`.
 - `src/components/skeletons/`: Domain-matched skeletons (`WorkspaceSkeleton`, `BoardSkeleton`, `TicketPanelSkeleton`, `SystemConfigSkeleton`, `SetupWizardSkeleton`, `SearchPaletteSkeleton`) plus Next.js App Router `loading.tsx` boundaries.
+
+## Surface-Derived Skeleton Tokens
+
+Skeleton colors are derived from their immediate surface via `color-mix(in oklab, var(--sk-surface), var(--sk-ink) ...)` with solid fallbacks, so skeletons maintain quiet contrast (`1.08–1.50` WCAG ratio, `0.03–0.10` OKLCH lightness delta) on every background in both light and dark themes:
+
+| Surface (`data-sk-surface`) | Light Base (`--sk-surface`) | Dark Base (`--sk-surface`) | Direction |
+| --- | --- | --- | --- |
+| `page`, `card`, `input`, `code` | `--pw-bg` (`#F6F5F2`) | `--pw-bg` (`#0D1014`) | Darker in light, lighter in dark |
+| `surface`, `panel`, `popover`, `dialog`, `table-row`, `command` | `--pw-surface` (`#FFFFFF`) | `--pw-surface` (`#13181E`) | Darker in light, lighter in dark |
+| `rail` | `--pw-rail-bg` (`#141920`) | `--pw-rail-bg` (`#090C10`) | Always lighter (dark rail) |
+| `table-header`, `table-stripe`, `chip` | `--pw-surface-muted` (`#ECEAE4`) | `--pw-surface-muted` (`#1A2129`) | Darker in light, lighter in dark |
+| `table-hover` | `--pw-surface-hover` (`#F0EFEA`) | `--pw-surface-hover` (`#1E2630`) | Darker in light, lighter in dark |
+| `accent`, `table-selected` | `--pw-accent-soft` (`#FCECE6`) | `--pw-accent-soft` (`#2D1A14`) | Tinted toward surface ink |
+| `success`, `warning`, `destructive`, `info` | Semantic soft tokens | Dark semantic soft tokens | Tinted toward surface ink |
+
+### Adding a New Surface
+
+1. Wrap every container that renders skeletons in `<Surface variant="...">` (or set `data-sk-surface="..."`). Nested surfaces automatically override `--sk-surface` and recompute `--sk-base` and `--sk-shine`.
+2. Never hardcode hex, `rgb()`, `hsl()`, or Tailwind gray utility classes inside skeleton components.
+3. `prefers-contrast: more` increases `--sk-base-mix` to `13%`, and `forced-colors: active` draws a `1px solid CanvasText` outline with no shimmer.
+
+## Allowed Exceptions
+
+All data-dependent regions must render geometry-matched skeletons. Allowed exceptions (documented in `loading-allowlist.yaml`):
+- In-button pending states for user-initiated actions (e.g. "Saving…", inline spinner inside the button).
+- Determinate progress bars (uploads, setup progress) and `RouteProgressBar` for stale-while-revalidate.
+- Short inline autosave status ("Saving…" / "Saved").
+- The native installer CLI.
+
+## Latency Harness, Dev Gallery, and Enforcement
+
+- **Dev Gallery**: Visit `/dev/skeletons` in development (`npm run dev`) to inspect all 25 surface variants, nested surfaces, theme/reduced-motion/forced-colors toggles, and region compositions. Returns `404` in production builds.
+- **Latency Harness**: Set `PATCHWORK_TEST_LATENCY_MS=1800` in non-production environments to delay `/api/*` requests and inspect skeleton geometry and zero-CLS transitions.
+- **Static Enforcement**: `npm run loading:check` (`scripts/check-loading-states.mjs`, run by `npm run lint` and `npm run verify`) fails on forbidden loading text literals, un-allowlisted spinners, `fallback={null}`, `if (loading) return null`, hardcoded skeleton colors, or route segments missing `loading.tsx`.
 
 ## Anti-Flash & Stale-While-Revalidate
 

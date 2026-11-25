@@ -11,10 +11,10 @@ function renderReadmeRoadmapSection(roadmap, versionInfo, docsSiteUrl) {
   ];
   for (const cat of roadmap.categories || []) {
     const titles = (roadmap.items || [])
-      .filter((it) => it.category === cat.id)
+      .filter((it) => it.category === cat.id && it.status !== "shipped")
       .map((it) => it.title)
       .join(", ");
-    lines.push(`- **${cat.title}**: ${titles}`);
+    if (titles) lines.push(`- **${cat.title}**: ${titles}`);
   }
   lines.push(
     "",
@@ -69,6 +69,7 @@ function buildProjectTree(repoRoot) {
 function buildFeaturesList() {
   return [
     "- **Boards & tickets**: Custom Kanban columns per team with drag-and-drop, WIP gauges, Calendar view, markdown, assignees, priorities, labels, comments, and activity history.",
+    "- **Collaboration & alerts**: Ticket watchers (`/watch`, `/mute`, `watching:me`), `@mentions` with a real-time notification bell inbox, live viewer presence and typing indicators, optional SMTP emails/digests, and signed outbound webhooks.",
     "- **Real-time sync**: Live board updates pushed over PostgreSQL `LISTEN/NOTIFY` and Server-Sent Events (`/api/events`).",
     "- **Scoped search**: Full-text search across tickets, comments, and extracted attachment text (`.pdf`, `.txt`, `.md`, `.csv`, `.json`) enforced by RBAC.",
     "- **Command bar**: Spotlight palette (`Ctrl+K` / `Cmd+K`) with filters, slash commands, inline ghost hints, and session history.",

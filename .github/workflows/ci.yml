@@ -1,0 +1,116 @@
+name: Cross-Platform CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    name: Native (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/patchwork_test
+      S3_ENDPOINT: http://127.0.0.1:9000
+      MINIO_PUBLIC_URL: http://127.0.0.1:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: patchwork-test
+      SESSION_SECRET: patchwork-ci-session-secret-32-bytes-minimum
+      CSRF_SECRET: patchwork-ci-csrf-secret-32-bytes-minimum-key
+      TOKEN_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix website ci
+
+      - name: Start native PostgreSQL (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+          sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='patchwork_test'" | grep -q 1 || sudo -u postgres createdb patchwork_test
+
+      - name: Start native PostgreSQL (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $svc = Get-Service -Name "postgresql*" | Select-Object -First 1
+          if ($svc -and $svc.Status -ne "Running") { Start-Service $svc.Name }
+          $pgBin = Get-ChildItem "C:\Program Files\PostgreSQL\*\bin" -Directory -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
+          if ($pgBin) { $env:PATH = "$pgBin;$env:PATH" }
+          $env:PGPASSWORD = "postgres"
+          psql -h 127.0.0.1 -U postgres -d postgres -c "SELECT 1;"
+
+      - name: Download verified MinIO binary (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p ./bin
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then SUFFIX="linux-arm64"; else SUFFIX="linux-amd64"; fi
+          TAG="RELEASE.2025-09-07T16-13-09Z"
+          curl -fsSL "https://github.com/minio/minio/releases/download/${TAG}/minio.${SUFFIX}.${TAG}" -o ./bin/minio
+          curl -fsSL "https://github.com/minio/minio/releases/download/${TAG}/minio.${SUFFIX}.${TAG}.sha256sum" -o ./bin/minio.sha256sum
+          EXPECTED=$(awk '{print $1}' ./bin/minio.sha256sum)
+          echo "${EXPECTED}  ./bin/minio" | sha256sum -c -
+          chmod +x ./bin/minio
+
+      - name: Download verified MinIO binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .\bin | Out-Null
+          $tag = "RELEASE.2025-09-07T16-13-09Z"
+          Invoke-WebRequest -Uri "https://github.com/minio/minio/releases/download/$tag/minio.windows-amd64.$tag.exe" -OutFile .\bin\minio.exe
+          $sumText = (Invoke-WebRequest -Uri "https://github.com/minio/minio/releases/download/$tag/minio.windows-amd64.$tag.exe.sha256sum").Content.Trim()
+          $expected = ($sumText -split '\s+')[0].ToLower()
+          $actual = (Get-FileHash .\bin\minio.exe -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) { throw "MinIO SHA-256 mismatch: expected $expected, got $actual" }
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      - name: Run full native verification suite
+        run: npm run verify
+
+      - name: Run non-interactive CLI installer smoke test
+        run: node scripts/setup.mjs --check
+
+  easy-install:
+    name: Easy Install Clean Env (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Easy-mode clean install + attachment E2E
+        run: npx vitest run tests/easy-install.test.ts
+

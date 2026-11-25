@@ -123,12 +123,52 @@ export const TeamDefaultColumnsSchema = z.record(
 ).default({});
 export type TeamDefaultColumns = z.infer<typeof TeamDefaultColumnsSchema>;
 
+function isValidTimeZone(tz: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const SmtpSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  host: z.string().max(255).default(""),
+  port: z.number().int().min(1).max(65535).default(587),
+  security: z.enum(["none", "starttls", "tls"]).default("starttls"),
+  username: z.string().max(255).default(""),
+  passwordCiphertext: z.string().nullable().default(null),
+  passwordIv: z.string().nullable().default(null),
+  passwordAuthTag: z.string().nullable().default(null),
+  passwordKeyVersion: z.number().int().min(1).default(1),
+  fromName: z.string().max(120).default("Patchwork"),
+  fromAddress: z.string().max(254).default(""),
+  replyTo: z.string().max(254).default(""),
+});
+
+export const NotificationsSettingsSchema = z.object({
+  defaultTimezone: z
+    .string()
+    .refine(isValidTimeZone, "Must be a valid IANA time zone (e.g. UTC, America/New_York)")
+    .default("UTC"),
+  retentionReadDays: z.number().int().min(1).max(3650).default(90),
+  retentionUnreadCap: z.number().int().min(50).max(10000).default(500),
+  deliveryLogRetentionDays: z.number().int().min(1).max(365).default(30),
+  presenceEnabled: z.boolean().default(true),
+  includeTicketTextInEmails: z.boolean().default(false),
+  allowPrivateNetworkWebhooks: z.boolean().default(false),
+  smtp: SmtpSettingsSchema.default(() => SmtpSettingsSchema.parse({})),
+});
+export type NotificationsSettings = z.infer<typeof NotificationsSettingsSchema>;
+
 export const SETTINGS_SCHEMAS = {
   security: SecuritySettingsSchema,
   storage: StorageSettingsSchema,
   integrations: IntegrationsSettingsSchema,
   appearance: AppearanceSettingsSchema,
   team_default_columns: TeamDefaultColumnsSchema,
+  notifications: NotificationsSettingsSchema,
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS_SCHEMAS;

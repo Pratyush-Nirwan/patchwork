@@ -192,7 +192,13 @@ async function main() {
         await page.waitForTimeout(250);
         await capture("command-palette");
 
-        // 4. Full-text search inside Command Palette
+        // 4. Full-text search inside Command Palette (close pill mode and reopen palette)
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(150);
+        await page.keyboard.press("Control+k");
+        await page.waitForSelector('[data-testid="global-search-input"]', {
+          timeout: 5000,
+        });
         await page.fill('[data-testid="global-search-input"]', "auth");
         await page.waitForFunction(
           () => {

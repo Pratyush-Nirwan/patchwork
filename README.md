@@ -12,7 +12,7 @@
 
 Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boards — no Docker required.
 
-![Version v0.7.1-beta](https://img.shields.io/badge/version-v0.7.1--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square) [![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)
+![Version v0.8.0-beta](https://img.shields.io/badge/version-v0.8.0--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square) [![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)
 
 [Documentation](https://pratyush-nirwan.github.io/patchwork/) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](CONTRIBUTING.md)
 
@@ -65,6 +65,7 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 ## Features
 
 - **Boards & tickets**: Custom Kanban columns per team with drag-and-drop, WIP gauges, Calendar view, markdown, assignees, priorities, labels, comments, and activity history.
+- **Collaboration & alerts**: Ticket watchers (`/watch`, `/mute`, `watching:me`), `@mentions` with a real-time notification bell inbox, live viewer presence and typing indicators, optional SMTP emails/digests, and signed outbound webhooks.
 - **Real-time sync**: Live board updates pushed over PostgreSQL `LISTEN/NOTIFY` and Server-Sent Events (`/api/events`).
 - **Scoped search**: Full-text search across tickets, comments, and extracted attachment text (`.pdf`, `.txt`, `.md`, `.csv`, `.json`) enforced by RBAC.
 - **Command bar**: Spotlight palette (`Ctrl+K` / `Cmd+K`) with filters, slash commands, inline ghost hints, and session history.
@@ -165,12 +166,11 @@ See [Contributing & Extending](website/src/content/docs/documentation/developmen
 
 ## Status & Roadmap
 
-> **Beta software (v0.7.1-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
+> **Beta software (v0.8.0-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
 
-Planned for **v1.0.0** (not yet available in v0.7.1-beta). This roadmap describes planned work. Scope and timing may change.
+Planned for **v1.0.0** (not yet available in v0.8.0-beta). This roadmap describes planned work. Scope and timing may change.
 
 - **Ticketing and Workflow**: Ticket dependencies and subtasks, Sprints and cycles, Ticket templates and recurring tickets, Bulk actions and multi-select, Saved views and custom filters
-- **Collaboration and Notifications**: In-app notification center and @mentions, Ticket watchers, Outbound email and webhook alerts, Presence and typing indicators
 - **Views and Analytics**: List and table view, My Work, Cycle time and WIP metrics
 - **Git and Developer Integrations**: Inbound GitHub and GitLab webhooks, Email-to-ticket and public intake form, Personal API tokens
 - **Security, Audit, and Operations**: Audit log viewer, Two-factor authentication, passkeys, and SSO, Backup and restore UI

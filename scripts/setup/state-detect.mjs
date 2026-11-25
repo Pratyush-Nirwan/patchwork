@@ -95,6 +95,15 @@ export async function detectInstallState(options = {}) {
     allTablesPresent: false,
   };
 
+  let workerStatus = {
+    status: "offline",
+    mode: envParsed.values.WORKER_MODE === "separate" ? "separate" : "embedded",
+    lastHeartbeatAt: null,
+    processedEvents: 0,
+    pendingEvents: 0,
+    deadLetterEvents: 0,
+    lastError: null,
+  };
   let tokenState = {
     exists: false,
     confirmed: false,
@@ -165,6 +174,28 @@ export async function detectInstallState(options = {}) {
             if (wizRes.rowCount > 0) {
               wizardCompleted = Boolean(wizRes.rows[0].is_completed);
             }
+          }
+
+          if (!migrationStatus.missingTables.includes("worker_health")) {
+            const whRes = await client.query(
+              `SELECT mode, last_heartbeat_at, processed_events, last_error FROM worker_health WHERE id = 'default' LIMIT 1`
+            );
+            const evRes = await client.query(
+              `SELECT COUNT(*) FILTER (WHERE processed_at IS NULL AND dead_lettered_at IS NULL)::int AS pending,
+                      COUNT(*) FILTER (WHERE dead_lettered_at IS NOT NULL)::int AS dead
+               FROM domain_events`
+            ).catch(() => ({ rows: [{ pending: 0, dead: 0 }] }));
+            const row = whRes.rows[0];
+            const ageMs = row ? Date.now() - new Date(row.last_heartbeat_at).getTime() : Infinity;
+            workerStatus = {
+              status: !row ? "offline" : ageMs <= 120000 ? "healthy" : "stale",
+              mode: row?.mode || (envParsed.values.WORKER_MODE === "separate" ? "separate" : "embedded"),
+              lastHeartbeatAt: row ? new Date(row.last_heartbeat_at).toISOString() : null,
+              processedEvents: row?.processed_events ?? 0,
+              pendingEvents: evRes.rows[0]?.pending ?? 0,
+              deadLetterEvents: evRes.rows[0]?.dead ?? 0,
+              lastError: row?.last_error || null,
+            };
           }
         } finally {
           client.release();
@@ -349,6 +380,7 @@ export async function detectInstallState(options = {}) {
     installedDisplayVersion: installedVersion ? `v${installedVersion.replace(/^v/, "")}` : null,
     upgradeAvailable,
     services,
+    worker: workerStatus,
   };
 }
 
@@ -407,6 +439,16 @@ export function formatStateTable(state) {
         : "⚠ Not built (run npm run docs:build)",
     ],
     ["Systemd services (Linux)", state.services.summary],
+    [
+      "Background worker",
+      state.worker
+        ? state.worker.status === "healthy"
+          ? `✔ Healthy (${state.worker.mode}, ${state.worker.pendingEvents} pending, ${state.worker.deadLetterEvents} dead)`
+          : state.worker.status === "stale"
+          ? `⚠ Stale heartbeat (${state.worker.mode}, ${state.worker.pendingEvents} pending)`
+          : `Stopped / no heartbeat yet (${state.worker.mode})`
+        : "Unknown",
+    ],
   ];
   if (state.mode === "easy" && state.easy) {
     const mb = (state.easy.dataDiskBytes / (1024 * 1024)).toFixed(1);

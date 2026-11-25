@@ -1,60 +1,64 @@
 "use client";
 
-import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-AlertTriangle,BookOpen,Check,FileText,FolderKanban,
-Hash,
-HelpCircle,
-LayoutGrid,MessageSquare,Tag,
-Terminal,
-Ticket,User,
-Users
+  AlertTriangle, BookOpen, Check, FileText, FolderKanban,
+  Hash,
+  HelpCircle,
+  LayoutGrid, MessageSquare, Tag,
+  Terminal,
+  Ticket, User,
+  Users
 } from "lucide-react";
 import {
-Command,
-CommandDialog,
-CommandEmpty,
-CommandGroup,
-CommandInput,
-CommandItem,
-CommandList,
-CommandSeparator,
-CommandShortcut,
-type CommandGhostConfig,
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+  type CommandGhostConfig,
 } from "@/components/ui/command";
 import { SearchPaletteSkeleton } from "@/components/skeletons/SearchPaletteSkeleton";
 import { RouteProgressBar } from "@/components/ui/motion";
 import {
-COMMAND_REGISTRY,
-filterCommandsByQuery,
-findCommandDefinition,
-formatUsage,
-isRoleAllowedForCommand,
-type CommandArgAutocomplete,
-type CommandDefinition,
+  COMMAND_REGISTRY,
+  filterCommandsByQuery,
+  findCommandDefinition,
+  formatUsage,
+  isRoleAllowedForCommand,
+  type CommandArgAutocomplete,
+  type CommandArgSpec,
+  type CommandDefinition,
+  type CommandOptionSpec,
 } from "@/lib/commands/registry";
 import {
-buildCommandNameGhostHint,
-buildSlashGhostHint,
-parseSlashCommand,
-type CommandTokenSpan
+  buildCommandNameGhostHint,
+  buildSlashGhostHint,
+  parseSlashCommand,
+  serializeSlashCommand,
+  type CommandTokenSpan
 } from "@/lib/commands/parser";
 import {
-loadCommandHistory,
-recordCommandHistory,
+  loadCommandHistory,
+  recordCommandHistory,
 } from "@/lib/commands/history";
-import { formatShortcut,type ShortcutMap } from "@/lib/shortcuts";
+import { formatShortcut, type ShortcutMap } from "@/lib/shortcuts";
 import type { EffectiveRole } from "@/db/schema";
-import type { ScopedSearchGroups,SearchResultItem } from "@/lib/search";
+import type { ScopedSearchGroups, SearchResultItem } from "@/lib/search";
 
 import {
-clearRecentPaletteItems,
-loadRecentPaletteItems,
-recordRecentPaletteItem,
-type RecentPaletteItem,
+  clearRecentPaletteItems,
+  loadRecentPaletteItems,
+  recordRecentPaletteItem,
+  type RecentPaletteItem,
 } from "./command-palette/palette-history";
 import { getCommandIcon } from "./command-palette/palette-icons";
-import { validateActiveArgument } from "./command-palette/palette-validation";
+import { validateActiveArgument, validatePillArguments } from "./command-palette/palette-validation";
+import { SlashPillRow, type SlashPillItem } from "./command-palette/SlashPillRow";
 export { clearRecentPaletteItems };
 
 
@@ -75,6 +79,7 @@ interface CommandPaletteProps {
   orgId?: string;
   teamId?: string;
   boardId?: string;
+  ticketId?: string;
   boards: Array<{
     id: string;
     name: string;
@@ -138,6 +143,51 @@ const DOCS_TOPICS: Array<{ slug: string; label: string; path: string }> = [
   { slug: "troubleshooting", label: "Troubleshooting & FAQ", path: "/documentation/operations/troubleshooting/" },
 ];
 
+function argToPill(arg: CommandArgSpec, value = ""): SlashPillItem {
+  return {
+    id: `arg:${arg.name}`,
+    kind: "positional",
+    key: arg.name,
+    label: arg.label,
+    placeholder: arg.typeName,
+    argType: arg.argType,
+    autocomplete: arg.autocomplete,
+    description: arg.description,
+    required: Boolean(arg.required),
+    value,
+  };
+}
+
+function optionToPill(opt: CommandOptionSpec, value = ""): SlashPillItem {
+  return {
+    id: `opt:${opt.key}`,
+    kind: "option",
+    key: opt.key,
+    label: opt.key,
+    placeholder: opt.typeName,
+    argType: opt.argType,
+    autocomplete: opt.autocomplete,
+    description: opt.description,
+    required: false,
+    value,
+  };
+}
+
+function serializePills(def: CommandDefinition, pillList: SlashPillItem[]): string {
+  const posValues: string[] = [];
+  const optValues: Record<string, string> = {};
+  def.args.forEach((arg, idx) => {
+    const found = pillList.find((p) => p.kind === "positional" && p.key === arg.name);
+    posValues[idx] = found ? found.value : "";
+  });
+  for (const p of pillList) {
+    if (p.kind === "option") {
+      optValues[p.key] = p.value;
+    }
+  }
+  return serializeSlashCommand(def, posValues, optValues);
+}
+
 export function CommandPalette({
   open,
   onOpenChange,
@@ -149,6 +199,7 @@ export function CommandPalette({
   orgId,
   teamId,
   boardId,
+  ticketId,
   boards,
   columns,
   tickets,
@@ -170,6 +221,21 @@ export function CommandPalette({
   onShowSnackbar,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
+  const [committedCmd, setCommittedCmd] = useState<CommandDefinition | null>(null);
+  const [pills, setPills] = useState<SlashPillItem[]>([]);
+  const [activePillIndex, setActivePillIndex] = useState(0);
+  const [pillLiveAnnouncement, setPillLiveAnnouncement] = useState("");
+  const [focusRequestTick, setFocusRequestTick] = useState(0);
+  const caretPlacementRef = useRef<"start" | "end" | null>(null);
+  const skipNextFocusAnnounceRef = useRef(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const [resolvedListboxId, setResolvedListboxId] = useState<string | undefined>(undefined);
+  const undoStackRef = useRef<
+    Array<{ cmd: CommandDefinition | null; pills: SlashPillItem[]; activePillIndex: number; query: string }>
+  >([]);
+  const redoStackRef = useRef<
+    Array<{ cmd: CommandDefinition | null; pills: SlashPillItem[]; activePillIndex: number; query: string }>
+  >([]);
   const [recentItems, setRecentItems] = useState<RecentPaletteItem[]>([]);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -177,6 +243,18 @@ export function CommandPalette({
   const [helpDetailCmd, setHelpDetailCmd] = useState<string | null>(null);
   const [searchGroups, setSearchGroups] = useState<ScopedSearchGroups | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [notificationResults, setNotificationResults] = useState<
+    Array<{
+      id: string;
+      ticketId: string;
+      ticketKey: string | null;
+      ticketTitle: string;
+      boardId: string | null;
+      actorName: string | null;
+      type: string;
+      redacted: boolean;
+    }>
+  >([]);
   const [isSearching, setIsSearching] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [selectedItemValue, setSelectedItemValue] = useState("");
@@ -210,6 +288,12 @@ export function CommandPalette({
       if (initialQuery) {
         setQuery(initialQuery);
       }
+      setCommittedCmd(null);
+      setPills([]);
+      setActivePillIndex(0);
+      setPillLiveAnnouncement("");
+      undoStackRef.current = [];
+      redoStackRef.current = [];
       setRecentItems(loadRecentPaletteItems(user.id));
       setCommandHistory(loadCommandHistory(user.id, userRole));
       setHistoryIndex(-1);
@@ -220,16 +304,24 @@ export function CommandPalette({
       setSelectedItemValue("");
       userNavigatedRef.current = false;
       requestAnimationFrame(() => {
-        const el = inputRef.current;
-        if (el) {
-          el.focus();
-          if (initialQuery) {
-            el.setSelectionRange(initialQuery.length, initialQuery.length);
+        requestAnimationFrame(() => {
+          const el = inputRef.current;
+          if (el) {
+            el.focus();
+            if (initialQuery) {
+              el.setSelectionRange(initialQuery.length, initialQuery.length);
+            }
           }
-        }
+        });
       });
     } else {
       setQuery("");
+      setCommittedCmd(null);
+      setPills([]);
+      setActivePillIndex(0);
+      setPillLiveAnnouncement("");
+      undoStackRef.current = [];
+      redoStackRef.current = [];
       setSearchGroups(null);
       setSearchResults([]);
       setHelpDetailCmd(null);
@@ -241,6 +333,12 @@ export function CommandPalette({
       userNavigatedRef.current = false;
     }
   }, [open, initialQuery, user.id, userRole]);
+
+  useEffect(() => {
+    if (open && listRef.current?.id) {
+      setResolvedListboxId(listRef.current.id);
+    }
+  }, [open, committedCmd]);
 
   useEffect(() => {
     if (pendingConfirm) {
@@ -266,16 +364,174 @@ export function CommandPalette({
   }, [open]);
 
   const baseParsed = useMemo(() => parseSlashCommand(query), [query]);
-  const isSlashMode = baseParsed.isCommand;
+  const isSlashMode = Boolean(committedCmd) || baseParsed.isCommand;
 
   const activeCommandDef = useMemo(() => {
+    if (committedCmd) return committedCmd;
     if (!baseParsed.isCommand || !baseParsed.inArgumentMode) return undefined;
-    return findCommandDefinition(baseParsed.commandName);
-  }, [baseParsed]);
+    const found = findCommandDefinition(baseParsed.commandName);
+    if (found && !isRoleAllowedForCommand(userRole, found.minRole)) return undefined;
+    return found;
+  }, [committedCmd, baseParsed, userRole]);
 
   const parsedSlash = useMemo(
     () => parseSlashCommand(query, activeCommandDef),
     [query, activeCommandDef]
+  );
+
+  const pushUndoSnapshot = useCallback(
+    (
+      snapCmd: CommandDefinition | null = committedCmd,
+      snapPills: SlashPillItem[] = pills,
+      snapIdx: number = activePillIndex,
+      snapQuery: string = query
+    ) => {
+      undoStackRef.current.push({
+        cmd: snapCmd,
+        pills: snapPills.map((p) => ({ ...p })),
+        activePillIndex: snapIdx,
+        query: snapQuery,
+      });
+      if (undoStackRef.current.length > 50) undoStackRef.current.shift();
+      redoStackRef.current = [];
+    },
+    [committedCmd, pills, activePillIndex, query]
+  );
+
+  const announceArgAt = useCallback(
+    (def: CommandDefinition, list: SlashPillItem[], idx: number) => {
+      const p = list[idx];
+      if (!p) return;
+      const total = Math.max(def.args.length, list.length);
+      setPillLiveAnnouncement(
+        `Argument ${idx + 1} of ${total}: ${p.label}, ${p.required ? "required" : "optional"}`
+      );
+    },
+    []
+  );
+
+  const handleUndo = useCallback(() => {
+    const prev = undoStackRef.current.pop();
+    if (!prev) return false;
+    redoStackRef.current.push({
+      cmd: committedCmd,
+      pills: pills.map((p) => ({ ...p })),
+      activePillIndex,
+      query,
+    });
+    setCommittedCmd(prev.cmd);
+    setPills(prev.pills);
+    setActivePillIndex(prev.activePillIndex);
+    setQuery(prev.query);
+    caretPlacementRef.current = "end";
+    setFocusRequestTick((t) => t + 1);
+    if (!prev.cmd) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+    return true;
+  }, [committedCmd, pills, activePillIndex, query]);
+
+  const handleRedo = useCallback(() => {
+    const next = redoStackRef.current.pop();
+    if (!next) return false;
+    undoStackRef.current.push({
+      cmd: committedCmd,
+      pills: pills.map((p) => ({ ...p })),
+      activePillIndex,
+      query,
+    });
+    setCommittedCmd(next.cmd);
+    setPills(next.pills);
+    setActivePillIndex(next.activePillIndex);
+    setQuery(next.query);
+    caretPlacementRef.current = "end";
+    setFocusRequestTick((t) => t + 1);
+    if (!next.cmd) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+    return true;
+  }, [committedCmd, pills, activePillIndex, query]);
+
+  const commitCommandDef = useCallback(
+    (def: CommandDefinition) => {
+      pushUndoSnapshot();
+      const initialPills = def.args.length > 0 ? [argToPill(def.args[0], "")] : [];
+      setCommittedCmd(def);
+      setPills(initialPills);
+      setActivePillIndex(0);
+      setQuery(serializePills(def, initialPills));
+      setFeedback(null);
+      setPendingConfirm(null);
+      userNavigatedRef.current = false;
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+      if (initialPills.length > 0) {
+        announceArgAt(def, initialPills, 0);
+      }
+    },
+    [pushUndoSnapshot, announceArgAt]
+  );
+
+  const commitCommandFromText = useCallback(
+    (rawText: string): boolean => {
+      const base = parseSlashCommand(rawText);
+      if (!base.isCommand || !base.commandName) return false;
+      const def = findCommandDefinition(base.commandName);
+      if (!def || !isRoleAllowedForCommand(userRole, def.minRole)) return false;
+      if (def.args.length === 0 && (!def.options || def.options.length === 0)) return false;
+      const parsed = parseSlashCommand(rawText, def);
+      if (!parsed.isCommand) return false;
+
+      pushUndoSnapshot();
+      const nextPills: SlashPillItem[] = [];
+      def.args.forEach((arg, idx) => {
+        const val = parsed.positional[idx] || "";
+        if (idx === 0 || val !== "" || (arg.required && idx <= parsed.positional.length)) {
+          nextPills.push(argToPill(arg, val));
+        }
+      });
+      for (const optKey of parsed.usedOptionKeys) {
+        const spec = def.options?.find((o) => o.key === optKey);
+        if (spec && !nextPills.some((p) => p.kind === "option" && p.key === optKey)) {
+          nextPills.push(optionToPill(spec, parsed.flags[optKey] || ""));
+        }
+      }
+      const focusIdx = Math.max(0, nextPills.length - 1);
+      setCommittedCmd(def);
+      setPills(nextPills);
+      setActivePillIndex(focusIdx);
+      setQuery(serializePills(def, nextPills));
+      setFeedback(null);
+      setPendingConfirm(null);
+      userNavigatedRef.current = false;
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+      if (nextPills.length > 0) {
+        announceArgAt(def, nextPills, focusIdx);
+      }
+      return true;
+    },
+    [userRole, pushUndoSnapshot, announceArgAt]
+  );
+
+  const uncommitToCommandText = useCallback(
+    (def: CommandDefinition) => {
+      pushUndoSnapshot();
+      setCommittedCmd(null);
+      setPills([]);
+      setActivePillIndex(0);
+      const nextText = `/${def.name}`;
+      setQuery(nextText);
+      setPillLiveAnnouncement(`${def.name} editable`);
+      requestAnimationFrame(() => {
+        const el = inputRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(nextText.length, nextText.length);
+        }
+      });
+    },
+    [pushUndoSnapshot]
   );
 
   // Debounced server search when not in slash mode and not in help mode
@@ -298,9 +554,12 @@ export function CommandPalette({
       try {
         const params = new URLSearchParams({ q: trimmed });
         if (orgId) params.set("orgId", orgId);
-        const res = await fetch(`/api/search?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        const [res, notifRes] = await Promise.all([
+          fetch(`/api/search?${params.toString()}`, { signal: controller.signal }),
+          fetch(`/api/notifications?q=${encodeURIComponent(trimmed)}&limit=5`, {
+            signal: controller.signal,
+          }).catch(() => null),
+        ]);
         if (!res.ok) {
           setIsSearching(false);
           return;
@@ -311,10 +570,17 @@ export function CommandPalette({
         };
         setSearchResults(Array.isArray(data.results) ? data.results : []);
         setSearchGroups(data.groups || null);
+        if (notifRes && notifRes.ok) {
+          const nd = await notifRes.json().catch(() => ({}));
+          setNotificationResults(Array.isArray(nd.items) ? nd.items : []);
+        } else {
+          setNotificationResults([]);
+        }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           setSearchResults([]);
           setSearchGroups(null);
+          setNotificationResults([]);
         }
       } finally {
         setIsSearching(false);
@@ -488,6 +754,42 @@ export function CommandPalette({
   );
 
   const argSuggestions = useMemo((): ArgSuggestion[] => {
+    if (committedCmd) {
+      const activePill = pills[activePillIndex];
+      const options = committedCmd.options || [];
+      const usedOptKeys = new Set(pills.filter((p) => p.kind === "option").map((p) => p.key));
+      const unused = options.filter((o) => !usedOptKeys.has(o.key));
+
+      const formatOptionSuggestion = (o: CommandOptionSpec): ArgSuggestion => ({
+        value: `opt-${o.key}`,
+        label: `${o.key}:`,
+        hint: `${o.description}${o.exampleValue ? ` (e.g. ${o.key}: ${o.exampleValue})` : ""}`,
+        applyToken: `${o.key}:`,
+        isOptionKey: true,
+      });
+
+      if (activePill) {
+        if (activePill.autocomplete !== "none") {
+          return buildSuggestionsForKind(activePill.autocomplete, activePill.value);
+        }
+        const allReqFilled = committedCmd.args
+          .filter((a) => a.required)
+          .every((a) => {
+            const found = pills.find((p) => p.kind === "positional" && p.key === a.name);
+            return Boolean(found && found.value.trim());
+          });
+        if (allReqFilled && activePill.value.trim().length > 0 && unused.length > 0) {
+          return unused.map(formatOptionSuggestion);
+        }
+        return [];
+      }
+
+      if (unused.length > 0) {
+        return unused.map(formatOptionSuggestion);
+      }
+      return [];
+    }
+
     if (!parsedSlash.isCommand || !activeCommandDef) return [];
 
     if (parsedSlash.activeOption) {
@@ -544,7 +846,7 @@ export function CommandPalette({
     return unused
       .filter((o) => !tok || o.key.startsWith(tok))
       .map((o) => formatOptionSuggestion(o));
-  }, [parsedSlash, activeCommandDef, buildSuggestionsForKind]);
+  }, [committedCmd, pills, activePillIndex, parsedSlash, activeCommandDef, buildSuggestionsForKind]);
 
   const isShowingOptionKeys = argSuggestions.length > 0 && Boolean(argSuggestions[0]?.isOptionKey);
 
@@ -580,9 +882,12 @@ export function CommandPalette({
   }, [isSlashMode, helpMode, isShowingOptionKeys, selectableValues, selectedItemValue]);
 
   const validationError = useMemo(() => {
+    if (committedCmd) {
+      return validatePillArguments(committedCmd, pills);
+    }
     if (!parsedSlash.isCommand || !activeCommandDef) return null;
     return validateActiveArgument(activeCommandDef, parsedSlash);
-  }, [parsedSlash, activeCommandDef]);
+  }, [committedCmd, pills, parsedSlash, activeCommandDef]);
 
   const ghostConfig = useMemo((): CommandGhostConfig | null => {
     if (!isSlashMode || !parsedSlash.isCommand || helpMode) return null;
@@ -617,18 +922,17 @@ export function CommandPalette({
     const activeDesc = hint.activeOptionSpec
       ? `${hint.activeOptionSpec.key}: ${hint.activeOptionSpec.description}`
       : hint.activeArgSpec
-      ? `Argument ${hint.activeArgPosition} of ${hint.totalArgs}: ${hint.activeArgSpec.label}, ${
-          hint.activeArgSpec.required ? "required" : "optional"
+        ? `Argument ${hint.activeArgPosition} of ${hint.totalArgs}: ${hint.activeArgSpec.label}, ${hint.activeArgSpec.required ? "required" : "optional"
         } — ${hint.activeArgSpec.description}`
-      : "";
+        : "";
 
     // Inline autocomplete suffix when user is typing a definite-option value (e.g. column, priority, view, theme)
     let inlineCompletion = "";
     const typedRaw = parsedSlash.activeOption
       ? parsedSlash.activeOption.value
       : !parsedSlash.hasTrailingSpace
-      ? parsedSlash.activeArgToken
-      : "";
+        ? parsedSlash.activeArgToken
+        : "";
     const typedPrefix = typedRaw.replace(/^["']/, "");
     if (!hint.activeSegment && typedPrefix.length > 0 && argSuggestions.length > 0) {
       const top = argSuggestions[0];
@@ -656,7 +960,7 @@ export function CommandPalette({
       showTabHint: argSuggestions.length > 0,
       ariaDescription: activeDesc,
       liveAnnouncement: activeSpec ? activeDesc : "",
-      errorSpan: validationError?.span || null,
+      errorSpan: validationError && "span" in validationError ? validationError.span || null : null,
     };
   }, [
     isSlashMode,
@@ -669,6 +973,19 @@ export function CommandPalette({
   ]);
 
   const activeArgHeader = useMemo(() => {
+    if (committedCmd) {
+      const activePill = pills[activePillIndex];
+      if (activePill) {
+        if (isShowingOptionKeys) {
+          return "Optional: pick an option, or press Enter to run";
+        }
+        return `${activePill.label}: ${activePill.description}`;
+      }
+      if (committedCmd.options && committedCmd.options.length > 0) {
+        return "Optional: pick an option, or press Enter to run";
+      }
+      return null;
+    }
     if (!parsedSlash.isCommand || !activeCommandDef) return null;
     if (parsedSlash.activeOption) {
       return `${parsedSlash.activeOption.spec.key}: ${parsedSlash.activeOption.spec.description}`;
@@ -684,10 +1001,86 @@ export function CommandPalette({
       return "Optional: pick an option, or press Enter to run";
     }
     return null;
-  }, [parsedSlash, activeCommandDef, isShowingOptionKeys]);
+  }, [committedCmd, pills, activePillIndex, parsedSlash, activeCommandDef, isShowingOptionKeys]);
+
+  const promoteGhostOption = useCallback(
+    (opt: CommandOptionSpec) => {
+      if (!committedCmd) return;
+      const existingIdx = pills.findIndex((p) => p.kind === "option" && p.key === opt.key);
+      if (existingIdx !== -1) {
+        setActivePillIndex(existingIdx);
+        caretPlacementRef.current = "end";
+        setFocusRequestTick((t) => t + 1);
+        announceArgAt(committedCmd, pills, existingIdx);
+        return;
+      }
+      pushUndoSnapshot();
+      const nextPills = [...pills, optionToPill(opt, "")];
+      const nextIdx = nextPills.length - 1;
+      setPills(nextPills);
+      setActivePillIndex(nextIdx);
+      setQuery(serializePills(committedCmd, nextPills));
+      userNavigatedRef.current = false;
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+      announceArgAt(committedCmd, nextPills, nextIdx);
+    },
+    [committedCmd, pills, pushUndoSnapshot, announceArgAt]
+  );
+
+  const advanceFromPill = useCallback(
+    (fromIdx: number, basePills: SlashPillItem[]) => {
+      if (!committedCmd) return;
+      if (fromIdx + 1 < basePills.length) {
+        setActivePillIndex(fromIdx + 1);
+        caretPlacementRef.current = "end";
+        setFocusRequestTick((t) => t + 1);
+        announceArgAt(committedCmd, basePills, fromIdx + 1);
+        return;
+      }
+      // Create next positional arg pill if one exists in registry
+      const nextArg = committedCmd.args.find(
+        (a) => !basePills.some((p) => p.kind === "positional" && p.key === a.name)
+      );
+      if (nextArg) {
+        const nextPills = [...basePills, argToPill(nextArg, "")];
+        const nextIdx = nextPills.length - 1;
+        setPills(nextPills);
+        setActivePillIndex(nextIdx);
+        setQuery(serializePills(committedCmd, nextPills));
+        caretPlacementRef.current = "end";
+        setFocusRequestTick((t) => t + 1);
+        announceArgAt(committedCmd, nextPills, nextIdx);
+        return;
+      }
+      setActivePillIndex(fromIdx);
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+    },
+    [committedCmd, announceArgAt]
+  );
 
   const applyArgCompletion = useCallback(
     (suggestion: ArgSuggestion) => {
+      if (committedCmd) {
+        userNavigatedRef.current = false;
+        if (suggestion.isOptionKey) {
+          const optKey = suggestion.applyToken.replace(/:$/, "");
+          const spec = committedCmd.options?.find((o) => o.key === optKey);
+          if (spec) promoteGhostOption(spec);
+          return;
+        }
+        const rawVal = suggestion.applyToken.replace(/^["']|["']$/g, "");
+        pushUndoSnapshot();
+        const nextPills = pills.map((p, idx) =>
+          idx === activePillIndex ? { ...p, value: rawVal } : p
+        );
+        setPills(nextPills);
+        setQuery(serializePills(committedCmd, nextPills));
+        advanceFromPill(activePillIndex, nextPills);
+        return;
+      }
+
       if (!parsedSlash.isCommand || !activeCommandDef) return;
       userNavigatedRef.current = false;
 
@@ -704,10 +1097,10 @@ export function CommandPalette({
         const base = suggestion.replaceSpan
           ? query.slice(0, suggestion.replaceSpan.start)
           : parsedSlash.hasTrailingSpace
-          ? query
-          : parsedSlash.activeArgSpan
-          ? query.slice(0, parsedSlash.activeArgSpan.start)
-          : `${query} `;
+            ? query
+            : parsedSlash.activeArgSpan
+              ? query.slice(0, parsedSlash.activeArgSpan.start)
+              : `${query} `;
         setQuery(`${base}${suggestion.applyToken}`);
         inputRef.current?.focus();
         return;
@@ -722,7 +1115,76 @@ export function CommandPalette({
       }
       inputRef.current?.focus();
     },
-    [parsedSlash, activeCommandDef, query]
+    [
+      committedCmd,
+      pills,
+      activePillIndex,
+      promoteGhostOption,
+      pushUndoSnapshot,
+      advanceFromPill,
+      parsedSlash,
+      activeCommandDef,
+      query,
+    ]
+  );
+
+  const handlePillValueChange = useCallback(
+    (idx: number, val: string) => {
+      if (!committedCmd) return;
+      pushUndoSnapshot();
+      const nextPills = pills.map((p, i) => (i === idx ? { ...p, value: val } : p));
+      setPills(nextPills);
+      setQuery(serializePills(committedCmd, nextPills));
+      setPendingConfirm(null);
+      setFeedback(null);
+      setHistoryIndex(-1);
+      userNavigatedRef.current = false;
+    },
+    [committedCmd, pills, pushUndoSnapshot]
+  );
+
+  const handleRemovePill = useCallback(
+    (idx: number) => {
+      if (!committedCmd) return;
+      const target = pills[idx];
+      if (!target) return;
+      pushUndoSnapshot();
+      const nextPills = pills.filter((_, i) => i !== idx);
+      skipNextFocusAnnounceRef.current = true;
+      setPillLiveAnnouncement(`${target.label} removed`);
+      if (nextPills.length === 0) {
+        uncommitToCommandText(committedCmd);
+        return;
+      }
+      const nextIdx = Math.max(0, Math.min(idx - 1, nextPills.length - 1));
+      setPills(nextPills);
+      setActivePillIndex(nextIdx);
+      setQuery(serializePills(committedCmd, nextPills));
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+    },
+    [committedCmd, pills, pushUndoSnapshot, uncommitToCommandText]
+  );
+
+  const handlePillPaste = useCallback(
+    (idx: number, e: React.ClipboardEvent<HTMLInputElement>) => {
+      const text = e.clipboardData.getData("text/plain");
+      if (!text) return;
+      if (text.trim().startsWith("/") && commitCommandFromText(text.trim())) {
+        e.preventDefault();
+        return;
+      }
+      if (/[\r\n]/.test(text)) {
+        e.preventDefault();
+        const sanitized = text.replace(/[\r\n]+/g, " ");
+        const el = e.currentTarget;
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? el.value.length;
+        const nextVal = `${el.value.slice(0, start)}${sanitized}${el.value.slice(end)}`;
+        handlePillValueChange(idx, nextVal);
+      }
+    },
+    [commitCommandFromText, handlePillValueChange]
   );
 
   const runServerCommand = useCallback(
@@ -749,7 +1211,7 @@ export function CommandPalette({
             positional,
             flags,
             rawArgs,
-            context: { orgId, teamId, boardId },
+            context: { orgId, teamId, boardId, ticketId },
           }),
         });
         await onRefreshBoard();
@@ -758,6 +1220,9 @@ export function CommandPalette({
 
         const msg = typeof res.message === "string" ? res.message : `Executed /${def.name}`;
         if (keepOpen) {
+          setCommittedCmd(null);
+          setPills([]);
+          setActivePillIndex(0);
           setQuery("");
           setFeedback({ type: "ok", text: msg });
           requestAnimationFrame(() => inputRef.current?.focus());
@@ -976,6 +1441,9 @@ export function CommandPalette({
         recordCommandHistory(user.id, rawInput, def);
         setCommandHistory(loadCommandHistory(user.id, userRole));
         if (keepOpen) {
+          setCommittedCmd(null);
+          setPills([]);
+          setActivePillIndex(0);
           setQuery("");
           setFeedback({ type: "ok", text: msg });
           requestAnimationFrame(() => inputRef.current?.focus());
@@ -1005,8 +1473,8 @@ export function CommandPalette({
               text:
                 closeMatches.length > 0
                   ? `Unknown command "/${targetCmd}". Did you mean ${closeMatches
-                      .map((c) => `/${c.name}`)
-                      .join(", ")}?`
+                    .map((c) => `/${c.name}`)
+                    .join(", ")}?`
                   : `Unknown command "/${targetCmd}". Type /help to see available commands.`,
             });
             return;
@@ -1063,12 +1531,19 @@ export function CommandPalette({
           onOpenChange(false);
           return;
         }
+        case "notifications": {
+          recordCommandHistory(user.id, rawInput, def);
+          onOpenChange(false);
+          window.dispatchEvent(new CustomEvent("patchwork:open-notifications"));
+          return;
+        }
+
         case "docs": {
           const topic = parsed.positional.join(" ").trim().toLowerCase();
           const matched = topic
             ? DOCS_TOPICS.find(
-                (t) => t.slug === topic || t.slug.includes(topic) || t.label.toLowerCase().includes(topic)
-              )
+              (t) => t.slug === topic || t.slug.includes(topic) || t.label.toLowerCase().includes(topic)
+            )
             : undefined;
           const targetPath = matched ? matched.path : "/documentation";
           recordCommandHistory(user.id, rawInput, def);
@@ -1219,8 +1694,10 @@ export function CommandPalette({
         const entry = commandHistory[idx];
         if (entry) {
           userNavigatedRef.current = false;
-          setQuery(entry);
-          inputRef.current?.focus();
+          if (!commitCommandFromText(entry)) {
+            setQuery(entry);
+            inputRef.current?.focus();
+          }
           return true;
         }
       }
@@ -1228,8 +1705,7 @@ export function CommandPalette({
       const target =
         matchingCommands.find((c) => c.name === matchedName) || matchingCommands[0];
       userNavigatedRef.current = false;
-      setQuery(`/${target.name} `);
-      inputRef.current?.focus();
+      commitCommandDef(target);
       return true;
     }
     if (activeCommandDef && argSuggestions.length > 0) {
@@ -1250,7 +1726,219 @@ export function CommandPalette({
     activeCommandDef,
     argSuggestions,
     applyArgCompletion,
+    commitCommandDef,
+    commitCommandFromText,
   ]);
+
+  const handlePillKeyDown = (
+    idx: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+    isComposing: boolean
+  ) => {
+    if (!committedCmd || isComposing) return;
+    const pill = pills[idx];
+    if (!pill) return;
+    const el = e.currentTarget;
+    const selStart = el.selectionStart ?? el.value.length;
+    const selEnd = el.selectionEnd ?? el.value.length;
+
+    // Undo / Redo across pill additions, removals, and edits
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      if (e.shiftKey) handleRedo();
+      else handleUndo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      handleRedo();
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      if (
+        pills.every((p) => p.value === "") &&
+        commandHistory.length > 0 &&
+        (historyIndex >= 0 || selectedItemValue === "" || selectedItemValue === selectableValues[0])
+      ) {
+        e.preventDefault();
+        if (historyIndex === -1) historyDraftRef.current = query;
+        const nextIdx = Math.min(historyIndex + 1, commandHistory.length - 1);
+        setHistoryIndex(nextIdx);
+        commitCommandFromText(commandHistory[nextIdx]);
+        return;
+      }
+      if (selectableValues.length > 0) {
+        e.preventDefault();
+        userNavigatedRef.current = true;
+        const curIdx = selectableValues.indexOf(selectedItemValue);
+        const nextIdx = curIdx <= 0 ? selectableValues.length - 1 : curIdx - 1;
+        setSelectedItemValue(selectableValues[nextIdx]);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      if (historyIndex >= 0) {
+        e.preventDefault();
+        const nextIdx = historyIndex - 1;
+        setHistoryIndex(nextIdx);
+        if (nextIdx < 0) {
+          commitCommandFromText(historyDraftRef.current);
+        } else {
+          commitCommandFromText(commandHistory[nextIdx]);
+        }
+        return;
+      }
+      if (selectableValues.length > 0) {
+        e.preventDefault();
+        userNavigatedRef.current = true;
+        const curIdx = selectableValues.indexOf(selectedItemValue);
+        const nextIdx = curIdx < 0 ? 0 : (curIdx + 1) % selectableValues.length;
+        setSelectedItemValue(selectableValues[nextIdx]);
+      }
+      return;
+    }
+
+    if (e.key === " ") {
+      if (pill.argType === "word") {
+        e.preventDefault();
+        if (pill.value.trim()) {
+          advanceFromPill(idx, pills);
+        }
+        return;
+      }
+      if (pill.argType === "choice") {
+        const nextPrefix = `${pill.value} `.toLowerCase();
+        const allChoices = buildSuggestionsForKind(pill.autocomplete, "");
+        const keepsLiteralSpace = allChoices.some((c) => {
+          const cand = c.applyToken.replace(/^["']|["']$/g, "").toLowerCase();
+          return cand.includes(" ") && cand.startsWith(nextPrefix);
+        });
+        if (!keepsLiteralSpace) {
+          e.preventDefault();
+          if (pill.value.trim()) {
+            advanceFromPill(idx, pills);
+          }
+        }
+        return;
+      }
+      // argType === "text": Space stays literal
+      return;
+    }
+
+    if (e.key === "Tab") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (idx > 0) {
+          setActivePillIndex(idx - 1);
+          caretPlacementRef.current = "end";
+          setFocusRequestTick((t) => t + 1);
+          announceArgAt(committedCmd, pills, idx - 1);
+        }
+        return;
+      }
+      if (argSuggestions.length > 0 && !isShowingOptionKeys) {
+        const topOrSelected =
+          (selectedItemValue.startsWith("arg-")
+            ? argSuggestions.find((s) => s.value === selectedItemValue.slice(4))
+            : undefined) || argSuggestions[0];
+        const cleanCand = topOrSelected.applyToken.replace(/^["']|["']$/g, "");
+        if (cleanCand.toLowerCase() !== pill.value.trim().toLowerCase()) {
+          applyArgCompletion(topOrSelected);
+          return;
+        }
+      }
+      if (idx + 1 < pills.length) {
+        advanceFromPill(idx, pills);
+        return;
+      }
+      const nextArg = committedCmd.args.find(
+        (a) => !pills.some((p) => p.kind === "positional" && p.key === a.name)
+      );
+      if (nextArg) {
+        advanceFromPill(idx, pills);
+        return;
+      }
+      const unusedOpts = (committedCmd.options || []).filter(
+        (o) => !pills.some((p) => p.kind === "option" && p.key === o.key)
+      );
+      if (unusedOpts.length > 0 && pill.value.trim().length > 0) {
+        promoteGhostOption(unusedOpts[0]);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowLeft" && selStart === 0 && selEnd === 0 && idx > 0) {
+      e.preventDefault();
+      setActivePillIndex(idx - 1);
+      caretPlacementRef.current = "end";
+      setFocusRequestTick((t) => t + 1);
+      announceArgAt(committedCmd, pills, idx - 1);
+      return;
+    }
+
+    if (e.key === "ArrowRight" && selStart === el.value.length && selEnd === el.value.length && idx + 1 < pills.length) {
+      e.preventDefault();
+      setActivePillIndex(idx + 1);
+      caretPlacementRef.current = "start";
+      setFocusRequestTick((t) => t + 1);
+      announceArgAt(committedCmd, pills, idx + 1);
+      return;
+    }
+
+    if (e.key === "Backspace" && pill.value === "") {
+      e.preventDefault();
+      handleRemovePill(idx);
+      return;
+    }
+
+    if (
+      e.key === "Delete" &&
+      selStart === el.value.length &&
+      selEnd === el.value.length &&
+      idx + 1 < pills.length &&
+      pills[idx + 1].value === ""
+    ) {
+      e.preventDefault();
+      handleRemovePill(idx + 1);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (pendingConfirm) {
+        if (e.metaKey || e.ctrlKey) {
+          void executeSlashCommand(pendingConfirm.rawCommand, true, e.shiftKey);
+        }
+        return;
+      }
+      const selectedArgVal = selectedItemValue.startsWith("arg-")
+        ? selectedItemValue.slice(4)
+        : "";
+      const highlightedArg = selectedArgVal
+        ? argSuggestions.find((s) => s.value === selectedArgVal)
+        : undefined;
+
+      if (highlightedArg?.isOptionKey) {
+        applyArgCompletion(highlightedArg);
+        return;
+      }
+
+      const requiredReady = committedCmd.args
+        .filter((a) => a.required)
+        .every((a) => {
+          const found = pills.find((p) => p.kind === "positional" && p.key === a.name);
+          return Boolean(found && found.value.trim());
+        });
+
+      if (!requiredReady && argSuggestions.length > 0) {
+        acceptCurrentCompletion();
+        return;
+      }
+      void executeSlashCommand(serializePills(committedCmd, pills), false, e.shiftKey);
+    }
+  };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isSlashMode || helpMode || !parsedSlash.isCommand) return;
@@ -1277,7 +1965,9 @@ export function CommandPalette({
         }
         const nextIdx = Math.min(historyIndex + 1, commandHistory.length - 1);
         setHistoryIndex(nextIdx);
-        setQuery(commandHistory[nextIdx]);
+        if (!commitCommandFromText(commandHistory[nextIdx])) {
+          setQuery(commandHistory[nextIdx]);
+        }
         userNavigatedRef.current = false;
         return;
       }
@@ -1393,7 +2083,9 @@ export function CommandPalette({
         if (entry) {
           e.preventDefault();
           userNavigatedRef.current = false;
-          setQuery(entry);
+          if (!commitCommandFromText(entry)) {
+            setQuery(entry);
+          }
           return;
         }
       }
@@ -1403,10 +2095,10 @@ export function CommandPalette({
         const exactCmd =
           !userNavigatedRef.current && parsedSlash.isCommand && parsedSlash.commandName
             ? matchingCommands.find(
-                (c) =>
-                  c.name === parsedSlash.commandName.toLowerCase() ||
-                  c.aliases?.includes(parsedSlash.commandName.toLowerCase())
-              )
+              (c) =>
+                c.name === parsedSlash.commandName.toLowerCase() ||
+                c.aliases?.includes(parsedSlash.commandName.toLowerCase())
+            )
             : undefined;
         const matchedName = selectedItemValue.startsWith("cmd-") ? selectedItemValue.slice(4) : "";
         const target =
@@ -1417,7 +2109,7 @@ export function CommandPalette({
           void executeSlashCommand(`/${target.name}`, false, e.shiftKey);
         } else {
           userNavigatedRef.current = false;
-          setQuery(`/${target.name} `);
+          commitCommandDef(target);
         }
       }
     }
@@ -1439,11 +2131,11 @@ export function CommandPalette({
     searchResults.length > 0 ||
     Boolean(
       searchGroups &&
-        (searchGroups.boards.length > 0 ||
-          searchGroups.projects.length > 0 ||
-          searchGroups.teams.length > 0 ||
-          searchGroups.people.length > 0 ||
-          searchGroups.labels.length > 0)
+      (searchGroups.boards.length > 0 ||
+        searchGroups.projects.length > 0 ||
+        searchGroups.teams.length > 0 ||
+        searchGroups.people.length > 0 ||
+        searchGroups.labels.length > 0)
     );
 
   const helpCategories = useMemo(() => {
@@ -1508,35 +2200,102 @@ export function CommandPalette({
         value={selectedItemValue}
         onValueChange={(v) => setSelectedItemValue(v)}
       >
-        <CommandInput
-          ref={inputRef}
-          data-testid="global-search-input"
-          value={query}
-          ghost={ghostConfig}
-          onCaretChange={(atEnd) => setCaretAtEnd(atEnd)}
-          onValueChange={(val) => {
-            setQuery(val);
-            setPendingConfirm(null);
-            setFeedback(null);
-            setHistoryIndex(-1);
-            userNavigatedRef.current = false;
-            if (helpMode && val.trim() !== "") {
-              setHelpDetailCmd(null);
-              onHelpModeChange(false);
+        {committedCmd && !helpMode ? (
+          <SlashPillRow
+            command={committedCmd}
+            pills={pills}
+            activePillIndex={activePillIndex}
+            ghostOptions={(committedCmd.options || []).filter(
+              (o) => !pills.some((p) => p.kind === "option" && p.key === o.key)
+            )}
+            invalidPillId={
+              validationError && "pillId" in validationError ? validationError.pillId : null
             }
-          }}
-          onKeyDown={handleInputKeyDown}
-          showClear={query.length > 0}
-          onClear={() => {
-            setQuery("");
-            setFeedback(null);
-            setPendingConfirm(null);
-            setHistoryIndex(-1);
-            userNavigatedRef.current = false;
-            inputRef.current?.focus();
-          }}
-          placeholder="Search tickets, boards, people, or type / for commands..."
-        />
+            liveAnnouncement={pillLiveAnnouncement}
+            isSuggestionsOpen={argSuggestions.length > 0}
+            listboxId={resolvedListboxId}
+            showTabHint={argSuggestions.length > 0}
+            readyToRun={
+              committedCmd.args
+                .filter((a) => a.required)
+                .every((a) => {
+                  const found = pills.find((p) => p.kind === "positional" && p.key === a.name);
+                  return Boolean(found && found.value.trim());
+                }) && !validationError
+            }
+            onActivePillChange={(idx) => {
+              setActivePillIndex(idx);
+              if (skipNextFocusAnnounceRef.current) {
+                skipNextFocusAnnounceRef.current = false;
+                return;
+              }
+              announceArgAt(committedCmd, pills, idx);
+            }}
+            onPillValueChange={handlePillValueChange}
+            onPillKeyDown={handlePillKeyDown}
+            onPillPaste={handlePillPaste}
+            onRemovePill={handleRemovePill}
+            onPromoteGhostOption={promoteGhostOption}
+            onClear={() => {
+              pushUndoSnapshot();
+              setCommittedCmd(null);
+              setPills([]);
+              setActivePillIndex(0);
+              setQuery("");
+              setFeedback(null);
+              setPendingConfirm(null);
+              setHistoryIndex(-1);
+              userNavigatedRef.current = false;
+              requestAnimationFrame(() => inputRef.current?.focus());
+            }}
+            focusRequestTick={focusRequestTick}
+            caretPlacementRef={caretPlacementRef}
+          />
+        ) : (
+          <CommandInput
+            ref={inputRef}
+            autoFocus
+            data-testid="global-search-input"
+            value={query}
+            ghost={ghostConfig}
+            onCaretChange={(atEnd) => setCaretAtEnd(atEnd)}
+            onValueChange={(val) => {
+              setPendingConfirm(null);
+              setFeedback(null);
+              setHistoryIndex(-1);
+              userNavigatedRef.current = false;
+              if (helpMode && val.trim() !== "") {
+                setHelpDetailCmd(null);
+                onHelpModeChange(false);
+              }
+              const parsedVal = parseSlashCommand(val);
+              if (parsedVal.isCommand && parsedVal.inArgumentMode) {
+                const def = findCommandDefinition(parsedVal.commandName);
+                if (
+                  def &&
+                  isRoleAllowedForCommand(userRole, def.minRole) &&
+                  (def.args.length > 0 || (def.options && def.options.length > 0))
+                ) {
+                  if (commitCommandFromText(val)) return;
+                }
+              }
+              setQuery(val);
+            }}
+            onKeyDown={handleInputKeyDown}
+            showClear={query.length > 0}
+            onClear={() => {
+              setQuery("");
+              setCommittedCmd(null);
+              setPills([]);
+              setFeedback(null);
+              setPendingConfirm(null);
+              setHistoryIndex(-1);
+              userNavigatedRef.current = false;
+              inputRef.current?.focus();
+            }}
+            placeholder="Search tickets, boards, people, or type / for commands..."
+          />
+        )}
 
         {validationError && (
           <div
@@ -1552,13 +2311,12 @@ export function CommandPalette({
           <div
             role="status"
             data-testid="command-feedback"
-            className={`mx-2 mt-2 flex items-center justify-between rounded-md border px-3 py-2 text-xs ${
-              feedback.type === "error"
-                ? "border-red-500/30 bg-red-500/10 text-red-500"
-                : feedback.type === "ok"
+            className={`mx-2 mt-2 flex items-center justify-between rounded-md border px-3 py-2 text-xs ${feedback.type === "error"
+              ? "border-red-500/30 bg-red-500/10 text-red-500"
+              : feedback.type === "ok"
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
                 : "border-[var(--pw-border)] bg-[var(--pw-bg)] text-[var(--pw-ink)]"
-            }`}
+              }`}
           >
             <span>{feedback.text}</span>
           </div>
@@ -1592,8 +2350,8 @@ export function CommandPalette({
                   {pendingConfirm.def.name === "delete"
                     ? "This permanently deletes the ticket, its comments, and its attachments."
                     : pendingConfirm.def.name === "archive"
-                    ? "This archives the ticket and hides it from the board."
-                    : "You will be signed out of your current session."}
+                      ? "This archives the ticket and hides it from the board."
+                      : "You will be signed out of your current session."}
                 </div>
               </div>
             </div>
@@ -1620,10 +2378,10 @@ export function CommandPalette({
                 {executing
                   ? "Running..."
                   : pendingConfirm.ticketContext
-                  ? `${pendingConfirm.def.name === "delete" ? "Delete" : "Archive"} ${pendingConfirm.ticketContext.key}`
-                  : pendingConfirm.def.name === "logout"
-                  ? "Sign out"
-                  : "Confirm"}
+                    ? `${pendingConfirm.def.name === "delete" ? "Delete" : "Archive"} ${pendingConfirm.ticketContext.key}`
+                    : pendingConfirm.def.name === "logout"
+                      ? "Sign out"
+                      : "Confirm"}
               </button>
             </div>
           </div>
@@ -1737,7 +2495,7 @@ export function CommandPalette({
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-semibold text-[var(--pw-ink)]">
-                          {opt.key}:{opt.typeName}
+                          {opt.key}: {opt.typeName}
                         </span>
                         <span className="font-mono text-[10px] text-[var(--pw-ink-muted)]">
                           optional
@@ -1766,8 +2524,10 @@ export function CommandPalette({
                       onClick={() => {
                         setHelpDetailCmd(null);
                         onHelpModeChange(false);
-                        setQuery(ex);
-                        requestAnimationFrame(() => inputRef.current?.focus());
+                        if (!commitCommandFromText(ex)) {
+                          setQuery(ex);
+                          requestAnimationFrame(() => inputRef.current?.focus());
+                        }
                       }}
                       className="min-h-[36px] sm:min-h-0 rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2.5 py-1 font-mono text-[11px] text-[var(--pw-ink)] hover:bg-[var(--pw-surface-hover)]"
                     >
@@ -1781,10 +2541,11 @@ export function CommandPalette({
         ) : null}
 
         <CommandList
+          ref={listRef}
           data-testid="search-results"
           hidden={Boolean(
             (helpMode && helpDetailDef) ||
-              (isSlashMode && !helpMode && activeCommandDef && argSuggestions.length === 0)
+            (isSlashMode && !helpMode && activeCommandDef && argSuggestions.length === 0)
           )}
         >
           {helpMode && !helpDetailDef ? (
@@ -1819,8 +2580,10 @@ export function CommandPalette({
                               e.stopPropagation();
                               setHelpDetailCmd(null);
                               onHelpModeChange(false);
-                              setQuery(cmd.examples[0]);
-                              requestAnimationFrame(() => inputRef.current?.focus());
+                              if (!commitCommandFromText(cmd.examples[0])) {
+                                setQuery(cmd.examples[0]);
+                                requestAnimationFrame(() => inputRef.current?.focus());
+                              }
                             }}
                             className="mt-1 inline-flex cursor-pointer rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--pw-ink-secondary)] hover:bg-[var(--pw-surface-hover)] hover:text-[var(--pw-ink)]"
                           >
@@ -1878,8 +2641,10 @@ export function CommandPalette({
                             onPointerMove={(e) => handlePointerMoveSelect(itemVal, e)}
                             onSelect={() => {
                               userNavigatedRef.current = false;
-                              setQuery(entry);
-                              inputRef.current?.focus();
+                              if (!commitCommandFromText(entry)) {
+                                setQuery(entry);
+                                inputRef.current?.focus();
+                              }
                             }}
                           >
                             <Terminal className="h-3.5 w-3.5 text-[var(--pw-ink-muted)]" />
@@ -1999,6 +2764,32 @@ export function CommandPalette({
           ) : (
             <>
               <RouteProgressBar active={isSearching} label="Searching workspace..." />
+              {notificationResults.length > 0 && (
+                <CommandGroup heading="Notifications">
+                  {notificationResults.map((nr) => (
+                    <CommandItem
+                      key={`notif-${nr.id}`}
+                      value={`notif-${nr.id}-${nr.ticketTitle}`}
+                      onSelect={() => {
+                        onOpenChange(false);
+                        if (!nr.redacted && nr.boardId) {
+                          onSelectTicket(nr.boardId, nr.ticketId);
+                        } else {
+                          window.dispatchEvent(new CustomEvent("patchwork:open-notifications"));
+                        }
+                      }}
+                    >
+                      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                        <span className="truncate text-xs">
+                          {nr.redacted
+                            ? "You no longer have access to this ticket"
+                            : `${nr.actorName || "Someone"} (${nr.type}) · ${nr.ticketKey || ""} ${nr.ticketTitle}`}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
               {searchGroups && searchGroups.tickets.length > 0 && (
                 <CommandGroup heading="Tickets">
                   {searchGroups.tickets.map((hit) => (

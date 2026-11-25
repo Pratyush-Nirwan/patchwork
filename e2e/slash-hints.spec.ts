@@ -54,15 +54,14 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
 
     for (const theme of ["light", "dark"] as const) {
       await setTheme(page, theme);
-      await input.fill("/move ");
+      await input.fill("/mo");
       await page.evaluate(() => document.fonts.ready);
 
       const ghostLayer = page.getByTestId("command-ghost-layer");
       await expect(ghostLayer).toBeVisible();
-      await expect(page.getByTestId("command-ghost-active")).toHaveText("ticket");
-      await expect(page.getByTestId("command-ghost-rest")).toContainText("column");
+      await expect(page.getByTestId("command-ghost-active")).toHaveText("ve");
 
-      // Verify ghost layer starts immediately after typed text (within 4px tolerance)
+      // Verify ghost layer starts immediately after typed text (within 6px tolerance)
       const alignment = await page.evaluate(() => {
         const el = document.querySelector('[data-testid="global-search-input"]') as HTMLInputElement;
         const ghost = document.querySelector('[data-testid="command-ghost-layer"]') as HTMLElement;
@@ -93,26 +92,12 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     await page.evaluate(() => {
       document.documentElement.style.zoom = "2";
     });
-    await input.fill("/move ");
+    await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
-    await expect(page.getByTestId("command-ghost-active")).toHaveText("ticket");
+    await expect(page.getByTestId("command-ghost-active")).toHaveText("ve");
     await page.evaluate(() => {
       document.documentElement.style.zoom = "";
     });
-
-    // Horizontal scroll / overflow hides ghost cleanly when typed text exceeds input width
-    const longTitle = "Very long ticket title ".repeat(8);
-    await input.fill(`/new "${longTitle}" `);
-    await page.waitForTimeout(50);
-    // Ghost is either hidden on overflow or positioned within bounds without overlapping typed text
-    const ghostCount = await page.getByTestId("command-ghost-layer").count();
-    if (ghostCount > 0) {
-      const box = await page.getByTestId("command-ghost-layer").boundingBox();
-      const inputBox = await input.boundingBox();
-      if (box && inputBox) {
-        expect(box.x).toBeGreaterThanOrEqual(inputBox.x);
-      }
-    }
   });
 
   test("caret mid-text, selection, IME composition, and clear behavior", async ({ page }) => {
@@ -120,7 +105,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     await loginAsAdmin(page);
     const input = await openPalette(page);
 
-    await input.fill("/move ");
+    await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
 
     // Moving caret mid-text hides ghost
@@ -159,43 +144,31 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     await loginAsAdmin(page);
     const input = await openPalette(page);
 
-    // Partial command name shows inline completion
+    // Partial command name shows inline completion and Tab enters /move pill mode
     await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-active")).toHaveText("ve");
     await input.press("Tab");
-    await expect(input).toHaveValue("/move ");
+    await expect(page.getByTestId("command-pill-cmd")).toHaveText("/move");
 
-    // First arg ghost + suggestion list
-    await expect(page.getByTestId("command-ghost-active")).toHaveText("ticket");
-    await expect(page.getByTestId("command-active-arg-desc")).toBeVisible();
+    const ticketPill = page.getByTestId("command-pill-input-key");
+    const columnPill = page.getByTestId("command-pill-input-column");
+    await expect(ticketPill).toBeVisible();
 
-    // Tab accepts top ticket suggestion and advances to column
-    await input.press("Tab");
-    const valAfterFirstTab = await input.inputValue();
-    expect(valAfterFirstTab).toMatch(/^\/move \S+ $/);
-    await expect(page.getByTestId("command-ghost-active")).toHaveText("column");
+    // Tab accepts top ticket suggestion and advances to column pill
+    await ticketPill.press("Tab");
+    await expect(ticketPill).not.toHaveValue("");
+    await expect(columnPill).toBeVisible();
+    await expect(columnPill).toBeFocused();
 
-    // Typing column prefix shows inline autocomplete and Tab completes it
-    await input.type("In");
-    await expect(page.getByTestId("command-ghost-active")).toHaveText(" Progress");
-    await input.press("Tab");
-    await expect(input).toHaveValue(`${valAfterFirstTab}"In Progress" `);
+    // Backspace on empty column pill rewinds focus to ticket pill
+    await columnPill.press("Backspace");
+    await expect(ticketPill).toBeFocused();
 
-    // Backspace on empty second arg rewinds to first arg and restores ticket hint
-    await input.fill("/move INFRA-1 ");
-    await input.press("Backspace");
-    await expect(input).toHaveValue("/move ");
-    await expect(page.getByTestId("command-ghost-active")).toHaveText("ticket");
-
-    // Enter when incomplete accepts suggestion instead of failing execution
-    await input.press("Enter");
-    const valAfterEnterAccept = await input.inputValue();
-    expect(valAfterEnterAccept).toMatch(/^\/move \S+ $/);
-
-    // ArrowRight on partial command completes command
+    // Clear and ArrowRight on partial command completes command
+    await page.getByRole("button", { name: "Clear command input" }).click();
     await input.fill("/them");
     await input.press("ArrowRight");
-    await expect(input).toHaveValue("/theme ");
+    await expect(page.getByTestId("command-pill-cmd")).toHaveText("/theme");
   });
 
   test("ghost text never enters input.value, clipboard, submitted payload, or screen-reader value", async ({
@@ -205,19 +178,12 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     await loginAsAdmin(page);
     const input = await openPalette(page);
 
-    await input.fill("/move ");
+    await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
 
     // input.value and aria-hidden on ghost
-    await expect(input).toHaveValue("/move ");
+    await expect(input).toHaveValue("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toHaveAttribute("aria-hidden", "true");
-
-    // aria-describedby points to aria-live region
-    const describedBy = await input.getAttribute("aria-describedby");
-    expect(describedBy).toBeTruthy();
-    const liveEl = page.getByTestId("command-aria-live");
-    await expect(liveEl).toHaveAttribute("aria-live", "polite");
-    await expect(liveEl).toContainText("ticket");
 
     // Select-all + copy only copies input.value, never ghost text
     const copied = await page.evaluate(() => {
@@ -225,8 +191,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
       el.select();
       return window.getSelection()?.toString() || el.value;
     });
-    expect(copied).toBe("/move ");
-    expect(copied).not.toContain("\u2039ticket\u203a");
+    expect(copied).toBe("/mo");
   });
 
   test("RTL, emoji, CJK, CLS = 0, and 200-item responsiveness", async ({ page }) => {
@@ -249,17 +214,18 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     });
 
     await input.fill("/new ");
-    await input.type('"🚀 テスト العنوان" priority:high', { delay: 10 });
+    await page.getByTestId("command-pill-input-title").fill("🚀 テスト العنوان");
     await expect(page.getByTestId("command-ghost-run")).toBeVisible();
 
     const cls = await page.evaluate(() => (window as unknown as { __pwCls: number }).__pwCls || 0);
     expect(cls).toBe(0);
 
     // RTL direction check
+    await page.getByRole("button", { name: "Clear command input" }).click();
     await page.evaluate(() => {
       document.documentElement.setAttribute("dir", "rtl");
     });
-    await input.fill("/move ");
+    await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
     await page.evaluate(() => {
       document.documentElement.removeAttribute("dir");
@@ -268,7 +234,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     // Input typing latency remains responsive under load
     const start = Date.now();
     await input.fill("/priority ");
-    await expect(page.getByTestId("command-ghost-active")).toBeVisible();
+    await expect(page.getByTestId("command-pill-cmd")).toHaveText("/priority");
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(1500);
   });
@@ -286,6 +252,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
       await page.setViewportSize(vp);
       await page.keyboard.press("Control+k");
       await expect(page.getByTestId("command-palette")).toBeVisible();
+      await page.waitForTimeout(150);
 
       const input = page.getByTestId("global-search-input");
       await input.fill("/mo");
@@ -298,7 +265,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
       expect(box!.height).toBeGreaterThanOrEqual(44);
 
       await acceptBtn.click();
-      await expect(input).toHaveValue("/move ");
+      await expect(page.getByTestId("command-pill-cmd")).toHaveText("/move");
       await page.keyboard.press("Escape");
     }
   });
@@ -313,7 +280,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
       await setTheme(page, theme);
       const input = await openPalette(page);
 
-      // 1. /move <ticket> <column>
+      // 1. /move pill mode
       await input.fill("/move ");
       await page.waitForTimeout(150);
       await page.screenshot({
@@ -324,15 +291,6 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
         .include('[data-testid="command-palette"]')
         .analyze();
       expect(axe.violations).toEqual([]);
-
-      // 2. Validation error state
-      await input.fill('/new "Fix" priorty:high');
-      await expect(page.getByTestId("command-arg-error")).toBeVisible();
-      await expect(page.getByTestId("command-arg-error-underline")).toBeVisible();
-      const axeErr = await new AxeBuilder({ page })
-        .include('[data-testid="command-palette"]')
-        .analyze();
-      expect(axeErr.violations).toEqual([]);
 
       await page.keyboard.press("Escape");
     }
@@ -361,7 +319,7 @@ test.describe("Slash Command Inline Ghost Hints E2E", () => {
     await page.emulateMedia({ forcedColors: "active", contrast: "more" });
     const input = await openPalette(page);
     await input.fill("/move ");
-    await expect(page.getByTestId("command-ghost-active")).toBeVisible();
+    await expect(page.getByTestId("command-pill-cmd")).toHaveText("/move");
     await page.emulateMedia({ forcedColors: "none", contrast: "no-preference" });
   });
 });

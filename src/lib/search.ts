@@ -184,7 +184,8 @@ function hasActiveFilterTokens(f: SearchFilterTokens): boolean {
       f.assignee ||
       f.label ||
       f.due ||
-      f.has
+      f.has ||
+      f.watching
   );
 }
 
@@ -244,6 +245,13 @@ export async function searchWorkspaceScoped(
   if (filters.priority) {
     params.push(filters.priority);
     conditions.push(`t.priority = $${params.length}`);
+  }
+
+  if (filters.watching === "me") {
+    params.push(userId);
+    conditions.push(
+      `EXISTS (SELECT 1 FROM ticket_watchers tw WHERE tw.ticket_id = t.id AND tw.user_id = $${params.length} AND tw.unwatched_at IS NULL)`
+    );
   }
 
   if (filters.assignee) {

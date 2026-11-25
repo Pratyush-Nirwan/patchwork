@@ -4,7 +4,15 @@ import React from "react";
  * Lightweight, safe Markdown renderer for ticket descriptions and comments.
  * Supports headings, bold, inline code, fenced code blocks, lists, blockquotes, and links.
  */
-export function MarkdownView({ content, className = "" }: { content: string; className?: string }) {
+export function MarkdownView({
+  content,
+  className = "",
+  mentionUsers,
+}: {
+  content: string;
+  className?: string;
+  mentionUsers?: Record<string, { id: string; name: string }>;
+}) {
   if (!content || !content.trim()) {
     return <p className="text-xs italic opacity-60">No description provided.</p>;
   }
@@ -14,8 +22,14 @@ export function MarkdownView({ content, className = "" }: { content: string; cla
   let inCodeBlock = false;
   let codeLines: string[] = [];
 
-  const renderInline = (text: string, keyPrefix: string): React.ReactNode[] => {
-    const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
+  const renderInline = (
+    text: string,
+    keyPrefix: string,
+    allowMentions = true
+  ): React.ReactNode[] => {
+    const tokens = text.split(
+      /(`[^`]+`|\*\*[^*]+\*\*|@\[[^\]]+\]\(mention:[0-9a-fA-F-]{36}\)|\[[^\]]+\]\([^)]+\))/g
+    );
     return tokens.map((tok, idx) => {
       const k = `${keyPrefix}-${idx}`;
       if (tok.startsWith("`") && tok.endsWith("`") && tok.length > 2) {
@@ -34,6 +48,24 @@ export function MarkdownView({ content, className = "" }: { content: string; cla
             {tok.slice(2, -2)}
           </strong>
         );
+      }
+      if (allowMentions) {
+        const mentionMatch = tok.match(
+          /^@\[([^\]]+)\]\(mention:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)$/
+        );
+        if (mentionMatch) {
+          const uid = mentionMatch[2].toLowerCase();
+          const displayName = mentionUsers?.[uid]?.name || mentionMatch[1];
+          return (
+            <span
+              key={k}
+              data-mention-user-id={uid}
+              className="inline-flex items-center rounded bg-[var(--pw-accent-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--pw-accent)]"
+            >
+              @{displayName}
+            </span>
+          );
+        }
       }
       const linkMatch = tok.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
       if (linkMatch) {
@@ -113,7 +145,7 @@ export function MarkdownView({ content, className = "" }: { content: string; cla
           key={i}
           className="my-1.5 border-l border-[var(--pw-border)] pl-3 text-xs italic text-[var(--pw-ink-secondary)]"
         >
-          {renderInline(line.slice(2), `bq-${i}`)}
+          {renderInline(line.slice(2), `bq-${i}`, false)}
         </blockquote>
       );
     } else {

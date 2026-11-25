@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import pg from "pg";
 import argon2 from "argon2";
 
-dotenv.config();
 dotenv.config({ path: ".env.test" });
 
 const DB_URL =
@@ -23,8 +22,8 @@ class SessionClient {
       typeof res.headers.getSetCookie === "function"
         ? res.headers.getSetCookie()
         : res.headers.get("set-cookie")
-        ? [res.headers.get("set-cookie")]
-        : [];
+          ? [res.headers.get("set-cookie")]
+          : [];
 
     for (const raw of setCookies) {
       if (!raw) continue;
@@ -96,6 +95,15 @@ async function startTempServerIfNeeded() {
     env: {
       ...process.env,
       DATABASE_URL: DB_URL,
+      S3_ENDPOINT: process.env.S3_ENDPOINT || "http://127.0.0.1:9000",
+      S3_REGION: process.env.S3_REGION || "us-east-1",
+      S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || "minioadmin",
+      S3_SECRET_KEY: process.env.S3_SECRET_KEY || "minioadmin",
+      S3_BUCKET: process.env.S3_BUCKET || "patchwork-test",
+      SESSION_SECRET: process.env.SESSION_SECRET || "patchwork-test-secret-key-32-bytes-minimum-len",
+      TOKEN_ENCRYPTION_KEY:
+        process.env.TOKEN_ENCRYPTION_KEY ||
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       NODE_ENV: "production",
     },
     stdio: "ignore",

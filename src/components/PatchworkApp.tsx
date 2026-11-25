@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WorkspaceSkeleton } from "@/components/skeletons/WorkspaceSkeleton";
+import { BoardSkeleton } from "@/components/skeletons/BoardSkeleton";
 import { TicketPanelSkeleton } from "@/components/skeletons/TicketPanelSkeleton";
 import {
   Presence,
@@ -62,6 +63,14 @@ import {
   BookOpen,
 } from "lucide-react";
 import { MarkdownView } from "./MarkdownView";
+import { TicketWatcherControls } from "./TicketWatcherControls";
+import { NotificationBell } from "./NotificationBell";
+import { MentionTextarea } from "./MentionTextarea";
+import {
+  TicketTypingIndicator,
+  TicketViewerAvatars,
+  useTicketPresence,
+} from "./TicketPresenceBar";
 import {
   CommandPalette,
   clearRecentPaletteItems,
@@ -230,6 +239,12 @@ export function PatchworkApp() {
   const [editDesc, setEditDesc] = useState("");
   const [editLabels, setEditLabels] = useState("");
   const [commentBody, setCommentBody] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentBody, setEditingCommentBody] = useState("");
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const { presence: ticketPresence, notifyTyping } = useTicketPresence(
+    user ? selectedTicketId : null
+  );
   const [linkUrl, setLinkUrl] = useState("");
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
@@ -518,6 +533,25 @@ export function PatchworkApp() {
       setTicketDetails(null);
     }
   }, [selectedTicketId, user, loadTicketDetails]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !user) return;
+    const params = new URLSearchParams(window.location.search);
+    const tId = params.get("ticket");
+    const cId = params.get("comment");
+    if (tId) setSelectedTicketId(tId);
+    if (cId) setHighlightedCommentId(cId);
+  }, [user]);
+
+  useEffect(() => {
+    if (!highlightedCommentId || !ticketDetails) return;
+    const el = document.getElementById(`comment-${highlightedCommentId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const timer = setTimeout(() => setHighlightedCommentId(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedCommentId, ticketDetails]);
 
   // Realtime SSE subscription
   useEffect(() => {
@@ -1171,15 +1205,40 @@ export function PatchworkApp() {
     e.preventDefault();
     if (!selectedTicketId || !commentBody.trim()) return;
     try {
-      await apiFetch(`/api/tickets/${selectedTicketId}/comments`, {
+      const res = await apiFetch(`/api/tickets/${selectedTicketId}/comments`, {
         method: "POST",
         body: JSON.stringify({ body: commentBody }),
       });
+      if (res?.comment?.mentionWarning) {
+        setErrorBanner(res.comment.mentionWarning);
+      }
       setCommentBody("");
       await loadTicketDetails(selectedTicketId);
       if (activeBoardId) await loadBoard(activeBoardId);
     } catch (err) {
       setErrorBanner(err instanceof Error ? err.message : "Failed to add comment");
+    }
+  };
+
+  const handleSaveCommentEdit = async (e: React.FormEvent, commentId: string) => {
+    e.preventDefault();
+    if (!selectedTicketId || !editingCommentBody.trim()) return;
+    try {
+      const res = await apiFetch(
+        `/api/tickets/${selectedTicketId}/comments/${commentId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ body: editingCommentBody }),
+        }
+      );
+      if (res?.comment?.mentionWarning) {
+        setErrorBanner(res.comment.mentionWarning);
+      }
+      setEditingCommentId(null);
+      setEditingCommentBody("");
+      await loadTicketDetails(selectedTicketId);
+    } catch (err) {
+      setErrorBanner(err instanceof Error ? err.message : "Failed to edit comment");
     }
   };
 
@@ -2075,6 +2134,13 @@ export function PatchworkApp() {
                 <span>New Ticket</span>
               </button>
             )}
+
+            <NotificationBell
+              onOpenTicket={(tid, cid) => {
+                setSelectedTicketId(tid);
+                if (cid) setHighlightedCommentId(cid);
+              }}
+            />
           </div>
         </header>
 
@@ -2138,23 +2204,26 @@ export function PatchworkApp() {
 
         {/* Workspace / Board Canvas */}
         <div className="relative flex flex-1 overflow-hidden">
-          {!boardData ? (
+          {!boardData && (boardLoading || activeBoardId) ? (
+            <BoardSkeleton />
+          ) : !boardData ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <div className="max-w-md space-y-4 rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-6 shadow-[var(--pw-shadow)]">
                 <h2 className="text-base font-semibold">
-                  Initialize Engineering Hierarchy
+                  {orgs.length === 0 ? "Set up your workspace" : "No board selected"}
                 </h2>
                 <p className="text-xs leading-relaxed text-[var(--pw-ink-secondary)]">
-                  Create an Organization, Team, Project, and Board from the left
-                  sidebar to begin tracking engineering tickets.
+                  {orgs.length === 0
+                    ? "Create an organization, team, and board from the sidebar to start tracking tickets."
+                    : "Pick a board from the sidebar, or create a new project and board to start tracking work."}
                 </p>
                 {orgs.length === 0 && (
                   <button
                     type="button"
                     onClick={() => setShowNewOrg(true)}
-                    className="rounded bg-[var(--pw-accent)] px-4 py-2 text-xs font-semibold text-white"
+                    className="rounded bg-[var(--pw-accent)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--pw-accent-hover)]"
                   >
-                    + Create First Organization
+                    + Create Organization
                   </button>
                 )}
               </div>
@@ -2336,76 +2405,54 @@ export function PatchworkApp() {
                       ) : ticketDetails ? (
                         <>
                           {/* Panel Top Bar */}
-                          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--pw-border)] bg-[var(--pw-surface)] px-4 py-3">
-                            <div className="flex items-center gap-2">
+                          <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-[var(--pw-border)] bg-[var(--pw-surface)] px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2">
                               <span
                                 data-testid="detail-ticket-key"
-                                className="rounded bg-[var(--pw-accent-soft)] px-2 py-0.5 font-mono text-xs font-bold text-[var(--pw-accent)] tabular-nums"
+                                className="shrink-0 whitespace-nowrap rounded bg-[var(--pw-accent-soft)] px-2 py-0.5 font-mono text-xs font-bold text-[var(--pw-accent)] tabular-nums"
                               >
                                 {ticketDetails.ticket.key}
                               </span>
-                              <select
-                                data-testid="detail-column-select"
-                                disabled={!canMutateTickets}
-                                value={ticketDetails.ticket.columnId}
-                                onChange={(e) =>
-                                  handleMoveTicket(ticketDetails.ticket.id, e.target.value)
-                                }
-                                className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2 py-1 text-xs font-medium"
-                              >
-                                {boardData.columns.map((c, cIdx) => {
-                                  const currentTicketColIdx = boardData.columns.findIndex(
-                                    (col) => col.id === ticketDetails.ticket.columnId
-                                  );
-                                  const currentTicketCol = boardData.columns[currentTicketColIdx];
-                                  const subErr = currentTicketCol && currentTicketCol.id !== c.id
-                                    ? checkSubRoleTransition(effectiveRole, effectiveSubRole, currentTicketCol.name, c.name)
-                                    : null;
-                                  const isDisallowed =
-                                    !canEditStructure &&
-                                    (Boolean(subErr) ||
-                                      (currentTicketColIdx !== -1 && cIdx > currentTicketColIdx + 1));
-
-                                  return (
-                                    <option
-                                      key={c.id}
-                                      value={c.id}
-                                      disabled={isDisallowed}
-                                      className={isDisallowed ? "text-gray-400 opacity-50" : ""}
-                                    >
-                                      {c.name}{subErr ? ` (${subErr})` : isDisallowed ? " (Sequential step required)" : ""}
-                                    </option>
-                                  );
-                                })}
-                              </select>
-                              <select
-                                data-testid="detail-priority-select"
-                                disabled={!canMutateTickets}
-                                value={ticketDetails.ticket.priority}
-                                onChange={(e) =>
-                                  handleUpdateTicketField({
-                                    priority: e.target.value as TicketItem["priority"],
-                                  })
-                                }
-                                className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2 py-1 font-mono text-xs uppercase"
-                              >
-                                <option value="urgent">Urgent</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                                <option value="none">None</option>
-                              </select>
                             </div>
 
-                            <button
-                              type="button"
-                              aria-label="Close ticket details"
-                              data-testid="close-detail-panel"
-                              onClick={() => setSelectedTicketId(null)}
-                              className="rounded p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-[var(--pw-ink-secondary)] hover:bg-[var(--pw-surface-muted)] hover:text-[var(--pw-ink)]"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
+                            <div className="flex shrink-0 items-center gap-2">
+                              {user && (
+                                <TicketViewerAvatars
+                                  viewers={ticketPresence.viewers}
+                                  currentUserId={user.id}
+                                />
+                              )}
+                              <TicketWatcherControls
+                                ticketId={ticketDetails.ticket.id}
+                                initialStatus={ticketDetails.watchStatus}
+                                onStatusChange={(next) => {
+                                  setTicketDetails((prev) =>
+                                    prev ? { ...prev, watchStatus: next } : prev
+                                  );
+                                  setBoardData((prev) =>
+                                    prev
+                                      ? {
+                                        ...prev,
+                                        tickets: prev.tickets.map((t) =>
+                                          t.id === ticketDetails.ticket.id
+                                            ? { ...t, isWatching: next.watching }
+                                            : t
+                                        ),
+                                      }
+                                      : prev
+                                  );
+                                }}
+                              />
+                              <button
+                                type="button"
+                                aria-label="Close ticket details"
+                                data-testid="close-detail-panel"
+                                onClick={() => setSelectedTicketId(null)}
+                                className="rounded p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-[var(--pw-ink-secondary)] hover:bg-[var(--pw-surface-muted)] hover:text-[var(--pw-ink)]"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="p-4 space-y-6">
@@ -2421,12 +2468,13 @@ export function PatchworkApp() {
                                     onChange={(e) => setEditTitle(e.target.value)}
                                     className="w-full rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-3 py-1.5 text-sm font-semibold"
                                   />
-                                  <textarea
+                                  <MentionTextarea
                                     data-testid="edit-ticket-desc-input"
                                     rows={4}
+                                    ticketId={ticketDetails.ticket.id}
                                     value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    placeholder="Markdown description..."
+                                    onChange={(val) => setEditDesc(val)}
+                                    placeholder="Markdown description... (type @ to mention)"
                                     className="w-full rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2.5 font-mono text-xs"
                                   />
                                   <input
@@ -2522,20 +2570,86 @@ export function PatchworkApp() {
                                         className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2 py-0.5 text-xs text-[var(--pw-ink)]"
                                       />
                                     </div>
-
-                                    {ticketDetails.ticket.labels.length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {ticketDetails.ticket.labels.map((lbl) => (
-                                          <span
-                                            key={lbl}
-                                            className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-1.5 py-0.5 font-mono text-[10px]"
-                                          >
-                                            {lbl}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    )}
                                   </div>
+
+                                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--pw-ink-secondary)]">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono text-[11px] uppercase">
+                                        Status:
+                                      </span>
+                                      <select
+                                        data-testid="detail-column-select"
+                                        disabled={!canMutateTickets}
+                                        value={ticketDetails.ticket.columnId}
+                                        onChange={(e) =>
+                                          handleMoveTicket(ticketDetails.ticket.id, e.target.value)
+                                        }
+                                        className="min-w-0 max-w-[140px] truncate rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2 py-0.5 text-xs"
+                                      >
+                                        {boardData.columns.map((c, cIdx) => {
+                                          const currentTicketColIdx = boardData.columns.findIndex(
+                                            (col) => col.id === ticketDetails.ticket.columnId
+                                          );
+                                          const currentTicketCol = boardData.columns[currentTicketColIdx];
+                                          const subErr = currentTicketCol && currentTicketCol.id !== c.id
+                                            ? checkSubRoleTransition(effectiveRole, effectiveSubRole, currentTicketCol.name, c.name)
+                                            : null;
+                                          const isDisallowed =
+                                            !canEditStructure &&
+                                            (Boolean(subErr) ||
+                                              (currentTicketColIdx !== -1 && cIdx > currentTicketColIdx + 1));
+
+                                          return (
+                                            <option
+                                              key={c.id}
+                                              value={c.id}
+                                              disabled={isDisallowed}
+                                              title={subErr || (isDisallowed ? "Sequential step required" : undefined)}
+                                              className={isDisallowed ? "text-gray-400 opacity-50" : ""}
+                                            >
+                                              {c.name}{isDisallowed ? " (locked)" : ""}
+                                            </option>
+                                          );
+                                        })}
+                                      </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono text-[11px] uppercase">
+                                        Priority:
+                                      </span>
+                                      <select
+                                        data-testid="detail-priority-select"
+                                        disabled={!canMutateTickets}
+                                        value={ticketDetails.ticket.priority}
+                                        onChange={(e) =>
+                                          handleUpdateTicketField({
+                                            priority: e.target.value as TicketItem["priority"],
+                                          })
+                                        }
+                                        className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-2 py-0.5 text-xs"
+                                      >
+                                        <option value="urgent">Urgent</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                        <option value="none">None</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  {ticketDetails.ticket.labels.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1 text-[var(--pw-ink-secondary)]">
+                                      {ticketDetails.ticket.labels.map((lbl) => (
+                                        <span
+                                          key={lbl}
+                                          className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-1.5 py-0.5 font-mono text-[10px]"
+                                        >
+                                          {lbl}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
 
                                   <div className="mt-4 rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-3">
                                     <MarkdownView content={ticketDetails.ticket.description} />
@@ -2676,12 +2790,20 @@ export function PatchworkApp() {
 
                               {canMutateTickets && (
                                 <form onSubmit={handleAddComment} className="space-y-2">
-                                  <textarea
+                                  {user && (
+                                    <TicketTypingIndicator
+                                      typers={ticketPresence.typers}
+                                      currentUserId={user.id}
+                                    />
+                                  )}
+                                  <MentionTextarea
                                     data-testid="comment-input"
                                     rows={3}
+                                    ticketId={ticketDetails.ticket.id}
                                     value={commentBody}
-                                    onChange={(e) => setCommentBody(e.target.value)}
-                                    placeholder="Write a markdown comment..."
+                                    onChange={(val) => setCommentBody(val)}
+                                    onTyping={notifyTyping}
+                                    placeholder="Write a markdown comment... (type @ to mention)"
                                     className="w-full rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2.5 text-xs"
                                   />
                                   <button
@@ -2695,26 +2817,85 @@ export function PatchworkApp() {
                               )}
 
                               <div className="space-y-2">
-                                {ticketDetails.comments.map((c) => (
-                                  <div
-                                    key={c.id}
-                                    data-testid="comment-item"
-                                    className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] p-2.5"
-                                  >
-                                    <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--pw-ink-secondary)]">
-                                      <span className="font-semibold text-[var(--pw-ink)]">
-                                        {c.author.name}
-                                      </span>
-                                      <span className="font-mono text-[10px] tabular-nums">
-                                        {new Date(c.createdAt).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
-                                      </span>
+                                {ticketDetails.comments.map((c) => {
+                                  const isHighlighted = highlightedCommentId === c.id;
+                                  const canEditThisComment =
+                                    canMutateTickets &&
+                                    (c.author.id === user?.id ||
+                                      effectiveRole === "admin" ||
+                                      effectiveRole === "lead");
+                                  return (
+                                    <div
+                                      key={c.id}
+                                      id={`comment-${c.id}`}
+                                      data-testid="comment-item"
+                                      className={`rounded border p-2.5 transition-colors ${isHighlighted
+                                        ? "border-[var(--pw-accent)] bg-[var(--pw-accent-soft)]/40"
+                                        : "border-[var(--pw-border)] bg-[var(--pw-bg)]"
+                                        }`}
+                                    >
+                                      <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--pw-ink-secondary)]">
+                                        <span className="font-semibold text-[var(--pw-ink)]">
+                                          {c.author.name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          {canEditThisComment && editingCommentId !== c.id && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setEditingCommentId(c.id);
+                                                setEditingCommentBody(c.body);
+                                              }}
+                                              className="text-[10px] font-medium text-[var(--pw-ink-muted)] hover:text-[var(--pw-ink)]"
+                                            >
+                                              Edit
+                                            </button>
+                                          )}
+                                          <span className="font-mono text-[10px] tabular-nums">
+                                            {new Date(c.createdAt).toLocaleTimeString([], {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      {editingCommentId === c.id ? (
+                                        <form
+                                          onSubmit={(e) => handleSaveCommentEdit(e, c.id)}
+                                          className="space-y-2 mt-1"
+                                        >
+                                          <MentionTextarea
+                                            rows={3}
+                                            ticketId={ticketDetails.ticket.id}
+                                            value={editingCommentBody}
+                                            onChange={(val) => setEditingCommentBody(val)}
+                                            className="w-full rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-2 text-xs"
+                                          />
+                                          <div className="flex gap-1.5">
+                                            <button
+                                              type="submit"
+                                              className="rounded bg-[var(--pw-accent)] px-2.5 py-1 text-[11px] font-semibold text-white"
+                                            >
+                                              Save
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setEditingCommentId(null)}
+                                              className="rounded border border-[var(--pw-border)] px-2.5 py-1 text-[11px]"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        </form>
+                                      ) : (
+                                        <MarkdownView
+                                          content={c.body}
+                                          mentionUsers={ticketDetails.mentionUsers}
+                                        />
+                                      )}
                                     </div>
-                                    <MarkdownView content={c.body} />
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </section>
 
@@ -3256,6 +3437,7 @@ export function PatchworkApp() {
             orgId={activeOrgId || undefined}
             teamId={activeTeamId || undefined}
             boardId={activeBoardId || undefined}
+            ticketId={selectedTicketId || undefined}
             boards={
               activeOrg?.teams.flatMap((t) =>
                 t.projects.flatMap((p) =>

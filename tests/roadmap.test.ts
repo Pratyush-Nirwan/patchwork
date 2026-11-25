@@ -83,7 +83,7 @@ items:
     const readme = fs.readFileSync(path.join(REPO_ROOT, "README.md"), "utf8");
     const statusIdx = readme.indexOf("## Status & Roadmap");
     const beforeRoadmap = statusIdx === -1 ? readme : readme.slice(0, statusIdx);
-    for (const term of ["sprints", "subtasks", "audit log", "webhooks", "passkeys", "2FA"]) {
+    for (const term of ["sprints", "subtasks", "audit log", "inbound webhooks", "passkeys", "2FA"]) {
       expect(beforeRoadmap.toLowerCase()).not.toContain(term.toLowerCase());
     }
   });

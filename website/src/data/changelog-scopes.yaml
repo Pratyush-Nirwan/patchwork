@@ -10,3 +10,7 @@ scopes:
   - "Documentation"
   - "Performance"
   - "Platform"
+  - "Notifications"
+  - "Email"
+  - "Webhooks"
+  - "Interface"

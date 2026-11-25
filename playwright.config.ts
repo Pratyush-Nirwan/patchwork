@@ -21,9 +21,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run start",
+    command: process.env.PW_USE_DEV === "1" ? "npm run dev" : "npm run start",
     url: "http://localhost:3000/api/health",
-    reuseExistingServer: false,
+    reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
     timeout: 60000,
     env: {
       DATABASE_URL: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/patchwork_test",
@@ -34,6 +34,7 @@ export default defineConfig({
       S3_BUCKET: process.env.S3_BUCKET || "patchwork-test",
       SESSION_SECRET: process.env.SESSION_SECRET || "patchwork-test-secret-key-32-bytes-minimum-len",
       TOKEN_ENCRYPTION_KEY: process.env.TOKEN_ENCRYPTION_KEY || "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      PATCHWORK_ENABLE_DEV_GALLERY: process.env.PATCHWORK_ENABLE_DEV_GALLERY || "1",
     },
   },
 });

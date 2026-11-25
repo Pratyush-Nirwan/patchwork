@@ -2,6 +2,7 @@
 
 import React,{ useState,useEffect,useCallback } from "react";
 import { SystemSectionSkeleton } from "@/components/skeletons/SystemConfigSkeleton";
+import { Skeleton, Surface } from "@/components/ui/skeleton";
 import { HoldToConfirmButton } from "./HoldToConfirmButton";
 import type { StorageHealthData,StorageOrphanItem } from "./types";
 
@@ -16,6 +17,7 @@ export function StorageSection({
   const [allowedExtensions, setAllowedExtensions] = useState<string[]>([]);
   const [healthData, setHealthData] = useState<StorageHealthData | null>(null);
   const [orphans, setOrphans] = useState<StorageOrphanItem[] | null>(null);
+  const [scanningOrphans, setScanningOrphans] = useState(false);
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -67,6 +69,7 @@ export function StorageSection({
   };
 
   const handleScanOrphans = async () => {
+    setScanningOrphans(true);
     try {
       const res = await fetch("/api/system/storage/orphans");
       const d = await res.json();
@@ -74,6 +77,8 @@ export function StorageSection({
       showToast(`Scan complete: found ${d.orphans?.length || 0} orphaned objects`);
     } catch {
       showToast("Failed to scan orphans", "error");
+    } finally {
+      setScanningOrphans(false);
     }
   };
 
@@ -252,7 +257,14 @@ export function StorageSection({
           </button>
         </div>
 
-        {orphans && (
+        {scanningOrphans && (
+          <Surface variant="surface" className="space-y-2 pt-2 border-t border-[var(--pw-border)]" aria-busy="true" aria-label="Scanning MinIO for orphaned objects">
+            <Skeleton className="h-3.5 w-48" />
+            <Skeleton className="h-10 w-full" />
+          </Surface>
+        )}
+
+        {!scanningOrphans && orphans && (
           <div className="space-y-2 pt-2 border-t border-[var(--pw-border)]">
             <div className="text-xs">
               {orphans.length === 0 ? (

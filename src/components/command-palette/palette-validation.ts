@@ -1,5 +1,14 @@
-import { findCommandDefinition, formatUsage, type CommandDefinition } from "@/lib/commands/registry";
+import type { CommandDefinition } from "@/lib/commands/registry";
 import type { ParsedSlashCommand } from "@/lib/commands/parser";
+
+export interface PillValidationTarget {
+  id: string;
+  kind: "positional" | "option";
+  key: string;
+  label: string;
+  value: string;
+  autocomplete: string;
+}
 
 export function validateActiveArgument(
   def: CommandDefinition,
@@ -64,5 +73,41 @@ export function validateActiveArgument(
     }
   }
 
+  return null;
+}
+
+export function validatePillArguments(
+  _def: CommandDefinition,
+  pills: PillValidationTarget[]
+): { message: string; pillId: string } | null {
+  for (const pill of pills) {
+    const val = pill.value.trim();
+    if (!val) continue;
+    if (val.length > 500) {
+      return {
+        message: "Argument value exceeds maximum length (500 characters).",
+        pillId: pill.id,
+      };
+    }
+    const lower = val.toLowerCase();
+    if (pill.autocomplete === "priority" && !["urgent", "high", "medium", "low"].some((p) => p.startsWith(lower))) {
+      return {
+        message: `Invalid priority '${val}'. Use urgent, high, medium, or low.`,
+        pillId: pill.id,
+      };
+    }
+    if (pill.autocomplete === "view" && !["kanban", "calendar"].some((v) => v.startsWith(lower))) {
+      return {
+        message: `Invalid view '${val}'. Use kanban or calendar.`,
+        pillId: pill.id,
+      };
+    }
+    if (pill.autocomplete === "theme" && !["dark", "light", "toggle"].some((t) => t.startsWith(lower))) {
+      return {
+        message: `Invalid theme '${val}'. Use dark, light, or toggle.`,
+        pillId: pill.id,
+      };
+    }
+  }
   return null;
 }

@@ -7,6 +7,7 @@ export type SystemConfigSection =
   | "storage"
   | "search"
   | "integrations"
+  | "notifications"
   | "appearance"
   | "health"
   | "data-backup"
@@ -82,6 +83,20 @@ export interface SystemDiagnostics {
     status: "healthy" | "unhealthy";
     bucket: string;
     latencyMs: number;
+  };
+  worker?: {
+    status: "healthy" | "stale" | "offline";
+    mode: "embedded" | "separate";
+    workerId: string | null;
+    lastHeartbeatAt: string | null;
+    startedAt: string | null;
+    processedEvents: number;
+    lastError: string | null;
+    queues: {
+      domainEvents: { pending: number; deadLettered: number; oldestPendingAgeSec: number | null };
+      emailOutbox: { pending: number; deadLettered: number; oldestPendingAgeSec: number | null };
+      webhookDeliveries: { pending: number; deadLettered: number; oldestPendingAgeSec: number | null };
+    };
   };
   recentErrors: ServerErrorLog[];
   generatedAt: string;

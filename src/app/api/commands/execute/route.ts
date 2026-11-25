@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { columns, teamMembers, tickets, users, type TicketPriority } from "@/db/schema";
 import { handleApiError, requireRequestAuth } from "@/lib/http";
 import { AppError, NotFoundError } from "@/lib/errors";
-import { getAccessibleTeamIds } from "@/lib/rbac";
+import { getAccessibleTeamIds, requireTicketRole } from "@/lib/rbac";
 import { findCommandDefinition } from "@/lib/commands/registry";
 import { parseSlashCommand } from "@/lib/commands/parser";
 import {
@@ -18,6 +18,8 @@ import {
 import { addComment } from "@/lib/comments";
 import { addTicketLink } from "@/lib/links";
 import { createColumn } from "@/lib/hierarchy";
+import { getTicketWatchStatus, setTicketMute, unwatchTicket, watchTicket } from "@/lib/watchers";
+import { markAllNotificationsRead } from "@/lib/notifications";
 
 const ExecuteCommandSchema = z.object({
   command: z.string().min(1).max(64),
@@ -29,6 +31,7 @@ const ExecuteCommandSchema = z.object({
       orgId: z.string().uuid().optional(),
       teamId: z.string().uuid().optional(),
       boardId: z.string().uuid().optional(),
+      ticketId: z.string().uuid().optional(),
     })
     .optional(),
 });
@@ -412,6 +415,74 @@ export async function POST(req: NextRequest) {
           message: `Created column "${column.name}"`,
           column,
           boardId,
+        });
+      }
+
+      case "watch": {
+        const rawKey = (flags.ticket || positional[0] || "").trim();
+        const ticket = rawKey
+          ? await resolveAccessibleTicketByKey(actorId, rawKey, orgId)
+          : context?.ticketId
+          ? (await requireTicketRole(actorId, context.ticketId, "viewer")).ticket
+          : (() => {
+              throw new AppError("Ticket key is required (or open a ticket first)", 400);
+            })();
+        const watchStatus = await watchTicket(actorId, ticket.id);
+        return NextResponse.json({
+          ok: true,
+          message: `Watching ${ticket.key}`,
+          boardId: ticket.boardId,
+          ticketId: ticket.id,
+          watchStatus,
+        });
+      }
+
+      case "unwatch": {
+        const rawKey = (flags.ticket || positional[0] || "").trim();
+        const ticket = rawKey
+          ? await resolveAccessibleTicketByKey(actorId, rawKey, orgId)
+          : context?.ticketId
+          ? (await requireTicketRole(actorId, context.ticketId, "viewer")).ticket
+          : (() => {
+              throw new AppError("Ticket key is required (or open a ticket first)", 400);
+            })();
+        const watchStatus = await unwatchTicket(actorId, ticket.id);
+        return NextResponse.json({
+          ok: true,
+          message: `Stopped watching ${ticket.key}`,
+          boardId: ticket.boardId,
+          ticketId: ticket.id,
+          watchStatus,
+        });
+      }
+
+      case "mute": {
+        const rawKey = (flags.ticket || positional[0] || "").trim();
+        const ticket = rawKey
+          ? await resolveAccessibleTicketByKey(actorId, rawKey, orgId)
+          : context?.ticketId
+          ? (await requireTicketRole(actorId, context.ticketId, "viewer")).ticket
+          : (() => {
+              throw new AppError("Ticket key is required (or open a ticket first)", 400);
+            })();
+        const current = await getTicketWatchStatus(actorId, ticket.id);
+        const nextMuted = !current.muted;
+        const watchStatus = await setTicketMute(actorId, ticket.id, nextMuted);
+        return NextResponse.json({
+          ok: true,
+          message: nextMuted ? `Muted updates for ${ticket.key}` : `Unmuted updates for ${ticket.key}`,
+          boardId: ticket.boardId,
+          ticketId: ticket.id,
+          watchStatus,
+        });
+      }
+
+      case "read-all": {
+        const updated = await markAllNotificationsRead(actorId);
+        return NextResponse.json({
+          ok: true,
+          message: `Marked ${updated} notification${updated === 1 ? "" : "s"} as read`,
+          updated,
         });
       }
 

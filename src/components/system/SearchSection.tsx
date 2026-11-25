@@ -1,7 +1,8 @@
 "use client";
 
-import { useState,useEffect,useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RefreshCw } from "lucide-react";
+import { Skeleton, SkeletonRegion, Surface } from "@/components/ui/skeleton";
 import type { SearchStatusData } from "./types";
 
 export function SearchSection({
@@ -60,9 +61,32 @@ export function SearchSection({
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-xs text-[var(--pw-ink-secondary)]">Loading status...</div>
-      ) : (
+      <SkeletonRegion
+        isLoading={loading}
+        hasData={!loading}
+        loadingLabel="Loading search index status"
+        readyLabel="Search index status loaded"
+        skeleton={
+          <div className="space-y-4" aria-hidden="true" data-testid="search-status-skeleton">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <Surface key={i} variant="surface" className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-3.5 space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-5 w-14" />
+                  <Skeleton className="h-3 w-36" />
+                </Surface>
+              ))}
+            </div>
+            <Surface variant="surface" className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-4 flex items-center justify-between gap-4">
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3 w-72" />
+              </div>
+              <Skeleton className="h-8 w-28" />
+            </Surface>
+          </div>
+        }
+      >
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] p-3.5">
@@ -118,7 +142,7 @@ export function SearchSection({
             </button>
           </div>
         </div>
-      )}
+      </SkeletonRegion>
     </div>
   );
 }

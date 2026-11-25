@@ -73,6 +73,7 @@ export interface TicketItem {
   commentCount?: number;
   attachmentCount?: number;
   linkCount?: number;
+  isWatching?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,6 +102,18 @@ export interface TicketDetailsData {
   ticket: TicketItem;
   role: "admin" | "lead" | "member" | "viewer";
   subRole?: "developer" | "tester" | null;
+  watchStatus?: {
+    watching: boolean;
+    muted: boolean;
+    watcherCount: number;
+    watchers: Array<{
+      userId: string;
+      name: string;
+      source: string;
+      muted: boolean;
+    }>;
+  };
+  mentionUsers?: Record<string, { id: string; name: string }>;
   comments: Array<{
     id: string;
     body: string;

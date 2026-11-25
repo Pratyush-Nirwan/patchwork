@@ -13,41 +13,78 @@ hero:
       variant: minimal
 ---
 
-import { Aside, Badge, Card, CardGrid } from "@astrojs/starlight/components";
+import { Badge } from "@astrojs/starlight/components";
 import appMeta from "../../../data/generated/app-meta.json";
 export const versionLabel = appMeta.displayVersion;
 
-<div data-testid="docs-landing-version">
-  <Badge text={`Release ${versionLabel}`} variant="note" />
+<div class="pw-docs-status">
+  <div class="pw-docs-status-left" data-testid="docs-landing-version">
+    <Badge text={`Release ${versionLabel}`} variant="note" />
+    <span>Pre-1.0 beta &mdash; back up PostgreSQL, <code>.env</code>, and MinIO before upgrading.</span>
+  </div>
+  <a class="pw-docs-status-link" href="/documentation/changelog/">Changelog &rarr;</a>
 </div>
 
-<Aside type="caution" title="Beta software">
-  Patchwork {versionLabel} is pre-1.0 beta software. Features and data formats may change between releases. Always back up PostgreSQL, `.env`, and MinIO data before upgrading, and report issues on the project issue tracker.
-</Aside>
+<div class="pw-docs-paths">
+  <div class="pw-docs-path">
+    <h3>Getting Started</h3>
+    <p>Install natively on Windows or Linux with Node.js, PostgreSQL, and MinIO &mdash; no Docker required.</p>
+    <ul>
+      <li><a href="/documentation/getting-started/quick-start/">Quick Start</a></li>
+      <li><a href="/documentation/getting-started/installation/">Installation Guide</a></li>
+      <li><a href="/documentation/getting-started/setup-wizard/">Setup Wizard</a></li>
+    </ul>
+  </div>
+  <div class="pw-docs-path">
+    <h3>User Guide</h3>
+    <p>Navigate boards, run slash commands with <code>Ctrl+K</code>, and collaborate with mentions and watchers.</p>
+    <ul>
+      <li><a href="/documentation/user-guide/workspace-and-boards/">Workspace &amp; Boards</a></li>
+      <li><a href="/documentation/user-guide/command-palette/">Command Bar</a></li>
+      <li><a href="/documentation/user-guide/notifications-and-mentions/">Notifications &amp; Mentions</a></li>
+    </ul>
+  </div>
+  <div class="pw-docs-path">
+    <h3>Admin &amp; Operations</h3>
+    <p>Configure SMTP, outbound webhooks, user roles, HTTPS, and backup routines.</p>
+    <ul>
+      <li><a href="/documentation/admin-guide/system-configuration/">System Configuration</a></li>
+      <li><a href="/documentation/admin-guide/email-smtp/">Email &amp; SMTP</a></li>
+      <li><a href="/documentation/operations/backups-and-upgrades/">Backups &amp; Upgrades</a></li>
+    </ul>
+  </div>
+  <div class="pw-docs-path">
+    <h3>Reference &amp; Development</h3>
+    <p>Inspect environment variables, database schema, RBAC permissions, and system architecture.</p>
+    <ul>
+      <li><a href="/documentation/reference/configuration/">Configuration Reference</a></li>
+      <li><a href="/documentation/reference/database-schema/">Database Schema</a></li>
+      <li><a href="/documentation/development/architecture/">Architecture</a></li>
+    </ul>
+  </div>
+</div>
 
 {/* ROADMAP_STRIP_START */}
-<Aside type="note" title="Coming in v1.0.0">
-Planned areas: **Ticketing and Workflow** · **Collaboration and Notifications** · **Views and Analytics** · **Git and Developer Integrations** · **Security, Audit, and Operations**. See the full [v1.0.0 Roadmap](/documentation/project/roadmap/) for details. This roadmap describes planned work. Scope and timing may change.
-</Aside>
+<div class="pw-docs-roadmap-strip">
+  <div class="pw-docs-roadmap-copy">
+    <strong>Coming in v1.0.0</strong>
+    <span>Ticketing and Workflow · Collaboration and Notifications · Views and Analytics · Git and Developer Integrations · Security, Audit, and Operations</span>
+  </div>
+  <a class="pw-cl-btn" href="/documentation/project/roadmap/">View v1.0.0 Roadmap &rarr;</a>
+</div>
 {/* ROADMAP_STRIP_END */}
-
-## Core Capabilities
-
-<CardGrid stagger>
-  <Card title="Multi-team hierarchy" icon="list-format">
-    Organize work cleanly across Organization, Teams, Projects, Boards, Columns, and Tickets with server-enforced RBAC.
-  </Card>
-  <Card title="Real-time Kanban & Calendar" icon="rocket">
-    Drag cards and reorder columns with WIP capacity gauges. PostgreSQL `LISTEN/NOTIFY` pushes live updates over SSE.
-  </Card>
-  <Card title="Spotlight Command Bar" icon="magnifier">
-    Open with `Ctrl+K` (`Cmd+K` on macOS) to search tickets or run slash commands with inline ghost hints and autocomplete.
-  </Card>
-  <Card title="Native, zero-Docker stack" icon="setting">
-    Runs directly on Node.js 20+, PostgreSQL 16+, and the official MinIO binary on Windows 10/11 and Linux.
-  </Card>
-</CardGrid>
 
 ## Workspace Preview
 
+<div class="pw-docs-preview">
+  <div class="pw-theme-light">
+
 ![Patchwork Kanban board in light mode](../../../assets/screenshots/board-light.png)
+
+  </div>
+  <div class="pw-theme-dark">
+
+![Patchwork Kanban board in dark mode](../../../assets/screenshots/board-dark.png)
+
+  </div>
+</div>

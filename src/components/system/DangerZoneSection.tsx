@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
+import { Skeleton, Surface } from "@/components/ui/skeleton";
 import { HoldToConfirmButton } from "./HoldToConfirmButton";
 
 export function DangerZoneSection({
@@ -15,16 +16,19 @@ export function DangerZoneSection({
 }) {
   const [archiveDays, setArchiveDays] = useState(90);
   const [archivePreview, setArchivePreview] = useState<number | null>(null);
+  const [archivePreviewLoading, setArchivePreviewLoading] = useState(false);
   const [archiveConfirm, setArchiveConfirm] = useState("");
   const [archivePending, setArchivePending] = useState(false);
 
   const [deactivatedPreview, setDeactivatedPreview] = useState<
     Array<{ id: string; name: string; email: string }> | null
   >(null);
+  const [deactivatedPreviewLoading, setDeactivatedPreviewLoading] = useState(false);
   const [deleteDeactivatedConfirm, setDeleteDeactivatedConfirm] = useState("");
   const [deletePending, setDeletePending] = useState(false);
 
   const handlePreviewArchive = async () => {
+    setArchivePreviewLoading(true);
     try {
       const res = await fetch(`/api/system/danger/archive-tickets?days=${archiveDays}`, {
         headers: { "x-org-id": orgId },
@@ -33,6 +37,8 @@ export function DangerZoneSection({
       setArchivePreview(data.affectedCount);
     } catch {
       showToast("Failed to preview archive", "error");
+    } finally {
+      setArchivePreviewLoading(false);
     }
   };
 
@@ -62,6 +68,7 @@ export function DangerZoneSection({
   };
 
   const handlePreviewDeactivated = async () => {
+    setDeactivatedPreviewLoading(true);
     try {
       const res = await fetch("/api/system/danger/delete-deactivated", {
         headers: { "x-org-id": orgId },
@@ -70,6 +77,8 @@ export function DangerZoneSection({
       setDeactivatedPreview(data.users || []);
     } catch {
       showToast("Failed to preview deactivated users", "error");
+    } finally {
+      setDeactivatedPreviewLoading(false);
     }
   };
 
@@ -140,7 +149,14 @@ export function DangerZoneSection({
             </button>
           </div>
 
-          {archivePreview !== null && (
+          {archivePreviewLoading && (
+            <Surface variant="destructive" className="space-y-2 pt-2 border-t border-red-500/20" aria-busy="true" aria-label="Loading archive preview">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-7 w-full" />
+            </Surface>
+          )}
+
+          {!archivePreviewLoading && archivePreview !== null && (
             <div className="space-y-2 pt-2 border-t border-red-500/20">
               <div className="text-amber-600 dark:text-amber-400 font-semibold">
                 Affected tickets: {archivePreview}
@@ -191,7 +207,14 @@ export function DangerZoneSection({
             Preview Deactivated Users
           </button>
 
-          {deactivatedPreview !== null && (
+          {deactivatedPreviewLoading && (
+            <Surface variant="destructive" className="space-y-2 pt-2 border-t border-red-500/20" aria-busy="true" aria-label="Loading deactivated users preview">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-12 w-full" />
+            </Surface>
+          )}
+
+          {!deactivatedPreviewLoading && deactivatedPreview !== null && (
             <div className="space-y-2 pt-2 border-t border-red-500/20">
               <div className="text-amber-600 dark:text-amber-400 font-semibold">
                 Deactivated users count: {deactivatedPreview.length}

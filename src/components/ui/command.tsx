@@ -364,16 +364,16 @@ const CommandInput = React.forwardRef<
             style={{
               left: measure.isRtl
                 ? undefined
-                : `${textOffsetInView + (ghost.needsColonGap ? 4 : 0)}px`,
+                : `${textOffsetInView + (ghost.needsColonGap ? 4 : 0) + (strValue.endsWith(" ") && !ghost.needsLeadingSpace ? 4 : 0)}px`,
               right: measure.isRtl
-                ? `${textOffsetInView + (ghost.needsColonGap ? 4 : 0)}px`
+                ? `${textOffsetInView + (ghost.needsColonGap ? 4 : 0) + (strValue.endsWith(" ") && !ghost.needsLeadingSpace ? 4 : 0)}px`
                 : undefined,
               maxWidth: availableGhostWidth !== undefined ? `${availableGhostWidth}px` : undefined,
             }}
             className="pw-ghost-enter pointer-events-none absolute top-0 flex h-7 select-none items-center overflow-hidden whitespace-pre text-sm leading-7"
           >
-            <span className="inline-flex items-center gap-1.5 truncate">
-              {ghost.needsLeadingSpace ? <span className="inline-block w-1.5" /> : null}
+            <span className="inline-flex items-center gap-2 truncate">
+              {ghost.needsLeadingSpace ? <span className="inline-block w-2" /> : null}
               {ghost.activeText && (
                 <span
                   data-testid="command-ghost-active"

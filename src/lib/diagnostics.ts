@@ -6,6 +6,7 @@ import { realtimeHub } from "./realtime";
 import { getS3Bucket, getS3Client } from "./attachments";
 import { getPlatformInfo } from "./platform";
 import { HeadBucketCommand } from "@aws-sdk/client-s3";
+import { getWorkerHealthSnapshot, type WorkerHealthSnapshot } from "./worker";
 
 export interface LoggedServerError {
   timestamp: string;
@@ -77,6 +78,7 @@ export interface DiagnosticsBundle {
     bucket: string;
     latencyMs: number;
   };
+  worker: WorkerHealthSnapshot;
   recentErrors: LoggedServerError[];
   generatedAt: string;
 }
@@ -120,6 +122,8 @@ export async function generateDiagnosticsBundle(): Promise<DiagnosticsBundle> {
     minioStatus = "unhealthy";
   }
 
+  const worker = await getWorkerHealthSnapshot();
+
   return {
     appVersion,
     channel: pkgChannel,
@@ -138,6 +142,7 @@ export async function generateDiagnosticsBundle(): Promise<DiagnosticsBundle> {
       bucket: bucketName,
       latencyMs: minioLatencyMs,
     },
+    worker,
     recentErrors: getRecentServerErrors(),
     generatedAt: new Date().toISOString(),
   };

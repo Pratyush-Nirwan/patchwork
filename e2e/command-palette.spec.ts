@@ -42,13 +42,13 @@ test.describe("Spotlight Command Palette E2E", () => {
     // Run /theme dark
     const input = page.getByTestId("global-search-input");
     await input.fill("/theme dark");
-    await input.press("Enter");
+    await page.keyboard.press("Enter");
     await expect(page.locator("html")).toHaveClass(/dark/);
 
     // Re-open and run /new
     await page.keyboard.press("Control+k");
     await input.fill('/new "Command Bar E2E Ticket" --priority urgent');
-    await input.press("Enter");
+    await page.keyboard.press("Enter");
     await expect(page.getByText("Command Bar E2E Ticket").first()).toBeVisible({ timeout: 10000 });
 
     // Close ticket detail panel if opened
@@ -60,7 +60,7 @@ test.describe("Spotlight Command Palette E2E", () => {
     // Filter board with /filter priority:urgent and clear
     await page.keyboard.press("Control+k");
     await input.fill("/filter priority:urgent");
-    await input.press("Enter");
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("active-board-filters")).toBeVisible();
     await page.getByText("Clear filters").click();
     await expect(page.getByTestId("active-board-filters")).not.toBeVisible();

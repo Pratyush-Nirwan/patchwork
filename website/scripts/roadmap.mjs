@@ -265,6 +265,9 @@ export function renderRoadmapPage(roadmap, meta) {
   const byId = new Map((roadmap.items || []).map((it) => [it.id, it]));
   const currentVer = meta.displayVersion;
   const targetVer = roadmap.targetVersion;
+  const allItems = roadmap.items || [];
+  const shippedItems = allItems.filter((it) => it.status === "shipped");
+  const plannedItems = allItems.filter((it) => it.status !== "shipped");
 
   const lines = [
     "---",
@@ -274,54 +277,78 @@ export function renderRoadmapPage(roadmap, meta) {
     "",
     GENERATED_HEADER,
     "",
-    `import { Aside } from "@astrojs/starlight/components";`,
+    `<div class="pw-cl-meta">`,
     "",
-    `Current release: **${currentVer}** · Target release: **${targetVer}**`,
+    `Current release: **${currentVer}** &middot; Target release: **${targetVer}**`,
     "",
-    PLANNED_WORK_DISCLAIMER,
+    `  <a class="pw-cl-back-link" href="/documentation/introduction/overview/">Feature Overview &rarr;</a>`,
+    `</div>`,
     "",
-    `<Aside type="note" title="Status Legend">`,
-    `**Planned**: Intended for ${targetVer}; not available in ${currentVer}. · **In progress**: Actively under development; not yet released. · **Shipped**: Released and documented in the main guides.`,
-    `</Aside>`,
+    `<p class="pw-rm-disclaimer">${PLANNED_WORK_DISCLAIMER}</p>`,
     "",
-    "Looking for what works today? See the [Feature Overview](/documentation/introduction/overview/).",
+    `<div class="pw-rm-legend" aria-label="Status legend">`,
+    `  <span class="pw-rm-legend-item" data-status="planned"><strong>Planned</strong> &mdash; Intended for ${targetVer}; not available in ${currentVer}</span>`,
+    `  <span class="pw-rm-legend-item" data-status="in-progress"><strong>In progress</strong> &mdash; Actively under development</span>`,
+    `  <span class="pw-rm-legend-item" data-status="shipped"><strong>Shipped</strong> &mdash; Released and documented</span>`,
+    `</div>`,
     "",
   ];
 
-  for (const cat of roadmap.categories || []) {
-    lines.push(`## ${cat.title}`, "");
-    lines.push("| Item | Summary | Status | Depends on |");
-    lines.push("| --- | --- | --- | --- |");
-    for (const item of (roadmap.items || []).filter((it) => it.category === cat.id)) {
-      const statusText =
-        item.status === "shipped" && item.shippedIn
-          ? `${STATUS_LABELS[item.status]} (${item.shippedIn})`
-          : `${STATUS_LABELS[item.status]} (${item.target})`;
-      const deps =
-        (item.dependsOn || [])
-          .map((d) => {
-            const targetItem = byId.get(d);
-            return targetItem ? `[${mdxEscape(targetItem.title)}](#${cat.id})` : mdxEscape(d);
-          })
-          .join(", ") || "—";
-      lines.push(
-        `| <span id="${item.id}"></span>**${mdxEscape(item.title)}** | ${mdxEscape(item.summary)} | ${mdxEscape(statusText)} | ${deps} |`
-      );
+  const renderItemRow = (item, fallbackCatId) => {
+    const statusText =
+      item.status === "shipped" && item.shippedIn
+        ? `${STATUS_LABELS[item.status]} · ${item.shippedIn}`
+        : `${STATUS_LABELS[item.status]} · ${item.target}`;
+    const deps = (item.dependsOn || [])
+      .map((d) => {
+        const targetItem = byId.get(d);
+        return targetItem ? `[${mdxEscape(targetItem.title)}](#${targetItem.id})` : mdxEscape(d);
+      })
+      .join(", ");
+
+    lines.push(`  <div class="pw-rm-item" id="${item.id}" data-status="${item.status}">`);
+    lines.push(`    <div class="pw-rm-status"><span>${mdxEscape(statusText)}</span></div>`);
+    lines.push(`    <div class="pw-rm-body">`);
+    lines.push(`      <div class="pw-rm-title">${mdxEscape(item.title)}</div>`);
+    lines.push(`      <p class="pw-rm-summary">${mdxEscape(item.summary)}</p>`);
+    if (deps) {
+      lines.push(`      <p class="pw-rm-deps">Depends on: ${deps}</p>`);
     }
-    lines.push("");
+    lines.push(`    </div>`);
+    lines.push(`  </div>`);
+    void fallbackCatId;
+  };
+
+  for (const cat of roadmap.categories || []) {
+    const catPlanned = plannedItems.filter((it) => it.category === cat.id);
+    if (catPlanned.length === 0) continue;
+    lines.push(`<section id="${cat.id}">`, "", `## ${cat.title}`, "");
+    lines.push(`<div class="pw-rm-list">`);
+    for (const item of catPlanned) {
+      renderItemRow(item, cat.id);
+    }
+    lines.push(`</div>`, `</section>`, "");
+  }
+
+  if (shippedItems.length > 0) {
+    lines.push(`<section id="collaboration-and-notifications">`, "", `## Shipped in ${currentVer}`, "");
+    lines.push(`<div class="pw-rm-list">`);
+    for (const item of shippedItems) {
+      renderItemRow(item, item.category);
+    }
+    lines.push(`</div>`, `</section>`, "");
   }
 
   lines.push(
     `## Known Limitations in ${currentVer}`,
     "",
-    `The following capabilities are **not yet available in ${currentVer}**, are **planned for ${targetVer}**, and are tracked in the tables above:`,
+    `The following capabilities are **not yet available in ${currentVer}** and are tracked in the ${targetVer} roadmap above:`,
     "",
-    `- **Email notifications and SMTP delivery**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#collaboration-and-notifications).`,
-    `- **In-app notification inbox**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#collaboration-and-notifications).`,
-    `- **Standalone audit log viewer**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#security-audit-and-operations).`,
-    `- **Personal API tokens (PATs) and public REST API**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#git-and-developer-integrations).`,
-    `- **Inbound and outbound webhooks**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#git-and-developer-integrations).`,
-    `- **2FA, passkeys, and SSO / OAuth login**: Not yet available in ${currentVer}. Planned for ${targetVer}. See the [Roadmap](#security-audit-and-operations).`,
+    `- **Inbound GitHub and GitLab webhooks**: Planned for ${targetVer} ([Git and Developer Integrations](#git-and-developer-integrations)).`,
+    `- **Email-to-ticket intake**: Planned for ${targetVer} ([Git and Developer Integrations](#git-and-developer-integrations)).`,
+    `- **Standalone audit log viewer**: Planned for ${targetVer} ([Security, Audit, and Operations](#security-audit-and-operations)).`,
+    `- **Personal API tokens (PATs) and public REST API**: Planned for ${targetVer} ([Git and Developer Integrations](#git-and-developer-integrations)).`,
+    `- **2FA, passkeys, and SSO / OAuth login**: Planned for ${targetVer} ([Security, Audit, and Operations](#security-audit-and-operations)).`,
     "",
     "### Out of Scope (Not on the Roadmap)",
     "",
@@ -334,12 +361,16 @@ export function renderRoadmapPage(roadmap, meta) {
 }
 
 export function renderLandingStrip(roadmap) {
-  const catNames = (roadmap.categories || []).map((c) => `**${c.title}**`).join(" · ");
+  const catNames = (roadmap.categories || []).map((c) => c.title).join(" · ");
   return [
     "{/* ROADMAP_STRIP_START */}",
-    `<Aside type="note" title="Coming in ${roadmap.targetVersion}">`,
-    `Planned areas: ${catNames}. See the full [v1.0.0 Roadmap](/documentation/project/roadmap/) for details. ${PLANNED_WORK_DISCLAIMER}`,
-    `</Aside>`,
+    `<div class="pw-docs-roadmap-strip">`,
+    `  <div class="pw-docs-roadmap-copy">`,
+    `    <strong>Coming in ${roadmap.targetVersion}</strong>`,
+    `    <span>${catNames}</span>`,
+    `  </div>`,
+    `  <a class="pw-cl-btn" href="/documentation/project/roadmap/">View ${roadmap.targetVersion} Roadmap &rarr;</a>`,
+    `</div>`,
     "{/* ROADMAP_STRIP_END */}",
   ].join("\n");
 }

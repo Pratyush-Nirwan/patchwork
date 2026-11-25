@@ -19,9 +19,7 @@ const ALLOWED_EXTERNAL_COMMANDS = new Set([
 ]);
 const PROHIBITED_AS_FEATURE = [
   "Docker",
-  "webhooks",
-  "email notifications",
-  "in-app notifications",
+  "inbound webhooks",
   "audit log",
   "API tokens",
   "SSO",

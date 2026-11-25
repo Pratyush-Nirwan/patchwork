@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft,
   ArrowRight,
+  Eye,
   GitPullRequest,
   GripVertical,
   MessageSquare,
@@ -329,6 +330,16 @@ export function WorkspaceSortableColumnItem({
                       <span className="flex items-center gap-0.5" title="Git Links">
                         <GitPullRequest className="h-2.5 w-2.5" />
                         {ticket.linkCount}
+                      </span>
+                    )}
+                    {ticket.isWatching && (
+                      <span
+                        className="flex items-center text-[var(--pw-accent)]"
+                        title="Watching"
+                        aria-label="Watching"
+                        data-testid="card-watching-indicator"
+                      >
+                        <Eye className="h-2.5 w-2.5" />
                       </span>
                     )}
                   </div>

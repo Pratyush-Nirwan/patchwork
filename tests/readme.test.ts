@@ -144,7 +144,8 @@ describe("README generator, assets, and checks", () => {
       // 1. Wrong version in README.md
       const readmePath = path.join(tmpRoot, "README.md");
       const baseReadme = fs.readFileSync(readmePath, "utf8");
-      fs.writeFileSync(readmePath, baseReadme.replaceAll("v0.7.0-beta", "v0.6.0"), "utf8");
+      const currentVer = `v${JSON.parse(fs.readFileSync(path.join(tmpRoot, "package.json"), "utf8")).version}`;
+      fs.writeFileSync(readmePath, baseReadme.replaceAll(currentVer, "v0.6.0"), "utf8");
       const versionErrs = checkReadme(tmpRoot, { runMarkdownLint: false });
       expect(versionErrs.some((e) => e.includes("out of sync"))).toBe(true);
       expect(versionErrs.some((e) => e.includes("missing expected version"))).toBe(true);

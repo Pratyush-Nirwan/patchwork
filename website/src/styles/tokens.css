@@ -30,6 +30,16 @@
   --pw-max-w: 1180px;
   --pw-measure: 68ch;
 
+  /* Surface-derived skeleton tokens (light) */
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base-mix: 8%;
+  --sk-shine-mix: 3%;
+  --sk-base-fallback: #e3e1db;
+  --sk-shine-fallback: #eceae5;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+
   /* Starlight token bridge */
   --sl-color-accent-low: var(--pw-accent-soft);
   --sl-color-accent: var(--pw-accent);
@@ -67,6 +77,77 @@
   --sl-color-hairline: var(--pw-border);
   --sl-color-text: var(--pw-ink);
   --sl-color-text-accent: #ff8a61;
+
+  /* Surface-derived skeleton tokens (dark) */
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base-mix: 9%;
+  --sk-shine-mix: 14%;
+  --sk-base-fallback: #1c222a;
+  --sk-shine-fallback: #252c36;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+
+[data-sk-surface="surface"] {
+  --sk-surface: var(--pw-surface);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+
+@keyframes pw-site-shimmer {
+  0% { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(100%, 0, 0); }
+}
+
+.pw-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--pw-radius-sm);
+  background-color: var(--sk-base-fallback);
+  background-color: var(--sk-base);
+}
+
+.pw-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translate3d(-100%, 0, 0);
+  background: linear-gradient(90deg, transparent 0%, var(--sk-shine-fallback) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--sk-shine) 50%, transparent 100%);
+  animation: pw-site-shimmer 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.pw-img-light,
+.pw-img-dark {
+  background-color: var(--sk-base-fallback);
+  background-color: var(--sk-base);
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme="dark"] {
+    --sk-base-mix: 13%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-skeleton::after {
+    animation: none !important;
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .pw-skeleton {
+    background-color: Canvas !important;
+    outline: 1px solid CanvasText !important;
+    outline-offset: -1px;
+  }
+  .pw-skeleton::after {
+    display: none !important;
+  }
 }
 
 .pw-tabular {

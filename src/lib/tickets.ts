@@ -15,18 +15,24 @@ import { requireBoardRole, requireTicketRole } from "./rbac";
 import { AppError, NotFoundError, ForbiddenError } from "./errors";
 import { realtimeHub } from "./realtime";
 import { getColumnStage, type WorkflowStage } from "./workflow-stages";
+import { emitDomainEvent, notifyDomainEventWorker, type DbOrTx } from "./domain-events";
+import { applyAutoWatch, getTicketWatchStatus } from "./watchers";
+import { listMentionableUsers, validateAndSanitizeMentions } from "./mentions";
 
 export { getColumnStage, type WorkflowStage };
 
 const VALID_PRIORITIES: TicketPriority[] = ["urgent", "high", "medium", "low", "none"];
 
-export async function recordActivity(input: {
-  ticketId: string;
-  actorId: string;
-  action: string;
-  details: Record<string, unknown>;
-}) {
-  const [act] = await db
+export async function recordActivity(
+  input: {
+    ticketId: string;
+    actorId: string;
+    action: string;
+    details: Record<string, unknown>;
+  },
+  tx: DbOrTx = db
+) {
+  const [act] = await tx
     .insert(ticketActivities)
     .values({
       ticketId: input.ticketId,
@@ -94,61 +100,102 @@ export async function createTicket(
     }
   }
 
-  const [proj] = await db
-    .update(projects)
-    .set({
-      ticketCounter: sql`${projects.ticketCounter} + 1`,
-    })
-    .where(eq(projects.id, board.projectId))
-    .returning();
-
-  const number = proj.ticketCounter;
-  const key = `${proj.key}-${number}`;
-
-  const existingInCol = await db
-    .select()
-    .from(tickets)
-    .where(eq(tickets.columnId, targetColumnId))
-    .orderBy(asc(tickets.position));
-
-  const position = existingInCol.length;
   const cleanLabels = (input.labels || [])
     .map((l) => l.trim())
     .filter(Boolean);
 
-  const [ticket] = await db
-    .insert(tickets)
-    .values({
+  const { ticket, domainEvent } = await db.transaction(async (tx) => {
+    const [proj] = await tx
+      .update(projects)
+      .set({
+        ticketCounter: sql`${projects.ticketCounter} + 1`,
+      })
+      .where(eq(projects.id, board.projectId))
+      .returning();
+
+    const number = proj.ticketCounter;
+    const key = `${proj.key}-${number}`;
+
+    const existingInCol = await tx
+      .select()
+      .from(tickets)
+      .where(eq(tickets.columnId, targetColumnId))
+      .orderBy(asc(tickets.position));
+
+    const position = existingInCol.length;
+    const rawDesc = input.description?.trim() || "";
+    const descMentions = rawDesc
+      ? await validateAndSanitizeMentions(rawDesc, { orgId: board.orgId, teamId: board.teamId }, tx)
+      : { validUserIds: [], unauthorizedCount: 0, sanitizedMarkdown: "" };
+    const mentionedUserIds = descMentions.validUserIds.filter((id) => id !== actorId);
+
+    const [created] = await tx
+      .insert(tickets)
+      .values({
+        orgId: board.orgId,
+        teamId: board.teamId,
+        projectId: board.projectId,
+        boardId: board.id,
+        columnId: targetColumnId,
+        number,
+        key,
+        title,
+        description: descMentions.sanitizedMarkdown,
+        priority,
+        labels: cleanLabels,
+        labelsText: cleanLabels.join(" "),
+        assigneeId: input.assigneeId || null,
+        reporterId: actorId,
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
+        position,
+      })
+      .returning();
+
+    await recordActivity(
+      {
+        ticketId: created.id,
+        actorId,
+        action: "ticket.created",
+        details: {
+          key: created.key,
+          title: created.title,
+          columnId: created.columnId,
+          priority: created.priority,
+        },
+      },
+      tx
+    );
+
+    const ev = await emitDomainEvent(tx, {
+      eventType: "ticket.created",
+      aggregateId: created.id,
       orgId: board.orgId,
       teamId: board.teamId,
-      projectId: board.projectId,
       boardId: board.id,
-      columnId: targetColumnId,
-      number,
-      key,
-      title,
-      description: input.description?.trim() || "",
-      priority,
-      labels: cleanLabels,
-      labelsText: cleanLabels.join(" "),
-      assigneeId: input.assigneeId || null,
-      reporterId: actorId,
-      dueDate: input.dueDate ? new Date(input.dueDate) : null,
-      position,
-    })
-    .returning();
+      actorId,
+      metadata: {
+        ticketKey: created.key,
+        columnId: created.columnId,
+        priority: created.priority,
+        assigneeId: created.assigneeId,
+        reporterId: created.reporterId,
+        hasDescription: Boolean(created.description),
+        mentionedUserIds,
+      },
+    });
 
-  await recordActivity({
-    ticketId: ticket.id,
-    actorId,
-    action: "ticket.created",
-    details: {
-      key: ticket.key,
-      title: ticket.title,
-      columnId: ticket.columnId,
-      priority: ticket.priority,
-    },
+    await applyAutoWatch(created, actorId, "creator", tx);
+    if (created.assigneeId && created.assigneeId !== actorId) {
+      await applyAutoWatch(created, created.assigneeId, "assignee", tx);
+    }
+    for (const mId of mentionedUserIds) {
+      await applyAutoWatch(created, mId, "mentioned", tx);
+    }
+
+    return { ticket: created, domainEvent: ev };
   });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "ticket.created",
@@ -229,19 +276,68 @@ export async function updateTicket(
     }
   }
 
-  const [updated] = await db
-    .update(tickets)
-    .set(updates)
-    .where(eq(tickets.id, ticketId))
-    .returning();
+  const { updated, domainEvent } = await db.transaction(async (tx) => {
+    let newlyMentionedUserIds: string[] = [];
+    if (updates.description !== undefined) {
+      const prevMentions = await validateAndSanitizeMentions(ticket.description, ticket, tx);
+      const nextMentions = await validateAndSanitizeMentions(updates.description, ticket, tx);
+      const prevSet = new Set(prevMentions.validUserIds);
+      newlyMentionedUserIds = nextMentions.validUserIds.filter(
+        (id) => id !== actorId && !prevSet.has(id)
+      );
+      updates.description = nextMentions.sanitizedMarkdown;
+    }
+
+    const [row] = await tx
+      .update(tickets)
+      .set(updates)
+      .where(eq(tickets.id, ticketId))
+      .returning();
+
+    let ev = null;
+    if (Object.keys(changes).length > 0) {
+      await recordActivity(
+        {
+          ticketId,
+          actorId,
+          action: "ticket.updated",
+          details: { changes },
+        },
+        tx
+      );
+
+      ev = await emitDomainEvent(tx, {
+        eventType: "ticket.updated",
+        aggregateId: ticket.id,
+        orgId: ticket.orgId,
+        teamId: ticket.teamId,
+        boardId: ticket.boardId,
+        actorId,
+        metadata: {
+          ticketKey: ticket.key,
+          changedFields: Object.keys(changes),
+          assigneeFrom: changes.assigneeId ? changes.assigneeId.from : undefined,
+          assigneeTo: changes.assigneeId ? changes.assigneeId.to : undefined,
+          priorityFrom: changes.priority ? changes.priority.from : undefined,
+          priorityTo: changes.priority ? changes.priority.to : undefined,
+          descriptionEdited: Boolean(changes.description),
+          mentionedUserIds: newlyMentionedUserIds,
+        },
+      });
+
+      if (changes.assigneeId && row.assigneeId) {
+        await applyAutoWatch(row, row.assigneeId, "assignee", tx);
+      }
+      for (const mId of newlyMentionedUserIds) {
+        await applyAutoWatch(row, mId, "mentioned", tx);
+      }
+    }
+
+    return { updated: row, domainEvent: ev };
+  });
 
   if (Object.keys(changes).length > 0) {
-    await recordActivity({
-      ticketId,
-      actorId,
-      action: "ticket.updated",
-      details: { changes },
-    });
+    await notifyDomainEventWorker(domainEvent?.id);
 
     await realtimeHub.publish({
       type: "ticket.updated",
@@ -357,46 +453,72 @@ export async function moveTicket(
   }
 
   if (isSameColumn) {
-    const colTickets = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.columnId, sourceColumnId))
-      .orderBy(asc(tickets.position), asc(tickets.createdAt));
+    const { updated, desiredIndex, domainEvent } = await db.transaction(async (tx) => {
+      const colTickets = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.columnId, sourceColumnId))
+        .orderBy(asc(tickets.position), asc(tickets.createdAt));
 
-    const withoutMoved = colTickets.filter((t) => t.id !== ticket.id);
-    const desiredIndex =
-      input.targetPosition !== undefined
-        ? Math.max(0, Math.min(input.targetPosition, withoutMoved.length))
-        : withoutMoved.length;
+      const withoutMoved = colTickets.filter((t) => t.id !== ticket.id);
+      const nextIndex =
+        input.targetPosition !== undefined
+          ? Math.max(0, Math.min(input.targetPosition, withoutMoved.length))
+          : withoutMoved.length;
 
-    withoutMoved.splice(desiredIndex, 0, ticket);
+      withoutMoved.splice(nextIndex, 0, ticket);
 
-    for (let i = 0; i < withoutMoved.length; i++) {
-      await db
-        .update(tickets)
-        .set({ position: i, updatedAt: new Date() })
-        .where(eq(tickets.id, withoutMoved[i].id));
-    }
+      for (let i = 0; i < withoutMoved.length; i++) {
+        await tx
+          .update(tickets)
+          .set({ position: i, updatedAt: new Date() })
+          .where(eq(tickets.id, withoutMoved[i].id));
+      }
 
-    const [updated] = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, ticket.id))
-      .limit(1);
+      const [row] = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.id, ticket.id))
+        .limit(1);
 
-    await recordActivity({
-      ticketId: ticket.id,
-      actorId,
-      action: "ticket.moved",
-      details: {
-        fromColumnId: sourceColumnId,
-        toColumnId: targetCol.id,
-        fromColumnName: sourceCol?.name || "",
-        toColumnName: targetCol.name,
-        fromPosition: ticket.position,
-        toPosition: desiredIndex,
-      },
+      await recordActivity(
+        {
+          ticketId: ticket.id,
+          actorId,
+          action: "ticket.moved",
+          details: {
+            fromColumnId: sourceColumnId,
+            toColumnId: targetCol.id,
+            fromColumnName: sourceCol?.name || "",
+            toColumnName: targetCol.name,
+            fromPosition: ticket.position,
+            toPosition: nextIndex,
+          },
+        },
+        tx
+      );
+
+      const ev = await emitDomainEvent(tx, {
+        eventType: "ticket.moved",
+        aggregateId: ticket.id,
+        orgId: ticket.orgId,
+        teamId: ticket.teamId,
+        boardId: ticket.boardId,
+        actorId,
+        metadata: {
+          ticketKey: ticket.key,
+          fromColumnId: sourceColumnId,
+          toColumnId: targetCol.id,
+          fromColumnName: sourceCol?.name || "",
+          toColumnName: targetCol.name,
+          crossColumn: false,
+        },
+      });
+
+      return { updated: row, desiredIndex: nextIndex, domainEvent: ev };
     });
+
+    await notifyDomainEventWorker(domainEvent?.id);
 
     await realtimeHub.publish({
       type: "ticket.moved",
@@ -415,64 +537,90 @@ export async function moveTicket(
 
     return updated;
   } else {
-    const sourceTickets = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.columnId, sourceColumnId))
-      .orderBy(asc(tickets.position), asc(tickets.createdAt));
+    const { updated, desiredIndex, domainEvent } = await db.transaction(async (tx) => {
+      const sourceTickets = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.columnId, sourceColumnId))
+        .orderBy(asc(tickets.position), asc(tickets.createdAt));
 
-    const remainingSource = sourceTickets.filter((t) => t.id !== ticket.id);
-    for (let i = 0; i < remainingSource.length; i++) {
-      await db
-        .update(tickets)
-        .set({ position: i })
-        .where(eq(tickets.id, remainingSource[i].id));
-    }
+      const remainingSource = sourceTickets.filter((t) => t.id !== ticket.id);
+      for (let i = 0; i < remainingSource.length; i++) {
+        await tx
+          .update(tickets)
+          .set({ position: i })
+          .where(eq(tickets.id, remainingSource[i].id));
+      }
 
-    const destTickets = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.columnId, targetCol.id))
-      .orderBy(asc(tickets.position), asc(tickets.createdAt));
+      const destTickets = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.columnId, targetCol.id))
+        .orderBy(asc(tickets.position), asc(tickets.createdAt));
 
-    const desiredIndex =
-      input.targetPosition !== undefined
-        ? Math.max(0, Math.min(input.targetPosition, destTickets.length))
-        : destTickets.length;
+      const nextIndex =
+        input.targetPosition !== undefined
+          ? Math.max(0, Math.min(input.targetPosition, destTickets.length))
+          : destTickets.length;
 
-    destTickets.splice(desiredIndex, 0, ticket);
+      destTickets.splice(nextIndex, 0, ticket);
 
-    for (let i = 0; i < destTickets.length; i++) {
-      const item = destTickets[i];
-      await db
-        .update(tickets)
-        .set({
-          columnId: targetCol.id,
-          position: i,
-          updatedAt: item.id === ticket.id ? new Date() : item.updatedAt,
-        })
-        .where(eq(tickets.id, item.id));
-    }
+      for (let i = 0; i < destTickets.length; i++) {
+        const item = destTickets[i];
+        await tx
+          .update(tickets)
+          .set({
+            columnId: targetCol.id,
+            position: i,
+            updatedAt: item.id === ticket.id ? new Date() : item.updatedAt,
+          })
+          .where(eq(tickets.id, item.id));
+      }
 
-    const [updated] = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, ticket.id))
-      .limit(1);
+      const [row] = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.id, ticket.id))
+        .limit(1);
 
-    await recordActivity({
-      ticketId: ticket.id,
-      actorId,
-      action: "ticket.moved",
-      details: {
-        fromColumnId: sourceColumnId,
-        toColumnId: targetCol.id,
-        fromColumnName: sourceCol?.name || "",
-        toColumnName: targetCol.name,
-        fromPosition: ticket.position,
-        toPosition: desiredIndex,
-      },
+      await recordActivity(
+        {
+          ticketId: ticket.id,
+          actorId,
+          action: "ticket.moved",
+          details: {
+            fromColumnId: sourceColumnId,
+            toColumnId: targetCol.id,
+            fromColumnName: sourceCol?.name || "",
+            toColumnName: targetCol.name,
+            fromPosition: ticket.position,
+            toPosition: nextIndex,
+          },
+        },
+        tx
+      );
+
+      const ev = await emitDomainEvent(tx, {
+        eventType: "ticket.moved",
+        aggregateId: ticket.id,
+        orgId: ticket.orgId,
+        teamId: ticket.teamId,
+        boardId: ticket.boardId,
+        actorId,
+        metadata: {
+          ticketKey: ticket.key,
+          fromColumnId: sourceColumnId,
+          toColumnId: targetCol.id,
+          fromColumnName: sourceCol?.name || "",
+          toColumnName: targetCol.name,
+          crossColumn: true,
+        },
+      });
+
+      return { updated: row, desiredIndex: nextIndex, domainEvent: ev };
     });
+
+    await notifyDomainEventWorker(domainEvent?.id);
 
     await realtimeHub.publish({
       type: "ticket.moved",
@@ -500,18 +648,37 @@ export async function archiveTicket(actorId: string, ticketId: string) {
   }
 
   const now = new Date();
-  const [updated] = await db
-    .update(tickets)
-    .set({ archivedAt: now, updatedAt: now })
-    .where(eq(tickets.id, ticketId))
-    .returning();
+  const { updated, domainEvent } = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(tickets)
+      .set({ archivedAt: now, updatedAt: now })
+      .where(eq(tickets.id, ticketId))
+      .returning();
 
-  await recordActivity({
-    ticketId,
-    actorId,
-    action: "ticket.archived",
-    details: { archivedAt: now.toISOString() },
+    await recordActivity(
+      {
+        ticketId,
+        actorId,
+        action: "ticket.archived",
+        details: { archivedAt: now.toISOString() },
+      },
+      tx
+    );
+
+    const ev = await emitDomainEvent(tx, {
+      eventType: "ticket.archived",
+      aggregateId: ticket.id,
+      orgId: ticket.orgId,
+      teamId: ticket.teamId,
+      boardId: ticket.boardId,
+      actorId,
+      metadata: { ticketKey: ticket.key },
+    });
+
+    return { updated: row, domainEvent: ev };
   });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "ticket.deleted",
@@ -532,7 +699,20 @@ export async function deleteTicket(actorId: string, ticketId: string) {
     throw new ForbiddenError("Only team leads, admins, or the ticket reporter can delete a ticket");
   }
 
-  await db.delete(tickets).where(eq(tickets.id, ticketId));
+  const domainEvent = await db.transaction(async (tx) => {
+    await tx.delete(tickets).where(eq(tickets.id, ticketId));
+    return emitDomainEvent(tx, {
+      eventType: "ticket.deleted",
+      aggregateId: ticket.id,
+      orgId: ticket.orgId,
+      teamId: ticket.teamId,
+      boardId: ticket.boardId,
+      actorId,
+      metadata: { ticketKey: ticket.key },
+    });
+  });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "ticket.deleted",
@@ -597,10 +777,19 @@ export async function getTicketFullDetails(actorId: string, ticketId: string) {
     .where(eq(ticketLinks.ticketId, ticketId))
     .orderBy(asc(ticketLinks.createdAt));
 
+  const watchStatus = await getTicketWatchStatus(actorId, ticketId);
+  const mentionableList = await listMentionableUsers(ticket);
+  const mentionUsers: Record<string, { id: string; name: string }> = {};
+  for (const u of mentionableList) {
+    mentionUsers[u.id.toLowerCase()] = u;
+  }
+
   return {
     ticket,
     role,
     subRole: subRole || (role === "admin" ? null : role === "lead" ? null : "developer"),
+    watchStatus,
+    mentionUsers,
     comments: commentsRows.map((r) => ({
       ...r.comment,
       author: r.author,

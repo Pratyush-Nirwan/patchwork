@@ -1,0 +1,361 @@
+---
+interface Props {
+  href: (p: string) => string;
+}
+
+const { href } = Astro.props;
+const manifestoWords =
+  "Your issues. Your servers. Your rules. Zero per-seat rent and zero container tax.".split(
+    " "
+  );
+---
+
+<section class="pw-section pw-story-section" aria-labelledby="why-patchwork-heading">
+  <div class="pw-container">
+    <p class="pw-manifesto" data-pw-manifesto aria-label="Patchwork manifesto">
+      {manifestoWords.map((word) => (
+        <span class="pw-m-word" data-m-word>{word} </span>
+      ))}
+    </p>
+
+    <div class="pw-story-grid">
+      <div class="pw-story-sticky">
+        <p class="pw-story-kicker pw-tabular">Why Patchwork exists</p>
+        <h2 id="why-patchwork-heading" class="pw-story-h2">
+          Built for teams tired of paying rent on their own tracker.
+        </h2>
+        <p class="pw-story-sub">
+          Paid tools gate basic controls behind per-seat tiers, and self-hosted tools bury you in Docker.
+          Patchwork skips both.
+        </p>
+        <a class="pw-story-link" href={href("/features/")}>Explore every verified capability &rarr;</a>
+      </div>
+
+      <div class="pw-story-rail-wrap">
+        <div class="pw-story-cards">
+          <article class="pw-story-beat" data-pw-story-card>
+            <div class="pw-story-card-head">
+              <span class="pw-story-tag">01 &middot; Zero seat tax</span>
+              <span class="pw-story-badge">AGPL-3.0</span>
+            </div>
+            <h3>No per-seat pricing or gated features.</h3>
+            <p>
+              Every role, custom Kanban workflow, webhook, and email digest is included for your whole org.
+            </p>
+          </article>
+
+          <article class="pw-story-beat" data-pw-story-card>
+            <div class="pw-story-card-head">
+              <span class="pw-story-tag">02 &middot; Native Windows &amp; Linux</span>
+              <span class="pw-story-badge">No Docker</span>
+            </div>
+            <h3>Zero container tax.</h3>
+            <p>
+              Runs natively with <strong>Node.js, PostgreSQL, and one SHA-256 verified MinIO binary</strong>.
+            </p>
+          </article>
+
+          <article class="pw-story-beat" data-pw-story-card>
+            <div class="pw-story-card-head">
+              <span class="pw-story-tag">03 &middot; Keyboard-first speed</span>
+              <span class="pw-story-badge">Ctrl+K Pills</span>
+            </div>
+            <h3>Slash pills and attachment search.</h3>
+            <p>
+              Move tickets with <code>Ctrl+K</code> pills and search across comments and extracted PDF/text files.
+            </p>
+          </article>
+
+          <article class="pw-story-beat" data-pw-story-card>
+            <div class="pw-story-card-head">
+              <span class="pw-story-tag">04 &middot; Private by default</span>
+              <span class="pw-story-badge">AES-256-GCM</span>
+            </div>
+            <h3>Server-enforced org isolation.</h3>
+            <p>
+              No public signup, encrypted single-use setup token, and strict RBAC on every API and SSE stream.
+            </p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pw-section pw-section-alt" aria-labelledby="bento-heading">
+  <div class="pw-container">
+    <div class="pw-section-head">
+      <h2 id="bento-heading">Engineered for daily velocity</h2>
+      <a href={href("/features/")}>Full feature matrix &rarr;</a>
+    </div>
+
+    <div class="pw-bento-grid" data-pw-bento>
+      <article class="pw-bento-zone pw-bento-a" data-pw-reveal>
+        <div class="pw-bento-meta">Command Bar &middot; Interactive</div>
+        <h3>Inline labeled argument pills</h3>
+        <p>
+          Type <code>/new</code>, <code>/move</code>, <code>/watch</code>, or <code>/mute</code> in Spotlight.
+          Arguments turn into structured pills with live autocomplete and keyboard navigation.
+        </p>
+        <div class="pw-pill-sim" data-pw-pill-sim>
+          <div class="pw-pill-sim-row">
+            <span class="pw-pill-sim-cmd" data-sim-cmd>/move</span>
+            <span class="pw-pill-chip"><span class="pw-pill-k" data-sim-k1>ticket:</span> <span data-sim-v1>INFRA-3</span></span>
+            <span class="pw-pill-chip"><span class="pw-pill-k" data-sim-k2>column:</span> <span data-sim-v2>In Review</span></span>
+          </div>
+          <div class="pw-pill-sim-btns" role="group" aria-label="Switch command example">
+            <button type="button" class="is-active" data-sim-preset="move">/move</button>
+            <button type="button" data-sim-preset="new">/new</button>
+            <button type="button" data-sim-preset="watch">/watch</button>
+            <button type="button" data-sim-preset="mute">/mute</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="pw-bento-zone pw-bento-b" data-pw-reveal>
+        <div class="pw-bento-meta">Presence &amp; Typing</div>
+        <h3>See who&apos;s on the ticket</h3>
+        <p>Live viewer avatars and typing state transmit only <code>{`{ state, tabId }`}</code> — never draft text.</p>
+        <div class="pw-presence-demo">
+          <div class="pw-presence-stack">
+            <span class="pw-p-av pw-p-av1">AC</span>
+            <span class="pw-p-av pw-p-av2">MH</span>
+            <span class="pw-p-av pw-p-av3">DK</span>
+          </div>
+          <span class="pw-typing-pill">
+            Maya is typing<span class="pw-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+          </span>
+        </div>
+      </article>
+
+      <article class="pw-bento-zone pw-bento-c" data-pw-reveal>
+        <div class="pw-bento-meta">Watchers &amp; @mentions</div>
+        <h3>Targeted signal, zero noise</h3>
+        <p>Split Watch toggle, per-user auto-watch rules, and an instant bell inbox with mute &amp; archive.</p>
+        <div class="pw-watch-demo">
+          <button type="button" class="pw-watch-toggle" data-pw-watch-toggle aria-pressed="true">
+            <span data-pw-watch-label>Watching</span>
+            <span class="pw-watch-count pw-tabular" data-pw-watch-count>4</span>
+          </button>
+          <span class="pw-mention-chip">@maya.haddad</span>
+        </div>
+      </article>
+
+      <article class="pw-bento-zone pw-bento-d" data-pw-reveal>
+        <div class="pw-bento-meta">PostgreSQL Native</div>
+        <h3><code>LISTEN/NOTIFY</code> + GIN FTS</h3>
+        <p>Live Kanban edits stream over SSE while PostgreSQL indexes tickets, comments, and attachments.</p>
+        <div class="pw-sse-stream" aria-hidden="true">
+          <span class="pw-sse-pulse"></span>
+          <code data-pw-sse-log>ticket.moved &rarr; 12ms</code>
+        </div>
+      </article>
+
+      <article class="pw-bento-zone pw-bento-e" data-pw-reveal>
+        <div class="pw-bento-meta">Outbound Delivery</div>
+        <h3>Encrypted SMTP digests &amp; HMAC webhooks</h3>
+        <p>
+          Immediate or scheduled email digests with signed one-click unsubscribe, plus Generic, Slack,
+          Discord, and Mattermost webhooks backed by a durable PostgreSQL outbox.
+        </p>
+        <div class="pw-hook-live" aria-hidden="true">
+          <span class="pw-hook-dot"></span>
+          <code data-pw-hook-log>POST /hooks/slack &rarr; 200 OK (14ms) &middot; HMAC-SHA256</code>
+        </div>
+        <div class="pw-hook-strip" aria-hidden="true">
+          <span>Generic HMAC-SHA256</span><span>Slack</span><span>Discord</span><span>Mattermost</span><span>AES-256-GCM SMTP</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pw-manifesto { font-family: var(--pw-font-display); font-size: clamp(1.7rem, 3.4vw, 2.75rem); line-height: 1.25; letter-spacing: -0.02em; max-width: 36ch; margin: 0 0 clamp(4rem, 7vw, 6rem); }
+  .pw-m-word { opacity: 0.2; transition: opacity 260ms ease; }
+  .pw-m-word.is-lit { opacity: 1; }
+  .pw-story-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: clamp(2.5rem, 6vw, 5.5rem); align-items: start; }
+  .pw-story-sticky { position: sticky; top: 6rem; }
+  .pw-story-kicker { margin: 0 0 0.75rem; font-family: var(--pw-font-mono); font-size: 0.78rem; color: var(--pw-accent); text-transform: uppercase; letter-spacing: 0.06em; }
+  .pw-story-h2 { font-size: clamp(1.75rem, 3vw, 2.45rem); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 1rem; }
+  .pw-story-sub { color: var(--pw-ink-secondary); line-height: 1.65; margin: 0 0 1.5rem; max-width: 40ch; }
+  .pw-story-link { font-weight: 600; color: var(--pw-accent); text-decoration: none; }
+  .pw-story-link:hover { text-decoration: underline; }
+  .pw-story-cards { display: grid; gap: 3rem; border-left: 1px solid var(--pw-border); padding-left: clamp(1.5rem, 3vw, 2.5rem); }
+  .pw-story-beat { position: relative; padding: 0.25rem 0 2.25rem; border-bottom: 1px solid color-mix(in oklab, var(--pw-border) 55%, transparent); opacity: 0.52; transform: translate3d(0, 6px, 0); transition: opacity 320ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .pw-story-beat::before { content: ""; position: absolute; left: calc(-1 * clamp(1.25rem, 2.5vw, 2rem) - 1.5px); top: 0.35rem; width: 3px; height: 1.4rem; background: var(--pw-accent); transform: scaleY(0); transform-origin: top; transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .pw-story-beat.is-active { opacity: 1; transform: translate3d(0, 0, 0); }
+  .pw-story-beat.is-active::before { transform: scaleY(1); }
+  .pw-story-beat:last-child { border-bottom: 0; padding-bottom: 0; }
+  .pw-story-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.6rem; }
+  .pw-story-tag { font-family: var(--pw-font-mono); font-size: 0.75rem; color: var(--pw-ink-muted); }
+  .pw-story-badge { font-family: var(--pw-font-mono); font-size: 0.7rem; color: var(--pw-accent); font-weight: 600; }
+  .pw-story-beat h3 { margin: 0 0 0.45rem; font-size: 1.2rem; }
+  .pw-story-beat p { margin: 0; color: var(--pw-ink-secondary); font-size: 0.96rem; line-height: 1.65; }
+  @media (max-width: 900px) { .pw-story-grid { grid-template-columns: 1fr; } .pw-story-sticky { position: static; } .pw-story-beat { opacity: 1; transform: none; } }
+  .pw-bento-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: dense; border-top: 1px solid var(--pw-border); }
+  .pw-bento-zone { padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 0.85rem; border-bottom: 1px solid var(--pw-border); transition: background-color 220ms ease; }
+  .pw-bento-zone:hover { background: color-mix(in oklab, var(--pw-surface-muted) 50%, transparent); }
+  .pw-bento-a { grid-column: span 7; grid-row: span 2; border-right: 1px solid var(--pw-border); }
+  .pw-bento-b { grid-column: span 5; }
+  .pw-bento-c { grid-column: span 5; }
+  .pw-bento-d { grid-column: span 5; border-right: 1px solid var(--pw-border); }
+  .pw-bento-e { grid-column: span 7; }
+  @media (max-width: 900px) { .pw-bento-a, .pw-bento-b, .pw-bento-c, .pw-bento-d, .pw-bento-e { grid-column: span 12; grid-row: span 1; border-right: 0; padding: 1.35rem 0; } }
+  .pw-bento-meta { font-family: var(--pw-font-mono); font-size: 0.72rem; color: var(--pw-accent); text-transform: uppercase; letter-spacing: 0.05em; }
+  .pw-bento-zone h3 { margin: 0; font-size: 1.18rem; }
+  .pw-bento-zone p { margin: 0; color: var(--pw-ink-secondary); font-size: 0.94rem; line-height: 1.55; }
+  .pw-pill-sim { margin-top: auto; padding: 0.95rem 0 0; display: grid; gap: 0.8rem; }
+  .pw-pill-sim-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; font-family: var(--pw-font-mono); font-size: 0.84rem; }
+  .pw-pill-sim-cmd { color: var(--pw-accent); font-weight: 700; }
+  .pw-pill-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--pw-border); background: var(--pw-bg); }
+  .pw-pill-k { color: var(--pw-ink-muted); }
+  .pw-pill-sim-btns { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .pw-pill-sim-btns button { font-family: var(--pw-font-mono); font-size: 0.74rem; padding: 0.25rem 0.65rem; border-radius: 4px; border: 1px solid var(--pw-border); background: var(--pw-bg); color: var(--pw-ink-secondary); cursor: pointer; min-height: 30px; }
+  .pw-pill-sim-btns button.is-active { border-color: var(--pw-accent); color: var(--pw-accent); font-weight: 600; }
+  .pw-presence-demo { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding-top: 0.4rem; }
+  .pw-presence-stack { display: flex; align-items: center; }
+  .pw-p-av { width: 28px; height: 28px; border-radius: 999px; border: 2px solid var(--pw-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; margin-left: -7px; transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .pw-p-av:hover { transform: translateY(-4px) scale(1.1); z-index: 2; }
+  .pw-p-av1 { background: #1d4ed8; color: #fff; animation: pw-av-bob 3.6s ease-in-out infinite; }
+  .pw-p-av2 { background: #c84317; color: #fff; animation: pw-av-bob 3.6s ease-in-out 0.45s infinite; }
+  .pw-p-av3 { background: #0f766e; color: #fff; animation: pw-av-bob 3.6s ease-in-out 0.9s infinite; }
+  @keyframes pw-av-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .pw-typing-pill { font-family: var(--pw-font-mono); font-size: 0.74rem; color: var(--pw-ink-secondary); }
+  .pw-dots span { animation: pw-blink 1.4s infinite both; }
+  .pw-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .pw-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pw-blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .pw-watch-demo { margin-top: auto; display: flex; align-items: center; gap: 0.6rem; padding-top: 0.4rem; }
+  .pw-watch-toggle { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid var(--pw-border); background: var(--pw-bg); color: var(--pw-ink); font-family: var(--pw-font-mono); font-size: 0.76rem; cursor: pointer; min-height: 32px; }
+  .pw-watch-toggle[aria-pressed="true"] { border-color: var(--pw-accent); color: var(--pw-accent); }
+  .pw-watch-count { padding-left: 0.45rem; border-left: 1px solid var(--pw-border); }
+  .pw-mention-chip { font-family: var(--pw-font-mono); font-size: 0.75rem; color: var(--pw-accent); font-weight: 500; }
+  .pw-sse-stream { margin-top: auto; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--pw-font-mono); font-size: 0.74rem; color: var(--pw-ink-secondary); padding-top: 0.4rem; }
+  .pw-sse-pulse { width: 8px; height: 8px; border-radius: 999px; background: #16a34a; animation: pw-sse-ping 2s ease-in-out infinite; }
+  @keyframes pw-sse-ping { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.75); } }
+  .pw-hook-live { margin-top: auto; display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--pw-font-mono); font-size: 0.74rem; color: var(--pw-ink-secondary); padding-top: 0.35rem; }
+  .pw-hook-dot { width: 7px; height: 7px; border-radius: 999px; background: #16a34a; animation: pw-sse-ping 2.2s ease-in-out infinite; }
+  .pw-hook-strip { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; padding-top: 0.25rem; font-family: var(--pw-font-mono); font-size: 0.72rem; color: var(--pw-ink-muted); }
+  .pw-pill-sim-row.is-swapping { animation: pw-bento-swap 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes pw-bento-swap { 0% { opacity: 0.3; transform: translate3d(0, 5px, 0); } 100% { opacity: 1; transform: translate3d(0, 0, 0); } }
+  .pw-watch-toggle.is-popping .pw-watch-count { animation: pw-count-pop 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes pw-count-pop { 0% { transform: scale(1.28); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pw-m-word { opacity: 1; transition: none; }
+    .pw-story-beat, .pw-story-beat::before, .pw-bento-zone, .pw-dots span, .pw-sse-pulse { animation: none !important; transition: none !important; transform: none !important; opacity: 1 !important; }
+  }
+</style>
+
+<script>
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const manifesto = document.querySelector("[data-pw-manifesto]");
+  const words = manifesto ? [...manifesto.querySelectorAll("[data-m-word]")] : [];
+  if (manifesto && words.length > 0 && !reducedMotion) {
+    let ticking = false;
+    const scrubWords = () => {
+      const rect = manifesto.getBoundingClientRect();
+      const vh = window.innerHeight || 800;
+      const raw = (vh * 0.85 - rect.top) / (vh * 0.55);
+      const progress = Math.max(0, Math.min(1, raw));
+      const litCount = Math.round(progress * words.length);
+      words.forEach((w, i) => w.classList.toggle("is-lit", i < litCount));
+      ticking = false;
+    };
+    window.addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(scrubWords); } }, { passive: true });
+    scrubWords();
+  } else {
+    words.forEach((w) => w.classList.add("is-lit"));
+  }
+  const storyCards = [...document.querySelectorAll("[data-pw-story-card]")];
+  if (storyCards.length > 0 && "IntersectionObserver" in window) {
+    const storyObs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            storyCards.forEach((c) => c.classList.remove("is-active"));
+            entry.target.classList.add("is-active");
+          }
+        }
+      },
+      { rootMargin: "-35% 0px -45% 0px", threshold: 0.1 }
+    );
+    storyCards.forEach((c) => storyObs.observe(c));
+  }
+  const presets: Record<string, { cmd: string; k1: string; v1: string; k2: string; v2: string }> = {
+    move: { cmd: "/move", k1: "ticket:", v1: "INFRA-3", k2: "column:", v2: "In Review" },
+    new: { cmd: "/new", k1: "title:", v1: "Fix SSE backoff", k2: "priority:", v2: "high" },
+    watch: { cmd: "/watch", k1: "ticket:", v1: "CORE-8", k2: "mode:", v2: "all updates" },
+    mute: { cmd: "/mute", k1: "ticket:", v1: "API-14", k2: "state:", v2: "muted" },
+  };
+  const sim = document.querySelector("[data-pw-pill-sim]");
+  if (sim) {
+    const row = sim.querySelector(".pw-pill-sim-row");
+    const btns = [...sim.querySelectorAll("[data-sim-preset]")];
+    const cmdEl = sim.querySelector("[data-sim-cmd]");
+    const k1El = sim.querySelector("[data-sim-k1]");
+    const v1El = sim.querySelector("[data-sim-v1]");
+    const k2El = sim.querySelector("[data-sim-k2]");
+    const v2El = sim.querySelector("[data-sim-v2]");
+    btns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-sim-preset") || "move";
+        const p = presets[key];
+        if (!p) return;
+        btns.forEach((b) => b.classList.toggle("is-active", b === btn));
+        if (row) {
+          row.classList.remove("is-swapping");
+          void (row as HTMLElement).offsetWidth;
+          row.classList.add("is-swapping");
+        }
+        if (cmdEl) cmdEl.textContent = p.cmd;
+        if (k1El) k1El.textContent = p.k1;
+        if (v1El) v1El.textContent = p.v1;
+        if (k2El) k2El.textContent = p.k2;
+        if (v2El) v2El.textContent = p.v2;
+      });
+    });
+  }
+  const watchBtn = document.querySelector("[data-pw-watch-toggle]");
+  if (watchBtn) {
+    watchBtn.addEventListener("click", () => {
+      const pressed = watchBtn.getAttribute("aria-pressed") === "true";
+      watchBtn.setAttribute("aria-pressed", String(!pressed));
+      watchBtn.classList.remove("is-popping");
+      void (watchBtn as HTMLElement).offsetWidth;
+      watchBtn.classList.add("is-popping");
+      const label = watchBtn.querySelector("[data-pw-watch-label]");
+      const count = watchBtn.querySelector("[data-pw-watch-count]");
+      if (label) label.textContent = pressed ? "Watch" : "Watching";
+      if (count) count.textContent = pressed ? "3" : "4";
+    });
+  }
+  const sseLog = document.querySelector("[data-pw-sse-log]");
+  const sseEvents = [
+    "ticket.moved → 12ms",
+    "comment.created → 8ms",
+    "fts.indexed → 4ms",
+    "watcher.notified → 9ms",
+  ];
+  let sIdx = 0;
+  if (sseLog && !reducedMotion) {
+    setInterval(() => {
+      sIdx = (sIdx + 1) % sseEvents.length;
+      sseLog.textContent = sseEvents[sIdx];
+    }, 2200);
+  }
+  const hookLog = document.querySelector("[data-pw-hook-log]");
+  const hookEvents = [
+    "POST /hooks/slack → 200 OK (14ms) · HMAC-SHA256",
+    "SMTP digest queued → 4 recipients · AES-256-GCM",
+    "POST /hooks/discord → 204 No Content (19ms)",
+    "POST /hooks/mattermost → 200 OK (11ms) · IP-pinned",
+  ];
+  let hIdx = 0;
+  if (hookLog && !reducedMotion) {
+    setInterval(() => {
+      hIdx = (hIdx + 1) % hookEvents.length;
+      hookLog.textContent = hookEvents[hIdx];
+    }, 3000);
+  }
+</script>

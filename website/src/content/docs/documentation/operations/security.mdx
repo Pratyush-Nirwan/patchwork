@@ -9,7 +9,7 @@ This page is for security reviewers and administrators operating Patchwork.
 
 {/* ROADMAP_ADMONITION_START:two-factor-passkeys-sso,audit-log-viewer */}
 <Aside type="note" title="Planned for v1.0.0">
-Not available in v0.7.1-beta: [Two-factor authentication, passkeys, and SSO](/documentation/project/roadmap/#two-factor-passkeys-sso), [Audit log viewer](/documentation/project/roadmap/#audit-log-viewer). See the [v1.0.0 Roadmap](/documentation/project/roadmap/).
+Not available in v0.8.0-beta: [Two-factor authentication, passkeys, and SSO](/documentation/project/roadmap/#two-factor-passkeys-sso), [Audit log viewer](/documentation/project/roadmap/#audit-log-viewer). See the [v1.0.0 Roadmap](/documentation/project/roadmap/).
 </Aside>
 {/* ROADMAP_ADMONITION_END */}
 
@@ -47,3 +47,14 @@ When the installer downloads MinIO (`RELEASE.2025-09-07T16-13-09Z`), it enforces
 - Displays binary name, size, and source URL for user confirmation before downloading (unless `--yes` / `--non-interactive` is passed).
 - Fetches the official `.sha256sum` file over HTTPS, streams into a `.part` file inside `./data/cache/`, verifies byte length and SHA-256 digest, and **deletes any mismatched or truncated file** before copying to `./bin/`.
 - Never executes an unverified binary and re-verifies cached binaries against `.sha256sum` before reuse.
+
+## Notifications, Webhooks & Privacy Note
+
+- **Read-time authorization:** Watcher lists, notifications, digests, SSE streams, and presence rooms enforce current ticket/team access at read and send time. If access is revoked, notifications redact to `"You no longer have access to this ticket"`.
+- **Encrypted secrets:** SMTP passwords and webhook signing secrets are encrypted at rest with AES-256-GCM (`TOKEN_ENCRYPTION_KEY`), write-only in the UI, and never returned in API responses or logs.
+- **SSRF protection:** Outbound webhooks resolve DNS at connect time, block loopback/private/link-local/metadata/multicast IPv4 and IPv6 ranges, pin the resolved IP, and never follow redirects (unless an admin explicitly enables private-network webhooks).
+- **What is stored & who can see what:**
+  - `ticket_watchers`: stores `ticket_id`, `user_id`, `source`, and `muted` state; visible (names and avatars only, never emails) to users who can view the ticket.
+  - `notifications`: stores minimal event metadata and up to 140-character snippets for mentions/comments; visible only to the recipient.
+  - `email_outbox` & `webhook_deliveries`: delivery logs mask recipient emails (`al***@example.com`) and redact secrets/errors; visible to organization admins only.
+  - **Presence & typing:** strictly in-memory (`presenceHub`) and `LISTEN/NOTIFY` ephemeral messages; never written to the database and never contains draft text.

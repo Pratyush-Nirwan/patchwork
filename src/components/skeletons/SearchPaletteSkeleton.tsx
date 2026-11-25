@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
-import { Skeleton, SkeletonChip } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonChip, Surface } from "@/components/ui/skeleton";
 
 export function SearchPaletteSkeleton() {
   return (
-    <div
+    <Surface
+      variant="command"
       data-testid="search-palette-skeleton"
       aria-hidden="true"
       className="space-y-1 p-2"
@@ -26,6 +27,6 @@ export function SearchPaletteSkeleton() {
           <SkeletonChip width={48} height={16} />
         </div>
       ))}
-    </div>
+    </Surface>
   );
 }

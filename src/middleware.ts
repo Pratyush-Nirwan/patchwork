@@ -4,11 +4,28 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.PATCHWORK_TEST_LATENCY_MS &&
+    pathname.startsWith("/api/") &&
+    req.headers.get("x-patchwork-internal") !== "1"
+  ) {
+    const ms = Number(process.env.PATCHWORK_TEST_LATENCY_MS);
+    if (Number.isFinite(ms) && ms > 0) {
+      await new Promise((resolve) => setTimeout(resolve, Math.min(ms, 5000)));
+    }
+  }
+
+  if (pathname === "/register") {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
+  if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
     pathname === "/documentation" ||
-    pathname.startsWith("/documentation/")
+    pathname.startsWith("/documentation/") ||
+    pathname.startsWith("/dev/")
   ) {
     return NextResponse.next();
   }

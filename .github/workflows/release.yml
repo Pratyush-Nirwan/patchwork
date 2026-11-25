@@ -1,0 +1,135 @@
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to publish as a GitHub Release (e.g. v0.8.0-beta)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build curated public release archives & extract notes
+        id: notes
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import path from "node:path";
+
+            const tag = process.env.RELEASE_TAG;
+            const changelog = fs.readFileSync("CHANGELOG.md", "utf8").replace(/\r\n/g, "\n");
+            const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const headerRe = new RegExp(`^## \\[${escaped}\\][^\\n]*\\n`, "m");
+            const match = changelog.match(headerRe);
+            let body = "";
+            if (match) {
+              const start = match.index + match[0].length;
+              const rest = changelog.slice(start);
+              const nextHeading = rest.search(/^## \[|\n\[Unreleased\]:/m);
+              body = (nextHeading === -1 ? rest : rest.slice(0, nextHeading)).trim();
+            }
+            if (!body) {
+              body = `Release ${tag}. See [CHANGELOG.md](CHANGELOG.md) for details.`;
+            }
+            fs.writeFileSync("release-notes.md", `${body}\n`, "utf8");
+
+            // Stage only files needed for public installation & operation
+            const stageRoot = path.join("release-stage", `patchwork-${tag}`);
+            fs.mkdirSync(stageRoot, { recursive: true });
+
+            const publicEntries = [
+              "src",
+              "scripts",
+              "drizzle",
+              "deploy",
+              "website",
+              "package.json",
+              "package-lock.json",
+              "next.config.ts",
+              "tsconfig.json",
+              "postcss.config.mjs",
+              "drizzle.config.ts",
+              ".env.example",
+              "README.md",
+              "CHANGELOG.md",
+              "LICENSE",
+              "SECURITY.md",
+              "CONTRIBUTING.md",
+            ];
+
+            const ignoredNames = new Set([
+              "node_modules",
+              ".astro",
+              "dist",
+              ".next",
+              "test-results",
+              "tests",
+            ]);
+
+            for (const entry of publicEntries) {
+              if (!fs.existsSync(entry)) continue;
+              fs.cpSync(entry, path.join(stageRoot, entry), {
+                recursive: true,
+                filter: (src) => !ignoredNames.has(path.basename(src)),
+              });
+            }
+
+            const isPrerelease = tag.includes("-");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag=${tag}\nprerelease=${isPrerelease}\n`);
+          '
+
+          TAG="${{ steps.notes.outputs.tag }}"
+          mkdir -p release-assets
+          tar -C release-stage -czf "release-assets/patchwork-${TAG}.tar.gz" "patchwork-${TAG}"
+          (cd release-stage && zip -qr "../release-assets/patchwork-${TAG}.zip" "patchwork-${TAG}")
+          (cd release-assets && sha256sum "patchwork-${TAG}.tar.gz" "patchwork-${TAG}.zip" > "patchwork-${TAG}.sha256")
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.notes.outputs.tag }}
+          PRERELEASE: ${{ steps.notes.outputs.prerelease }}
+        run: |
+          ASSETS=(
+            "release-assets/patchwork-${TAG}.tar.gz"
+            "release-assets/patchwork-${TAG}.zip"
+            "release-assets/patchwork-${TAG}.sha256"
+          )
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Patchwork $TAG" \
+              --notes-file release-notes.md
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            FLAGS=()
+            if [ "$PRERELEASE" = "true" ]; then
+              FLAGS+=(--prerelease)
+            fi
+            gh release create "$TAG" \
+              --title "Patchwork $TAG" \
+              --notes-file release-notes.md \
+              "${FLAGS[@]}" \
+              "${ASSETS[@]}"
+          fi

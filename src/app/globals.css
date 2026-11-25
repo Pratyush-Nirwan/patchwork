@@ -13,8 +13,8 @@
   --pw-ink: #141619;
   --pw-ink-secondary: #434B56;
   --pw-ink-muted: #5C6673;
-  --pw-ghost-active: #525B68;
-  --pw-ghost-rest: #687280;
+  --pw-ghost-active: #454E5A;
+  --pw-ghost-rest: #56606E;
   --pw-border: #D8D6D0;
   --pw-accent: #C84317;
   --pw-accent-hover: #AF3810;
@@ -40,8 +40,24 @@
   --pw-dist-sm: 8px;
   --pw-dist-md: 16px;
   --pw-stagger-step: 24ms;
-  --pw-skeleton-base: #E6E3DC;
-  --pw-skeleton-highlight: rgba(255, 255, 255, 0.65);
+
+  /* Surface-derived skeleton tokens (light theme) */
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base-mix: 8%;
+  --sk-shine-mix: 3%;
+  --sk-base-fallback: #E3E1DB;
+  --sk-shine-fallback: #ECEAE5;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+  --pw-skeleton-base: var(--sk-base);
+  --pw-skeleton-highlight: var(--sk-shine);
+
+  /* Semantic surface backgrounds for tinted callouts & chips */
+  --pw-success-soft: #ECFDF3;
+  --pw-warning-soft: #FEF3C7;
+  --pw-destructive-soft: #FEE2E2;
+  --pw-info-soft: #EFF6FF;
 }
 
 .dark {
@@ -57,8 +73,8 @@
   --pw-ink: #EBF0F5;
   --pw-ink-secondary: #A6B2C0;
   --pw-ink-muted: #8A97A8;
-  --pw-ghost-active: #93A0B0;
-  --pw-ghost-rest: #7E8B9B;
+  --pw-ghost-active: #A3B0C0;
+  --pw-ghost-rest: #8A97A8;
   --pw-border: #222A35;
   --pw-accent: #F05A28;
   --pw-accent-hover: #FF6E3D;
@@ -69,8 +85,133 @@
   --pw-low: #2DD4BF;
   --pw-success: #4ADE80;
   --pw-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 2px 8px -2px rgba(0, 0, 0, 0.35);
-  --pw-skeleton-base: #1D252F;
-  --pw-skeleton-highlight: rgba(255, 255, 255, 0.07);
+
+  /* Surface-derived skeleton tokens (dark theme) */
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base-mix: 9%;
+  --sk-shine-mix: 14%;
+  --sk-base-fallback: #1C222A;
+  --sk-shine-fallback: #252C36;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+  --pw-skeleton-base: var(--sk-base);
+  --pw-skeleton-highlight: var(--sk-shine);
+
+  /* Semantic surface backgrounds for tinted callouts & chips (dark) */
+  --pw-success-soft: #0F291E;
+  --pw-warning-soft: #2B2110;
+  --pw-destructive-soft: #2D1517;
+  --pw-info-soft: #122133;
+}
+
+/* Per-surface skeleton inheritance — nested surfaces override --sk-surface and recompute */
+[data-sk-surface="page"] {
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="surface"],
+[data-sk-surface="panel"],
+[data-sk-surface="popover"],
+[data-sk-surface="dropdown"],
+[data-sk-surface="dialog"],
+[data-sk-surface="sheet"],
+[data-sk-surface="table-row"],
+[data-sk-surface="toast"],
+[data-sk-surface="tooltip"],
+[data-sk-surface="command"] {
+  --sk-surface: var(--pw-surface);
+  --sk-ink: var(--pw-ink);
+  --sk-base-fallback: #EAEAEB;
+  --sk-shine-fallback: #F4F4F5;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+.dark [data-sk-surface="surface"],
+.dark [data-sk-surface="panel"],
+.dark [data-sk-surface="popover"],
+.dark [data-sk-surface="dropdown"],
+.dark [data-sk-surface="dialog"],
+.dark [data-sk-surface="sheet"],
+.dark [data-sk-surface="table-row"],
+.dark [data-sk-surface="toast"],
+.dark [data-sk-surface="tooltip"],
+.dark [data-sk-surface="command"] {
+  --sk-base-fallback: #222933;
+  --sk-shine-fallback: #2B3440;
+}
+[data-sk-surface="card"],
+[data-sk-surface="input"],
+[data-sk-surface="code"] {
+  --sk-surface: var(--pw-bg);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="table-header"],
+[data-sk-surface="table-stripe"],
+[data-sk-surface="chip"] {
+  --sk-surface: var(--pw-surface-muted);
+  --sk-ink: var(--pw-ink);
+  --sk-base-fallback: #DAD8D2;
+  --sk-shine-fallback: #E3E1DB;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+.dark [data-sk-surface="table-header"],
+.dark [data-sk-surface="table-stripe"],
+.dark [data-sk-surface="chip"] {
+  --sk-base-fallback: #29323D;
+  --sk-shine-fallback: #333E4C;
+}
+[data-sk-surface="table-hover"] {
+  --sk-surface: var(--pw-surface-hover);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="rail"] {
+  --sk-surface: var(--pw-rail-bg);
+  --sk-ink: var(--pw-rail-ink);
+  --sk-base-mix: 9%;
+  --sk-shine-mix: 14%;
+  --sk-base-fallback: #242B35;
+  --sk-shine-fallback: #2E3744;
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="table-selected"],
+[data-sk-surface="accent"] {
+  --sk-surface: var(--pw-accent-soft);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="success"] {
+  --sk-surface: var(--pw-success-soft);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="warning"] {
+  --sk-surface: var(--pw-warning-soft);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="destructive"] {
+  --sk-surface: var(--pw-destructive-soft);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
+}
+[data-sk-surface="info"] {
+  --sk-surface: var(--pw-info-soft);
+  --sk-ink: var(--pw-ink);
+  --sk-base: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-base-mix));
+  --sk-shine: color-mix(in oklab, var(--sk-surface), var(--sk-ink) var(--sk-shine-mix));
 }
 
 * {
@@ -102,6 +243,10 @@ body {
 :focus-visible {
   outline: 2px solid var(--pw-accent);
   outline-offset: 2px;
+}
+
+.pw-pill-input:focus-visible {
+  outline: none;
 }
 
 .tabular-nums {
@@ -146,24 +291,31 @@ mark {
   0% {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
+
   15% {
     transform: translate3d(calc(var(--vibe, 0) * -3px), calc(var(--vibe, 0) * 1.8px), 0) rotate(calc(var(--vibe, 0) * -1.2deg));
   }
+
   30% {
     transform: translate3d(calc(var(--vibe, 0) * 2.8px), calc(var(--vibe, 0) * -2.2px), 0) rotate(calc(var(--vibe, 0) * 1deg));
   }
+
   45% {
     transform: translate3d(calc(var(--vibe, 0) * -2.2px), calc(var(--vibe, 0) * -1.8px), 0) rotate(calc(var(--vibe, 0) * -0.8deg));
   }
+
   60% {
     transform: translate3d(calc(var(--vibe, 0) * 3px), calc(var(--vibe, 0) * 2px), 0) rotate(calc(var(--vibe, 0) * 1.3deg));
   }
+
   75% {
     transform: translate3d(calc(var(--vibe, 0) * -2px), calc(var(--vibe, 0) * 2.8px), 0) rotate(calc(var(--vibe, 0) * -1deg));
   }
+
   90% {
     transform: translate3d(calc(var(--vibe, 0) * 2.5px), calc(var(--vibe, 0) * -1.5px), 0) rotate(calc(var(--vibe, 0) * 0.9deg));
   }
+
   100% {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
@@ -175,10 +327,12 @@ mark {
 }
 
 @media (prefers-contrast: more) {
+
   :root,
   .dark {
     --pw-ghost-active: var(--pw-ink);
     --pw-ghost-rest: var(--pw-ink-secondary);
+    --sk-base-mix: 13%;
   }
 }
 
@@ -186,12 +340,23 @@ mark {
   [data-testid="command-ghost-layer"] {
     color: GrayText !important;
   }
+
+  .pw-skeleton {
+    background-color: Canvas !important;
+    outline: 1px solid CanvasText !important;
+    outline-offset: -1px;
+  }
+
+  .pw-skeleton::after {
+    display: none !important;
+  }
 }
 
 @keyframes pw-ghost-fade {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -206,6 +371,7 @@ mark {
   0% {
     transform: translate3d(-100%, 0, 0);
   }
+
   100% {
     transform: translate3d(100%, 0, 0);
   }
@@ -214,7 +380,8 @@ mark {
 .pw-skeleton {
   position: relative;
   overflow: hidden;
-  background-color: var(--pw-skeleton-base);
+  background-color: var(--sk-base-fallback);
+  background-color: var(--sk-base);
 }
 
 .pw-skeleton::after {
@@ -222,12 +389,14 @@ mark {
   position: absolute;
   inset: 0;
   transform: translate3d(-100%, 0, 0);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--pw-skeleton-highlight) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--sk-shine-fallback) 50%,
+      transparent 100%);
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--sk-shine) 50%,
+      transparent 100%);
   animation: pw-shimmer 1.4s var(--pw-ease-in-out) infinite;
 }
 
@@ -235,9 +404,11 @@ mark {
   0% {
     transform: translate3d(-100%, 0, 0) scaleX(0.35);
   }
+
   50% {
     transform: translate3d(25%, 0, 0) scaleX(0.55);
   }
+
   100% {
     transform: translate3d(120%, 0, 0) scaleX(0.35);
   }
@@ -260,18 +431,24 @@ mark {
 }
 
 @keyframes pw-dnd-shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
+
   20% {
     transform: translate3d(-5px, 0, 0);
   }
+
   45% {
     transform: translate3d(5px, 0, 0);
   }
+
   70% {
     transform: translate3d(-3px, 0, 0);
   }
+
   85% {
     transform: translate3d(2px, 0, 0);
   }
@@ -285,6 +462,7 @@ mark {
   0% {
     opacity: 0.9;
   }
+
   100% {
     opacity: 0;
   }
@@ -294,6 +472,7 @@ mark {
   from {
     transform: scaleX(1);
   }
+
   to {
     transform: scaleX(0);
   }

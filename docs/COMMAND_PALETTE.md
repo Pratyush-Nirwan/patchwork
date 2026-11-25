@@ -1,1 +1,1 @@
-Moved to the official documentation site: `docs-site/src/content/docs/user-guide/command-palette.mdx`.
+Moved to the official documentation site: `website/src/content/docs/documentation/user-guide/command-palette.mdx`.

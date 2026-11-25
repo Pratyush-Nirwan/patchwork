@@ -327,6 +327,27 @@ function formatCategoryCounts(rel) {
   return parts.join(", ") || "0 entries";
 }
 
+function countTotalEntries(rel) {
+  let total = 0;
+  for (const cat of ALLOWED_CATEGORIES) {
+    total += rel.categories.get(cat)?.length || 0;
+  }
+  return total;
+}
+
+function renderCategoryPills(rel) {
+  const pills = [];
+  for (const cat of ALLOWED_CATEGORIES) {
+    const count = rel.categories.get(cat)?.length || 0;
+    if (count > 0) {
+      pills.push(
+        `<span class="pw-cl-cat-pill" data-cat="${cat.toLowerCase()}">${count} ${cat.toLowerCase()}</span>`
+      );
+    }
+  }
+  return pills.join("");
+}
+
 export function renderChangelogOverview(parsed, meta) {
   const { releases } = parsed;
   const published = releases.filter((r) => !r.isUnreleased);
@@ -345,49 +366,76 @@ export function renderChangelogOverview(parsed, meta) {
     "",
     `import { Badge } from "@astrojs/starlight/components";`,
     "",
-    `What changed in each release of Patchwork. Current release: **${meta.displayVersion}**.`,
-    "",
-    `See the [v1.0.0 Roadmap](/documentation/project/roadmap/) for upcoming work, [Backups & Upgrades](/documentation/operations/backups-and-upgrades/) before updating, or subscribe to the <a href="/changelog.xml">RSS feed</a>.`,
+    `<div class="pw-cl-intro">`,
+    `  <p class="pw-cl-intro-lead">Release history for Patchwork. Current release: <strong>${meta.displayVersion}</strong>.</p>`,
+    `  <div class="pw-cl-intro-links">`,
+    `    <a href="/documentation/project/roadmap/">v1.0.0 Roadmap</a>`,
+    `    <span aria-hidden="true">&middot;</span>`,
+    `    <a href="/documentation/operations/backups-and-upgrades/">Backups &amp; Upgrades</a>`,
+    `    <span aria-hidden="true">&middot;</span>`,
+    `    <a href="/changelog.xml">RSS feed</a>`,
+    `  </div>`,
+    `</div>`,
     "",
   ];
 
+  const unreleased = releases.find((r) => r.isUnreleased);
+  if (unreleased && countTotalEntries(unreleased) === 0 && unreleased.highlights.length === 0) {
+    lines.push(
+      `<div class="pw-cl-unreleased-empty" data-cl-release="unreleased">`,
+      `  <Badge text="Unreleased" variant="note" />`,
+      `  <span>No unreleased changes queued yet.</span>`,
+      `  <a href="/documentation/changelog/unreleased/">View Unreleased</a>`,
+      `</div>`,
+      ""
+    );
+  }
+
+  lines.push(`<div class="pw-cl-timeline">`);
   for (const rel of releases) {
+    const totalEntries = countTotalEntries(rel);
+    if (rel.isUnreleased && totalEntries === 0 && rel.highlights.length === 0) {
+      continue;
+    }
+
     const slug = releaseSlug(rel.version);
     const isBeta = rel.version.includes("-");
     const badgeVariant = rel.isUnreleased ? "note" : isBeta ? "caution" : "success";
     const badgeText = rel.isUnreleased ? "Unreleased" : isBeta ? "Beta" : "Stable";
     const isLatest = rel.version === latestVersion;
-    const counts = formatCategoryCounts(rel);
+    const pillsHtml = renderCategoryPills(rel);
 
-    lines.push(`<div class="pw-cl-release-card" data-cl-release="${slug}">`);
-    lines.push(`<div class="pw-cl-release-header">`);
     lines.push(
-      `  <h2><a href="/documentation/changelog/${slug}/">${rel.version}</a></h2> <Badge text="${badgeText}" variant="${badgeVariant}" />${rel.date ? ` <span class="pw-cl-date">${rel.date}</span>` : ""}`
+      `<article class="pw-cl-release-row" data-cl-release="${slug}"${isLatest ? ' data-latest="true"' : ""}>`
     );
-    lines.push(`</div>`);
-    lines.push(`<p class="pw-cl-counts">${counts} · <a href="/documentation/changelog/${slug}/">Read full notes</a></p>`);
+    lines.push(`  <span class="pw-cl-timeline-dot" aria-hidden="true"></span>`);
+    lines.push(`  <div class="pw-cl-release-header">`);
+    lines.push(
+      `    <div class="pw-cl-release-title"><h2><a href="/documentation/changelog/${slug}/">${rel.version}</a></h2> <Badge text="${badgeText}" variant="${badgeVariant}" />${isLatest ? ' <span class="pw-cl-latest-pill">Latest</span>' : ""}</div>`
+    );
+    if (rel.date) {
+      lines.push(`    <time class="pw-cl-date" datetime="${rel.date}">${rel.date}</time>`);
+    }
+    lines.push(`  </div>`);
+
+    if (pillsHtml) {
+      lines.push(`  <div class="pw-cl-cat-pills">${pillsHtml}</div>`);
+    }
 
     if (rel.highlights.length > 0) {
-      lines.push(`<ul class="pw-cl-highlights">`);
-      for (const h of rel.highlights) lines.push(`  <li>${mdxEscape(h.text)}</li>`);
-      lines.push(`</ul>`);
+      lines.push(`  <ul class="pw-cl-highlights">`);
+      for (const h of rel.highlights) lines.push(`    <li>${mdxEscape(h.text)}</li>`);
+      lines.push(`  </ul>`);
     }
 
-    lines.push(`<details class="pw-cl-details"${isLatest ? " open" : ""}>`);
-    lines.push(`<summary>Entries (${counts})</summary>`);
-    for (const [catName, entries] of rel.categories.entries()) {
-      lines.push(`<h3>${catName} (${entries.length})</h3>`);
-      lines.push(`<ul class="pw-cl-list">`);
-      for (const entry of entries) {
-        lines.push(
-          `  <li><span class="pw-cl-scope">${mdxEscape(entry.scope)}</span> ${mdxEscape(rewriteDocLinksToDocumentation(entry.text))}</li>`
-        );
-      }
-      lines.push(`</ul>`);
-    }
-    lines.push(`</details>`);
-    lines.push(`</div>`, "");
+    lines.push(`  <div class="pw-cl-release-footer">`);
+    lines.push(
+      `    <a class="pw-cl-btn" href="/documentation/changelog/${slug}/">View details <span aria-hidden="true">&rarr;</span></a>`
+    );
+    lines.push(`  </div>`);
+    lines.push(`</article>`);
   }
+  lines.push(`</div>`, "");
 
   return lines.join("\n");
 }
@@ -398,6 +446,8 @@ export function renderReleasePage(rel, idx, allReleases) {
   const badgeText = rel.isUnreleased ? "Unreleased" : isBeta ? "Beta" : "Stable";
   const breakingEntries = Array.from(rel.categories.values()).flat().filter((e) => e.breaking);
   const sidebarOrder = rel.isUnreleased ? 99 : idx + 1;
+  const totalEntries = countTotalEntries(rel);
+  const activeCategories = ALLOWED_CATEGORIES.filter((cat) => (rel.categories.get(cat)?.length || 0) > 0);
 
   const lines = [
     "---",
@@ -413,7 +463,7 @@ export function renderReleasePage(rel, idx, allReleases) {
     `import { Aside, Badge } from "@astrojs/starlight/components";`,
     "",
     `<div class="pw-cl-meta">`,
-    `  <Badge text="${badgeText}" variant="${badgeVariant}" />${rel.date ? ` <span class="pw-cl-date">Released ${rel.date}</span>` : ""} · <a href="/documentation/changelog/">All releases</a>`,
+    `  <Badge text="${badgeText}" variant="${badgeVariant}" />${rel.date ? ` <time class="pw-cl-date" datetime="${rel.date}">Released ${rel.date}</time>` : ""}${totalEntries > 0 ? ` <span class="pw-cl-meta-count">${totalEntries} ${totalEntries === 1 ? "change" : "changes"}</span>` : ""} <a class="pw-cl-back-link" href="/documentation/changelog/">&larr; All releases</a>`,
     `</div>`,
     "",
   ];
@@ -440,16 +490,29 @@ export function renderReleasePage(rel, idx, allReleases) {
     lines.push(`</Aside>`, "");
   }
 
-  lines.push(`<div class="pw-cl-measure">`);
-  for (const catName of ALLOWED_CATEGORIES) {
-    const entries = rel.categories.get(catName);
-    if (!entries || entries.length === 0) continue;
+  if (activeCategories.length > 1) {
+    lines.push(`<nav class="pw-cl-jump" aria-label="Change categories">`);
+    for (const catName of activeCategories) {
+      const count = rel.categories.get(catName)?.length || 0;
+      lines.push(
+        `  <a class="pw-cl-jump-pill" data-cat="${catName.toLowerCase()}" href="#${catName.toLowerCase()}">${catName} <span>${count}</span></a>`
+      );
+    }
+    lines.push(`</nav>`, "");
+  }
 
-    const icon = CATEGORY_ICONS[catName] || "";
-    const isSecurity = catName === "Security";
-    lines.push(`<section id="${catName.toLowerCase()}">`, "");
+  lines.push(`<div class="pw-cl-measure">`);
+  if (activeCategories.length === 0 && rel.highlights.length === 0 && rel.upgradeNotes.length === 0) {
     lines.push(
-      `## ${icon} ${catName} (${entries.length})${isSecurity ? ' <Badge text="Security" variant="caution" />' : ""}`,
+      `<p class="pw-cl-empty-note">No changes are queued for this release yet. New entries added under <code>## [Unreleased]</code> in <code>CHANGELOG.md</code> will appear here.</p>`
+    );
+  }
+  for (const catName of activeCategories) {
+    const entries = rel.categories.get(catName);
+    const isSecurity = catName === "Security";
+    lines.push(`<section id="${catName.toLowerCase()}" class="pw-cl-section" data-cat="${catName.toLowerCase()}">`, "");
+    lines.push(
+      `## ${catName} <span class="pw-cl-cat-count">${entries.length}</span>${isSecurity ? ' <Badge text="Security" variant="caution" />' : ""}`,
       ""
     );
 
@@ -459,20 +522,24 @@ export function renderReleasePage(rel, idx, allReleases) {
       byScope.get(e.scope).push(e);
     }
 
+    const collapse = entries.length > 24;
+    if (collapse) lines.push(`<details class="pw-cl-details"><summary>Show all ${entries.length} entries</summary>`, "");
+    lines.push(`<div class="pw-cl-list pw-cl-list--release">`);
     for (const [scope, scopeEntries] of byScope.entries()) {
-      lines.push(`### ${scope}`, "");
-      const collapse = scopeEntries.length > 10;
-      if (collapse) lines.push(`<details><summary>${scopeEntries.length} entries</summary>`, "");
-      lines.push(`<ul class="pw-cl-list">`);
+      lines.push(`  <div class="pw-cl-scope-group">`);
+      lines.push(`    <span class="pw-cl-scope">${mdxEscape(scope)}</span>`);
+      lines.push(`    <ul class="pw-cl-scope-items">`);
       for (const e of scopeEntries) {
+        const breakingBadge = e.breaking ? '<Badge text="Breaking" variant="danger" /> ' : "";
         lines.push(
-          `  <li><span class="pw-cl-scope">${mdxEscape(scope)}</span>${e.breaking ? ' <Badge text="Breaking" variant="danger" />' : ""} ${mdxEscape(rewriteDocLinksToDocumentation(e.text))}</li>`
+          `      <li>${breakingBadge}${mdxEscape(rewriteDocLinksToDocumentation(e.text))}</li>`
         );
       }
-      lines.push(`</ul>`);
-      if (collapse) lines.push(`</details>`, "");
-      lines.push("");
+      lines.push(`    </ul>`);
+      lines.push(`  </div>`);
     }
+    lines.push(`</div>`);
+    if (collapse) lines.push(`</details>`, "");
     lines.push(`</section>`, "");
   }
   lines.push(`</div>`, "");
@@ -482,10 +549,14 @@ export function renderReleasePage(rel, idx, allReleases) {
   if (prevRel || nextRel) {
     lines.push(`<nav class="pw-cl-pager" aria-label="Release navigation">`);
     lines.push(
-      prevRel ? `  <a href="/documentation/changelog/${releaseSlug(prevRel.version)}/">&larr; Previous: ${prevRel.version}</a>` : `  <span></span>`
+      prevRel
+        ? `  <a class="pw-cl-pager-link" href="/documentation/changelog/${releaseSlug(prevRel.version)}/"><span class="pw-cl-pager-dir">&larr; Previous</span><span class="pw-cl-pager-ver">${prevRel.version}</span></a>`
+        : `  <span></span>`
     );
     lines.push(
-      nextRel ? `  <a href="/documentation/changelog/${releaseSlug(nextRel.version)}/">Next: ${nextRel.version} &rarr;</a>` : `  <span></span>`
+      nextRel
+        ? `  <a class="pw-cl-pager-link pw-cl-pager-link--next" href="/documentation/changelog/${releaseSlug(nextRel.version)}/"><span class="pw-cl-pager-dir">Next &rarr;</span><span class="pw-cl-pager-ver">${nextRel.version}</span></a>`
+        : `  <span></span>`
     );
     lines.push(`</nav>`, "");
   }

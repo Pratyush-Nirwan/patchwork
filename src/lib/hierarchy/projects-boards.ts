@@ -7,7 +7,8 @@ columns,
 tickets,
 ticketComments,
 ticketAttachments,
-ticketLinks
+ticketLinks,
+ticketWatchers
 } from "@/db/schema";
 import {
 requireTeamRole,
@@ -192,6 +193,7 @@ export async function getBoardWithDetails(actorId: string, boardId: string) {
   const commentCounts = new Map<string, number>();
   const attachmentCounts = new Map<string, number>();
   const linkCounts = new Map<string, number>();
+  const watchedSet = new Set<string>();
 
   if (ticketIds.length > 0) {
     const cRows = await db
@@ -217,6 +219,20 @@ export async function getBoardWithDetails(actorId: string, boardId: string) {
     for (const r of lRows) {
       linkCounts.set(r.ticketId, (linkCounts.get(r.ticketId) || 0) + 1);
     }
+
+    const wRows = await db
+      .select({ ticketId: ticketWatchers.ticketId })
+      .from(ticketWatchers)
+      .where(
+        and(
+          eq(ticketWatchers.userId, actorId),
+          isNull(ticketWatchers.unwatchedAt),
+          inArray(ticketWatchers.ticketId, ticketIds)
+        )
+      );
+    for (const r of wRows) {
+      watchedSet.add(r.ticketId);
+    }
   }
 
   const enrichedTickets = boardTickets.map((t) => ({
@@ -224,6 +240,7 @@ export async function getBoardWithDetails(actorId: string, boardId: string) {
     commentCount: commentCounts.get(t.id) || 0,
     attachmentCount: attachmentCounts.get(t.id) || 0,
     linkCount: linkCounts.get(t.id) || 0,
+    isWatching: watchedSet.has(t.id),
   }));
 
   const members = await listTeamMembers(actorId, board.teamId);

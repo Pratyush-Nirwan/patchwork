@@ -5,26 +5,28 @@
     ],
     "args": [
       {
+        "argType": "text",
         "autocomplete": "none",
-        "description": "Type the title. Add options like priority:high after it.",
+        "description": "Type the title. Add options like priority: high after it.",
         "greedyText": true,
         "label": "title",
         "name": "title",
         "required": true,
-        "typeName": "text"
+        "typeName": "ticket title"
       }
     ],
     "category": "Tickets",
     "description": "Create a new ticket on the active board",
     "examples": [
-      "/new Fix SSE reconnect priority:high",
-      "/new Audit login rate limit"
+      "/new title: Fix SSE reconnect priority: high",
+      "/new title: Audit login rate limit"
     ],
     "execution": "server",
     "minRole": "member",
     "name": "new",
     "options": [
       {
+        "argType": "choice",
         "autocomplete": "column",
         "description": "Target column on the active board",
         "exampleValue": "In Progress",
@@ -32,6 +34,7 @@
         "typeName": "column"
       },
       {
+        "argType": "choice",
         "autocomplete": "priority",
         "description": "Ticket priority (urgent, high, medium, low)",
         "exampleValue": "high",
@@ -39,6 +42,7 @@
         "typeName": "level"
       },
       {
+        "argType": "word",
         "autocomplete": "member",
         "description": "Assign to a team member or me",
         "exampleValue": "me",
@@ -46,6 +50,7 @@
         "typeName": "@user"
       },
       {
+        "argType": "word",
         "autocomplete": "label",
         "description": "Comma-separated label tags",
         "exampleValue": "bug",
@@ -61,6 +66,7 @@
     ],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to open (e.g. TELE-1)",
         "label": "ticket",
@@ -72,7 +78,7 @@
     "category": "Tickets",
     "description": "Open a ticket by key",
     "examples": [
-      "/open TELE-1"
+      "/open ticket: TELE-1"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -86,6 +92,7 @@
     ],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to move",
         "label": "ticket",
@@ -94,6 +101,7 @@
         "typeName": "key"
       },
       {
+        "argType": "choice",
         "autocomplete": "column",
         "description": "The column to move the ticket to",
         "label": "column",
@@ -105,8 +113,8 @@
     "category": "Tickets",
     "description": "Move a ticket to another column (enforces workflow & WIP rules)",
     "examples": [
-      "/move TELE-1 \"In Progress\"",
-      "/move TELE-1 QA"
+      "/move ticket: TELE-1 column: In Progress",
+      "/move ticket: TELE-1 column: QA"
     ],
     "execution": "server",
     "minRole": "member",
@@ -118,6 +126,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to assign",
         "label": "ticket",
@@ -126,6 +135,7 @@
         "typeName": "key"
       },
       {
+        "argType": "word",
         "autocomplete": "member",
         "description": "@name, email, me, or unassigned",
         "label": "@user",
@@ -137,8 +147,8 @@
     "category": "Tickets",
     "description": "Assign a ticket to a team member, yourself, or unassign it",
     "examples": [
-      "/assign TELE-1 me",
-      "/assign TELE-1 unassigned"
+      "/assign ticket: TELE-1 @user: me",
+      "/assign ticket: TELE-1 @user: unassigned"
     ],
     "execution": "server",
     "minRole": "member",
@@ -152,6 +162,7 @@
     ],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to update",
         "label": "ticket",
@@ -160,6 +171,7 @@
         "typeName": "key"
       },
       {
+        "argType": "choice",
         "autocomplete": "priority",
         "description": "Priority level (urgent, high, medium, low)",
         "label": "level",
@@ -171,7 +183,7 @@
     "category": "Tickets",
     "description": "Set ticket priority",
     "examples": [
-      "/priority TELE-1 urgent"
+      "/priority ticket: TELE-1 level: urgent"
     ],
     "execution": "server",
     "minRole": "member",
@@ -183,6 +195,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to label",
         "label": "ticket",
@@ -191,6 +204,7 @@
         "typeName": "key"
       },
       {
+        "argType": "word",
         "autocomplete": "label",
         "description": "Label (+add, -remove, or name)",
         "label": "tag",
@@ -202,8 +216,8 @@
     "category": "Tickets",
     "description": "Add or remove a label on a ticket",
     "examples": [
-      "/label TELE-1 +bug",
-      "/label TELE-1 -wip"
+      "/label ticket: TELE-1 tag: +bug",
+      "/label ticket: TELE-1 tag: -wip"
     ],
     "execution": "server",
     "minRole": "member",
@@ -215,6 +229,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to schedule",
         "label": "ticket",
@@ -223,6 +238,7 @@
         "typeName": "key"
       },
       {
+        "argType": "word",
         "autocomplete": "due",
         "description": "YYYY-MM-DD, today, tomorrow, or none",
         "label": "date",
@@ -234,9 +250,9 @@
     "category": "Tickets",
     "description": "Set or clear a ticket due date",
     "examples": [
-      "/due TELE-1 tomorrow",
-      "/due TELE-1 2026-12-01",
-      "/due TELE-1 none"
+      "/due ticket: TELE-1 date: tomorrow",
+      "/due ticket: TELE-1 date: 2026-12-01",
+      "/due ticket: TELE-1 date: none"
     ],
     "execution": "server",
     "minRole": "member",
@@ -248,6 +264,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to comment on",
         "label": "ticket",
@@ -256,6 +273,7 @@
         "typeName": "key"
       },
       {
+        "argType": "text",
         "autocomplete": "none",
         "description": "Comment body in markdown",
         "label": "text",
@@ -267,7 +285,7 @@
     "category": "Tickets",
     "description": "Add a markdown comment to a ticket",
     "examples": [
-      "/comment TELE-1 \"Verified locally on Windows\""
+      "/comment ticket: TELE-1 text: Verified locally on Windows"
     ],
     "excludeFromHistory": true,
     "execution": "server",
@@ -279,6 +297,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to link",
         "label": "ticket",
@@ -287,6 +306,7 @@
         "typeName": "key"
       },
       {
+        "argType": "word",
         "autocomplete": "none",
         "description": "Forge PR, issue, or commit URL",
         "label": "url",
@@ -298,7 +318,7 @@
     "category": "Tickets",
     "description": "Attach a GitHub or GitLab URL to a ticket",
     "examples": [
-      "/link TELE-1 https://github.com/org/repo/pull/42"
+      "/link ticket: TELE-1 url: https://github.com/org/repo/pull/42"
     ],
     "execution": "server",
     "minRole": "member",
@@ -309,6 +329,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to archive",
         "label": "ticket",
@@ -322,7 +343,7 @@
     "description": "Archive a ticket (hides it from active boards)",
     "destructive": true,
     "examples": [
-      "/archive TELE-1"
+      "/archive ticket: TELE-1"
     ],
     "excludeFromHistory": true,
     "execution": "server",
@@ -334,6 +355,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "ticket",
         "description": "Ticket key to permanently delete",
         "label": "ticket",
@@ -347,7 +369,7 @@
     "description": "Permanently delete a ticket (requires confirmation)",
     "destructive": true,
     "examples": [
-      "/delete TELE-1"
+      "/delete ticket: TELE-1"
     ],
     "excludeFromHistory": true,
     "execution": "server",
@@ -361,6 +383,7 @@
     ],
     "args": [
       {
+        "argType": "choice",
         "autocomplete": "board",
         "description": "Board, project, or team name",
         "label": "target",
@@ -372,8 +395,8 @@
     "category": "Navigation",
     "description": "Jump to a board, project, or team",
     "examples": [
-      "/go Core",
-      "/go TELE"
+      "/go target: Core",
+      "/go target: TELE"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -385,6 +408,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "choice",
         "autocomplete": "view",
         "description": "Board layout mode (kanban or calendar)",
         "label": "mode",
@@ -397,8 +421,8 @@
     "category": "Navigation",
     "description": "Switch board view between Kanban and Calendar",
     "examples": [
-      "/view calendar",
-      "/view kanban"
+      "/view mode: calendar",
+      "/view mode: kanban"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -410,6 +434,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "word",
         "autocomplete": "filter",
         "description": "Filter expression (priority:urgent, assignee:me, label:tag, or clear)",
         "label": "expr",
@@ -421,9 +446,9 @@
     "category": "Navigation",
     "description": "Filter the active board by priority, assignee, label, or clear filters",
     "examples": [
-      "/filter priority:urgent",
-      "/filter assignee:me",
-      "/filter clear"
+      "/filter expr: priority:urgent",
+      "/filter expr: assignee:me",
+      "/filter expr: clear"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -449,6 +474,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "text",
         "autocomplete": "none",
         "description": "Name for the new column",
         "label": "name",
@@ -460,13 +486,14 @@
     "category": "Workspace",
     "description": "Create a new column on the active board",
     "examples": [
-      "/column \"Blocked\" wip:3"
+      "/column name: Blocked wip: 3"
     ],
     "execution": "server",
     "minRole": "lead",
     "name": "column",
     "options": [
       {
+        "argType": "word",
         "autocomplete": "none",
         "description": "Optional WIP limit for the column",
         "exampleValue": "3",
@@ -494,6 +521,7 @@
     "aliases": [],
     "args": [
       {
+        "argType": "choice",
         "autocomplete": "theme",
         "description": "Theme mode (dark, light, or toggle)",
         "label": "mode",
@@ -506,8 +534,8 @@
     "category": "Appearance & Help",
     "description": "Switch between light and dark theme",
     "examples": [
-      "/theme dark",
-      "/theme toggle"
+      "/theme mode: dark",
+      "/theme mode: toggle"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -564,6 +592,7 @@
     ],
     "args": [
       {
+        "argType": "choice",
         "autocomplete": "command",
         "description": "Optional command name to inspect",
         "label": "command",
@@ -576,7 +605,7 @@
     "description": "Show available commands and shortcuts",
     "examples": [
       "/help",
-      "/help move"
+      "/help command: move"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -591,6 +620,7 @@
     ],
     "args": [
       {
+        "argType": "choice",
         "autocomplete": "docs",
         "description": "Optional documentation topic",
         "label": "topic",
@@ -603,8 +633,8 @@
     "description": "Open Patchwork documentation",
     "examples": [
       "/docs",
-      "/docs command-palette",
-      "/docs troubleshooting"
+      "/docs topic: command-palette",
+      "/docs topic: troubleshooting"
     ],
     "execution": "client",
     "minRole": "viewer",
@@ -630,5 +660,112 @@
     "name": "logout",
     "navigation": true,
     "usage": "/logout"
+  },
+  {
+    "aliases": [
+      "follow"
+    ],
+    "args": [
+      {
+        "argType": "word",
+        "autocomplete": "ticket",
+        "description": "Optional ticket key (defaults to currently open ticket)",
+        "label": "ticket",
+        "name": "key",
+        "required": false,
+        "typeName": "key"
+      }
+    ],
+    "category": "Tickets",
+    "description": "Watch a ticket for updates (defaults to open ticket)",
+    "examples": [
+      "/watch",
+      "/watch ticket: TELE-1"
+    ],
+    "execution": "server",
+    "minRole": "viewer",
+    "name": "watch",
+    "usage": "/watch ticket"
+  },
+  {
+    "aliases": [
+      "unfollow"
+    ],
+    "args": [
+      {
+        "argType": "word",
+        "autocomplete": "ticket",
+        "description": "Optional ticket key (defaults to currently open ticket)",
+        "label": "ticket",
+        "name": "key",
+        "required": false,
+        "typeName": "key"
+      }
+    ],
+    "category": "Tickets",
+    "description": "Stop watching a ticket (defaults to open ticket)",
+    "examples": [
+      "/unwatch",
+      "/unwatch ticket: TELE-1"
+    ],
+    "execution": "server",
+    "minRole": "viewer",
+    "name": "unwatch",
+    "usage": "/unwatch ticket"
+  },
+  {
+    "aliases": [],
+    "args": [
+      {
+        "argType": "word",
+        "autocomplete": "ticket",
+        "description": "Optional ticket key (defaults to currently open ticket)",
+        "label": "ticket",
+        "name": "key",
+        "required": false,
+        "typeName": "key"
+      }
+    ],
+    "category": "Tickets",
+    "description": "Mute or unmute watched-ticket notifications (defaults to open ticket)",
+    "examples": [
+      "/mute",
+      "/mute ticket: TELE-1"
+    ],
+    "execution": "server",
+    "minRole": "viewer",
+    "name": "mute",
+    "usage": "/mute ticket"
+  },
+  {
+    "aliases": [
+      "inbox"
+    ],
+    "args": [],
+    "category": "Navigation",
+    "description": "Open your notifications inbox",
+    "examples": [
+      "/notifications"
+    ],
+    "execution": "client",
+    "minRole": "viewer",
+    "name": "notifications",
+    "navigation": true,
+    "usage": "/notifications"
+  },
+  {
+    "aliases": [
+      "mark-all-read"
+    ],
+    "args": [],
+    "category": "Workspace",
+    "description": "Mark all unread notifications as read",
+    "examples": [
+      "/read-all"
+    ],
+    "execution": "server",
+    "minRole": "viewer",
+    "name": "read-all",
+    "usage": "/read-all"
   }
 ]

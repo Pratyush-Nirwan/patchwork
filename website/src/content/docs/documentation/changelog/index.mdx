@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "What changed in each release of Patchwork (current: v0.7.1-beta)."
+description: "What changed in each release of Patchwork (current: v0.8.0-beta)."
 sidebar:
   label: "Overview"
   order: 0
@@ -10,69 +10,69 @@ sidebar:
 
 import { Badge } from "@astrojs/starlight/components";
 
-What changed in each release of Patchwork. Current release: **v0.7.1-beta**.
-
-See the [v1.0.0 Roadmap](/documentation/project/roadmap/) for upcoming work, [Backups & Upgrades](/documentation/operations/backups-and-upgrades/) before updating, or subscribe to the <a href="/changelog.xml">RSS feed</a>.
-
-<div class="pw-cl-release-card" data-cl-release="unreleased">
-<div class="pw-cl-release-header">
-  <h2><a href="/documentation/changelog/unreleased/">Unreleased</a></h2> <Badge text="Unreleased" variant="note" />
-</div>
-<p class="pw-cl-counts">0 entries · <a href="/documentation/changelog/unreleased/">Read full notes</a></p>
-<details class="pw-cl-details">
-<summary>Entries (0 entries)</summary>
-</details>
+<div class="pw-cl-intro">
+  <p class="pw-cl-intro-lead">Release history for Patchwork. Current release: <strong>v0.8.0-beta</strong>.</p>
+  <div class="pw-cl-intro-links">
+    <a href="/documentation/project/roadmap/">v1.0.0 Roadmap</a>
+    <span aria-hidden="true">&middot;</span>
+    <a href="/documentation/operations/backups-and-upgrades/">Backups &amp; Upgrades</a>
+    <span aria-hidden="true">&middot;</span>
+    <a href="/changelog.xml">RSS feed</a>
+  </div>
 </div>
 
-<div class="pw-cl-release-card" data-cl-release="v0-7-1-beta">
-<div class="pw-cl-release-header">
-  <h2><a href="/documentation/changelog/v0-7-1-beta/">v0.7.1-beta</a></h2> <Badge text="Beta" variant="caution" /> <span class="pw-cl-date">2026-11-16</span>
-</div>
-<p class="pw-cl-counts">5 added · <a href="/documentation/changelog/v0-7-1-beta/">Read full notes</a></p>
-<ul class="pw-cl-highlights">
-  <li>You can now install Patchwork with only Node.js and git using the new Easy mode default.</li>
-  <li>You can now manage PostgreSQL, MinIO, and the app together via `npm run start`, `npm run stop`, and `npm run status`.</li>
-</ul>
-<details class="pw-cl-details" open>
-<summary>Entries (5 added)</summary>
-<h3>Added (5)</h3>
-<ul class="pw-cl-list">
-  <li><span class="pw-cl-scope">Installer</span> Added a process supervisor for `npm run start`, `npm run stop`, and `npm run status` with automatic crash recovery ([docs](/documentation/getting-started/quick-start/)).</li>
-  <li><span class="pw-cl-scope">Installer</span> Added Easy mode as the default install path, auto-provisioning PostgreSQL 18 and MinIO with only Node.js and git ([docs](/documentation/getting-started/installation/)).</li>
-  <li><span class="pw-cl-scope">Installer</span> Added localhost vs. network exposure prompts, proxy support, and an offline cache route for MinIO ([docs](/documentation/getting-started/installation/)).</li>
-  <li><span class="pw-cl-scope">Documentation</span> Added project website and documentation package at `/documentation` ([docs](/documentation/introduction/overview/)).</li>
-  <li><span class="pw-cl-scope">Documentation</span> Added the v1.0.0 roadmap ([docs](/documentation/project/roadmap/)).</li>
-</ul>
-</details>
+<div class="pw-cl-unreleased-empty" data-cl-release="unreleased">
+  <Badge text="Unreleased" variant="note" />
+  <span>No unreleased changes queued yet.</span>
+  <a href="/documentation/changelog/unreleased/">View Unreleased</a>
 </div>
 
-<div class="pw-cl-release-card" data-cl-release="v0-7-0-beta">
-<div class="pw-cl-release-header">
-  <h2><a href="/documentation/changelog/v0-7-0-beta/">v0.7.0-beta</a></h2> <Badge text="Beta" variant="caution" /> <span class="pw-cl-date">2026-11-15</span>
-</div>
-<p class="pw-cl-counts">13 added · <a href="/documentation/changelog/v0-7-0-beta/">Read full notes</a></p>
-<ul class="pw-cl-highlights">
-  <li>You can now run Patchwork natively on Windows and Linux with multi-team Kanban boards, Calendar view, and real-time sync.</li>
-  <li>You can now use the Spotlight command bar (`Ctrl+K` / `Cmd+K`) with slash commands, inline ghost hints, and scoped full-text search.</li>
-  <li>You can now browse official documentation directly inside the app at `/documentation`.</li>
-</ul>
-<details class="pw-cl-details">
-<summary>Entries (13 added)</summary>
-<h3>Added (13)</h3>
-<ul class="pw-cl-list">
-  <li><span class="pw-cl-scope">Boards</span> Added live board synchronization over PostgreSQL real-time notifications and Server-Sent Events ([docs](/documentation/user-guide/workspace-and-boards/)).</li>
-  <li><span class="pw-cl-scope">Boards</span> Added multi-team hierarchy, Kanban drag-and-drop with WIP gauges, and a Calendar view ([docs](/documentation/user-guide/workspace-and-boards/)).</li>
-  <li><span class="pw-cl-scope">Search</span> Added MinIO presigned file attachments with text extraction and scoped PostgreSQL full-text search ([docs](/documentation/user-guide/search-and-filters/)).</li>
-  <li><span class="pw-cl-scope">Command bar</span> Added `/docs [topic]` and a Documentation search entry, plus links from login, sidebar, setup wizard, and installer ([docs](/documentation/user-guide/command-palette/)).</li>
-  <li><span class="pw-cl-scope">Command bar</span> Added the Spotlight palette (`Ctrl+K` / `Cmd+K`) with slash commands, inline ghost hints, `/help`, and command history ([docs](/documentation/user-guide/command-palette/)).</li>
-  <li><span class="pw-cl-scope">Setup wizard</span> Added the native CLI installer, encrypted one-time Admin Setup Token, and multi-step Setup Wizard with CSV import ([docs](/documentation/getting-started/setup-wizard/)).</li>
-  <li><span class="pw-cl-scope">System Configuration</span> Added single-source versioning (`v0.7.0-beta`), health version metadata, sidebar display, and upgrade checks ([docs](/documentation/operations/monitoring-and-maintenance/)).</li>
-  <li><span class="pw-cl-scope">System Configuration</span> Added the admin dashboard for users, hierarchy, roles, security, storage, search, integrations, and data export ([docs](/documentation/admin-guide/system-configuration/)).</li>
-  <li><span class="pw-cl-scope">Security</span> Added server-enforced RBAC with admin, lead, member, and viewer roles plus developer and tester sub-roles ([docs](/documentation/reference/roles-and-permissions/)).</li>
-  <li><span class="pw-cl-scope">Documentation</span> Added embedded documentation at `/documentation` with scoped CSP, caching, and standalone or embedded builds ([docs](/documentation/introduction/overview/)).</li>
-  <li><span class="pw-cl-scope">Documentation</span> Added security reporting, contributing guidelines, changelog, PR template, and automated docs publishing ([docs](/documentation/project/license-and-contributing/)).</li>
-  <li><span class="pw-cl-scope">Documentation</span> Added the Astro Starlight documentation site with generated references, coverage checks, and automated screenshots ([docs](/documentation/introduction/overview/)).</li>
-  <li><span class="pw-cl-scope">Performance</span> Added shared UI motion primitives, geometry-matched skeleton loaders, error boundaries, and a Reduce motion toggle ([docs](/documentation/user-guide/shortcuts-and-themes/)).</li>
-</ul>
-</details>
+<div class="pw-cl-timeline">
+<article class="pw-cl-release-row" data-cl-release="v0-8-0-beta" data-latest="true">
+  <span class="pw-cl-timeline-dot" aria-hidden="true"></span>
+  <div class="pw-cl-release-header">
+    <div class="pw-cl-release-title"><h2><a href="/documentation/changelog/v0-8-0-beta/">v0.8.0-beta</a></h2> <Badge text="Beta" variant="caution" /> <span class="pw-cl-latest-pill">Latest</span></div>
+    <time class="pw-cl-date" datetime="2026-11-24">2026-11-24</time>
+  </div>
+  <div class="pw-cl-cat-pills"><span class="pw-cl-cat-pill" data-cat="added">6 added</span><span class="pw-cl-cat-pill" data-cat="changed">8 changed</span><span class="pw-cl-cat-pill" data-cat="fixed">2 fixed</span></div>
+  <ul class="pw-cl-highlights">
+    <li>You can now watch tickets, `@mention` teammates with real-time notifications, and see live viewers and typing indicators on tickets.</li>
+    <li>You can now send immediate or digest SMTP emails and signed outbound webhooks to Slack, Discord, Mattermost, or custom HTTP endpoints.</li>
+    <li>Every loading state now uses surface-derived OKLCH skeletons with command bar inline argument pills and compact ticket header controls.</li>
+  </ul>
+  <div class="pw-cl-release-footer">
+    <a class="pw-cl-btn" href="/documentation/changelog/v0-8-0-beta/">View details <span aria-hidden="true">&rarr;</span></a>
+  </div>
+</article>
+<article class="pw-cl-release-row" data-cl-release="v0-7-1-beta">
+  <span class="pw-cl-timeline-dot" aria-hidden="true"></span>
+  <div class="pw-cl-release-header">
+    <div class="pw-cl-release-title"><h2><a href="/documentation/changelog/v0-7-1-beta/">v0.7.1-beta</a></h2> <Badge text="Beta" variant="caution" /></div>
+    <time class="pw-cl-date" datetime="2026-11-16">2026-11-16</time>
+  </div>
+  <div class="pw-cl-cat-pills"><span class="pw-cl-cat-pill" data-cat="added">5 added</span></div>
+  <ul class="pw-cl-highlights">
+    <li>You can now install Patchwork with only Node.js and git using the new Easy mode default.</li>
+    <li>You can now manage PostgreSQL, MinIO, and the app together via `npm run start`, `npm run stop`, and `npm run status`.</li>
+  </ul>
+  <div class="pw-cl-release-footer">
+    <a class="pw-cl-btn" href="/documentation/changelog/v0-7-1-beta/">View details <span aria-hidden="true">&rarr;</span></a>
+  </div>
+</article>
+<article class="pw-cl-release-row" data-cl-release="v0-7-0-beta">
+  <span class="pw-cl-timeline-dot" aria-hidden="true"></span>
+  <div class="pw-cl-release-header">
+    <div class="pw-cl-release-title"><h2><a href="/documentation/changelog/v0-7-0-beta/">v0.7.0-beta</a></h2> <Badge text="Beta" variant="caution" /></div>
+    <time class="pw-cl-date" datetime="2026-11-15">2026-11-15</time>
+  </div>
+  <div class="pw-cl-cat-pills"><span class="pw-cl-cat-pill" data-cat="added">13 added</span></div>
+  <ul class="pw-cl-highlights">
+    <li>You can now run Patchwork natively on Windows and Linux with multi-team Kanban boards, Calendar view, and real-time sync.</li>
+    <li>You can now use the Spotlight command bar (`Ctrl+K` / `Cmd+K`) with slash commands, inline ghost hints, and scoped full-text search.</li>
+    <li>You can now browse official documentation directly inside the app at `/documentation`.</li>
+  </ul>
+  <div class="pw-cl-release-footer">
+    <a class="pw-cl-btn" href="/documentation/changelog/v0-7-0-beta/">View details <span aria-hidden="true">&rarr;</span></a>
+  </div>
+</article>
 </div>

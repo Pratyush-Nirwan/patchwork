@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Keyboard, Moon, RotateCcw, Sun, X } from "lucide-react";
+import { Bell, Keyboard, Moon, RotateCcw, Sun, X } from "lucide-react";
 import { Presence, Scale } from "@/components/ui/motion";
+import { Skeleton, SkeletonRegion, Surface } from "@/components/ui/skeleton";
+import { apiFetchJson } from "@/lib/api-client";
 import { buildDate, displayVersion } from "@/lib/version";
 import {
   getReduceMotionPreference,
@@ -39,17 +41,75 @@ export function UserSettingsModal({
   onUpdateShortcut,
   onResetShortcuts,
 }: UserSettingsModalProps) {
+  const [activeTab, setActiveTab] = useState<"general" | "notifications">("general");
   const [recordingId, setRecordingId] = useState<ShortcutActionId | null>(null);
   const [conflictMsg, setConflictMsg] = useState<string | null>(null);
   const [reduceMotionPref, setReduceMotionPref] = useState<boolean>(() =>
     getReduceMotionPreference()
   );
+  const [notifPrefs, setNotifPrefs] = useState<{
+    inAppMentions: boolean;
+    inAppAssignments: boolean;
+    inAppWatched: boolean;
+    emailMentions: "off" | "immediate" | "digest";
+    emailAssignments: "off" | "immediate" | "digest";
+    emailWatched: "off" | "digest";
+    digestFrequency: "daily" | "weekly";
+    digestHour: number;
+    digestDay: number;
+    autoWatchCreator: boolean;
+    autoWatchAssignee: boolean;
+    autoWatchCommenter: boolean;
+    autoWatchMentioned: boolean;
+    presenceEnabled: boolean;
+  } | null>(null);
+  const [smtpConfigured, setSmtpConfigured] = useState(false);
+  const [defaultTimezone, setDefaultTimezone] = useState("UTC");
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifMsg, setNotifMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setReduceMotionPref(getReduceMotionPreference());
+      apiFetchJson("/api/account/notifications")
+        .then((d: {
+          preferences?: typeof notifPrefs;
+          smtpConfigured?: boolean;
+          defaultTimezone?: string;
+        }) => {
+          if (d.preferences) setNotifPrefs(d.preferences);
+          setSmtpConfigured(Boolean(d.smtpConfigured));
+          if (d.defaultTimezone) setDefaultTimezone(d.defaultTimezone);
+        })
+        .catch(() => undefined);
     }
   }, [open]);
+
+  const updateNotifPref = async (patch: Record<string, unknown>) => {
+    if (!notifPrefs) return;
+    const optimistic = { ...notifPrefs, ...patch };
+    setNotifPrefs(optimistic);
+    setNotifSaving(true);
+    setNotifMsg(null);
+    try {
+      const match =
+        typeof document !== "undefined"
+          ? document.cookie.match(/(?:^|;\s*)patchwork_csrf=([^;]+)/)
+          : null;
+      const csrfToken = match ? decodeURIComponent(match[1]) : undefined;
+      const res = (await apiFetchJson(
+        "/api/account/notifications",
+        { method: "PUT", body: JSON.stringify(patch) },
+        { csrfToken }
+      )) as { preferences?: typeof notifPrefs };
+      if (res.preferences) setNotifPrefs(res.preferences);
+      setNotifMsg("Saved");
+    } catch {
+      setNotifMsg("Failed to save");
+    } finally {
+      setNotifSaving(false);
+    }
+  };
 
   const handleToggleReduceMotion = () => {
     const next = !reduceMotionPref;
@@ -78,9 +138,13 @@ export function UserSettingsModal({
             >
         <div className="mb-4 flex items-center justify-between border-b border-[var(--pw-border)] pb-3">
           <div className="flex items-center gap-2">
-            <Keyboard className="h-4 w-4 text-[var(--pw-accent)]" />
+            {activeTab === "notifications" ? (
+              <Bell className="h-4 w-4 text-[var(--pw-accent)]" />
+            ) : (
+              <Keyboard className="h-4 w-4 text-[var(--pw-accent)]" />
+            )}
             <h2 className="text-sm font-semibold text-[var(--pw-ink)]">
-              Preferences & Keyboard Shortcuts
+              Account Settings
             </h2>
           </div>
           <button
@@ -93,6 +157,215 @@ export function UserSettingsModal({
           </button>
         </div>
 
+        <div role="tablist" aria-label="Account settings sections" className="mb-4 flex gap-1 border-b border-[var(--pw-border)] pb-2">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "general"}
+            onClick={() => setActiveTab("general")}
+            className={`rounded px-3 py-1.5 text-xs font-medium transition ${
+              activeTab === "general"
+                ? "bg-[var(--pw-accent)] text-white"
+                : "text-[var(--pw-ink-secondary)] hover:bg-[var(--pw-surface-hover)]"
+            }`}
+          >
+            Preferences & Shortcuts
+          </button>
+          <button
+            type="button"
+            role="tab"
+            data-testid="account-notifications-tab"
+            aria-selected={activeTab === "notifications"}
+            onClick={() => setActiveTab("notifications")}
+            className={`rounded px-3 py-1.5 text-xs font-medium transition ${
+              activeTab === "notifications"
+                ? "bg-[var(--pw-accent)] text-white"
+                : "text-[var(--pw-ink-secondary)] hover:bg-[var(--pw-surface-hover)]"
+            }`}
+          >
+            Notifications
+          </button>
+        </div>
+
+        {activeTab === "notifications" ? (
+          <Surface variant="dialog" className="max-h-[65vh] space-y-4 overflow-y-auto pr-1 text-xs" data-testid="account-notifications-panel">
+            <SkeletonRegion
+              isLoading={!notifPrefs}
+              hasData={Boolean(notifPrefs)}
+              loadingLabel="Loading notification preferences"
+              readyLabel="Notification preferences loaded"
+              skeleton={
+                <div className="space-y-4" aria-hidden="true">
+                  <Skeleton className="h-3 w-36" />
+                  <Surface variant="card" className="divide-y divide-[var(--pw-border)] rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)]">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 px-3 py-2.5">
+                        <Skeleton className="h-3.5 w-28" />
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      </div>
+                    ))}
+                  </Surface>
+                  <Skeleton className="h-3 w-32" />
+                  <Surface variant="card" className="rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)] p-3 space-y-2.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <Skeleton className="h-3 w-44" />
+                        <Skeleton className="h-4 w-4 rounded" />
+                      </div>
+                    ))}
+                  </Surface>
+                </div>
+              }
+            >
+              {notifPrefs && (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--pw-ink-muted)]">
+                      Notification Channels
+                    </span>
+                    {notifMsg && (
+                      <span className="text-[11px] text-[var(--pw-ink-muted)]">
+                        {notifSaving ? "Saving..." : notifMsg}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="divide-y divide-[var(--pw-border)] rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)]">
+                    {(
+                      [
+                        {
+                          label: "@Mentions",
+                          inAppKey: "inAppMentions" as const,
+                          emailKey: "emailMentions" as const,
+                          allowImmediate: true,
+                        },
+                        {
+                          label: "Assignments",
+                          inAppKey: "inAppAssignments" as const,
+                          emailKey: "emailAssignments" as const,
+                          allowImmediate: true,
+                        },
+                        {
+                          label: "Watched updates",
+                          inAppKey: "inAppWatched" as const,
+                          emailKey: "emailWatched" as const,
+                          allowImmediate: false,
+                        },
+                      ]
+                    ).map((row) => (
+                      <div key={row.label} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                        <span className="font-medium text-[var(--pw-ink)]">{row.label}</span>
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex items-center gap-1.5 text-[11px] text-[var(--pw-ink-secondary)]">
+                            <input
+                              type="checkbox"
+                              checked={notifPrefs[row.inAppKey]}
+                              onChange={(e) =>
+                                updateNotifPref({ [row.inAppKey]: e.target.checked })
+                              }
+                            />
+                            <span>In-app</span>
+                          </label>
+                          {smtpConfigured && (
+                            <select
+                              aria-label={`${row.label} email preference`}
+                              value={notifPrefs[row.emailKey]}
+                              onChange={(e) =>
+                                updateNotifPref({ [row.emailKey]: e.target.value })
+                              }
+                              className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] px-2 py-1 text-[11px]"
+                            >
+                              <option value="off">Email: Off</option>
+                              {row.allowImmediate && (
+                                <option value="immediate">Email: Immediate</option>
+                              )}
+                              <option value="digest">Email: Digest</option>
+                            </select>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {!smtpConfigured ? (
+                    <p
+                      data-testid="email-disabled-note"
+                      className="rounded border border-[var(--pw-border)] bg-[var(--pw-bg)] px-3 py-2 text-[11px] text-[var(--pw-ink-muted)]"
+                    >
+                      Email notifications are disabled because SMTP is not configured by your administrator.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)] px-3 py-2.5">
+                      <span className="text-[11px] font-medium text-[var(--pw-ink)]">Digest schedule ({defaultTimezone}):</span>
+                      <select
+                        aria-label="Digest frequency"
+                        value={notifPrefs.digestFrequency}
+                        onChange={(e) => updateNotifPref({ digestFrequency: e.target.value })}
+                        className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] px-2 py-1 text-[11px]"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                      {notifPrefs.digestFrequency === "weekly" && (
+                        <select
+                          aria-label="Digest day of week"
+                          value={notifPrefs.digestDay}
+                          onChange={(e) => updateNotifPref({ digestDay: Number(e.target.value) })}
+                          className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] px-2 py-1 text-[11px]"
+                        >
+                          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, idx) => (
+                            <option key={d} value={idx}>{d}</option>
+                          ))}
+                        </select>
+                      )}
+                      <select
+                        aria-label="Digest hour"
+                        value={notifPrefs.digestHour}
+                        onChange={(e) => updateNotifPref({ digestHour: Number(e.target.value) })}
+                        className="rounded border border-[var(--pw-border)] bg-[var(--pw-surface)] px-2 py-1 text-[11px]"
+                      >
+                        {Array.from({ length: 24 }, (_, h) => (
+                          <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--pw-ink-muted)]">
+                    Auto-watch rules
+                  </span>
+                  <div className="divide-y divide-[var(--pw-border)] rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)]">
+                    {(
+                      [
+                        ["autoWatchCreator", "When I create a ticket"],
+                        ["autoWatchAssignee", "When I am assigned to a ticket"],
+                        ["autoWatchCommenter", "When I comment on a ticket"],
+                        ["autoWatchMentioned", "When I am @mentioned"],
+                        ["presenceEnabled", "Show when I'm viewing or typing on a ticket"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} className="flex items-center justify-between px-3 py-2 cursor-pointer">
+                        <span className="text-[var(--pw-ink)]">{label}</span>
+                        <input
+                          type="checkbox"
+                          checked={notifPrefs[key]}
+                          onChange={(e) => updateNotifPref({ [key]: e.target.checked })}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+              )}
+            </SkeletonRegion>
+          </Surface>
+        ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border border-[var(--pw-border)] bg-[var(--pw-bg)] px-3 py-2.5">
             <div className="min-w-0">
@@ -271,6 +544,7 @@ export function UserSettingsModal({
             </div>
           </div>
         </div>
+        )}
             </div>
           </Scale>
         </div>

@@ -10,7 +10,9 @@ import {
   encryptIntegrationToken,
   decryptIntegrationToken,
   IntegrationsSettings,
+  NotificationsSettings,
 } from "@/lib/settings";
+import { encryptSetupToken } from "@/lib/setup-token";
 import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { AppError } from "@/lib/errors";
@@ -51,6 +53,28 @@ export async function GET(
           githubTokenMasked: ghDecrypted ? `ghp_••••••••` : process.env.GITHUB_TOKEN ? `env_••••••••` : null,
           hasGitlabToken: Boolean(glDecrypted || process.env.GITLAB_TOKEN),
           gitlabTokenMasked: glDecrypted ? `glpat-••••••••` : process.env.GITLAB_TOKEN ? `env_••••••••` : null,
+        },
+      });
+    }
+
+    if (key === "notifications") {
+      const notif = settings as NotificationsSettings;
+      const hasSmtpPassword = Boolean(notif.smtp.passwordCiphertext);
+      return NextResponse.json({
+        settings: {
+          ...notif,
+          smtp: {
+            enabled: notif.smtp.enabled,
+            host: notif.smtp.host,
+            port: notif.smtp.port,
+            security: notif.smtp.security,
+            username: notif.smtp.username,
+            fromName: notif.smtp.fromName,
+            fromAddress: notif.smtp.fromAddress,
+            replyTo: notif.smtp.replyTo,
+            hasPassword: hasSmtpPassword,
+            passwordMasked: hasSmtpPassword ? "••••••••" : null,
+          },
         },
       });
     }
@@ -135,7 +159,65 @@ export async function PUT(
       };
     }
 
+    if (key === "notifications") {
+      const current = await getSystemSetting("notifications");
+      const rawSmtp = (body.smtp || {}) as Record<string, unknown>;
+      let pwdCipher = current.smtp.passwordCiphertext;
+      let pwdIv = current.smtp.passwordIv;
+      let pwdTag = current.smtp.passwordAuthTag;
+      let pwdVer = current.smtp.passwordKeyVersion;
+
+      if (rawSmtp.password !== undefined) {
+        if (typeof rawSmtp.password === "string" && rawSmtp.password && !rawSmtp.password.includes("•")) {
+          const enc = encryptSetupToken(rawSmtp.password);
+          pwdCipher = enc.ciphertext;
+          pwdIv = enc.iv;
+          pwdTag = enc.authTag;
+          pwdVer = enc.keyVersion;
+        } else if (rawSmtp.password === null || rawSmtp.password === "") {
+          pwdCipher = null;
+          pwdIv = null;
+          pwdTag = null;
+        }
+      }
+
+      payloadToSave = {
+        ...current,
+        ...body,
+        smtp: {
+          ...current.smtp,
+          ...rawSmtp,
+          passwordCiphertext: pwdCipher,
+          passwordIv: pwdIv,
+          passwordAuthTag: pwdTag,
+          passwordKeyVersion: pwdVer,
+        },
+      };
+    }
+
     const updated = await setSystemSetting(key, payloadToSave, auth.user.id);
+    if (key === "notifications") {
+      const notif = updated as NotificationsSettings;
+      const hasSmtpPassword = Boolean(notif.smtp.passwordCiphertext);
+      return NextResponse.json({
+        success: true,
+        settings: {
+          ...notif,
+          smtp: {
+            enabled: notif.smtp.enabled,
+            host: notif.smtp.host,
+            port: notif.smtp.port,
+            security: notif.smtp.security,
+            username: notif.smtp.username,
+            fromName: notif.smtp.fromName,
+            fromAddress: notif.smtp.fromAddress,
+            replyTo: notif.smtp.replyTo,
+            hasPassword: hasSmtpPassword,
+            passwordMasked: hasSmtpPassword ? "••••••••" : null,
+          },
+        },
+      });
+    }
     return NextResponse.json({ success: true, settings: updated });
   } catch (err) {
     return handleApiError(err);

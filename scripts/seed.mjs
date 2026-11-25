@@ -1293,6 +1293,93 @@ try {
     await client.query(`DELETE FROM setup_credentials`);
   }
 
+  // Seed ticket watchers, mention comments, notifications (read & unread), and a disabled sample webhook
+  if (seededTickets.length > 0 && usersList.length >= 2) {
+    for (let i = 0; i < Math.min(seededTickets.length, 20); i++) {
+      const t = seededTickets[i];
+      const watcherA = usersList[i % usersList.length];
+      const watcherB = usersList[(i + 1) % usersList.length];
+      await client.query(
+        `INSERT INTO ticket_watchers (ticket_id, user_id, source, muted)
+         VALUES ($1, $2, 'creator', false), ($1, $3, 'assignee', false)
+         ON CONFLICT (ticket_id, user_id) DO NOTHING`,
+        [t.id, watcherA.id, watcherB.id]
+      );
+    }
+
+    const firstTicket = seededTickets[0];
+    const mentionTarget = usersList[0];
+    const mentionActor = usersList[1];
+    const [mentionComment] = (
+      await client.query(
+        `INSERT INTO ticket_comments (ticket_id, org_id, team_id, author_id, body)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [
+          firstTicket.id,
+          orgId,
+          firstTicket.teamId,
+          mentionActor.id,
+          `Please review @[${mentionTarget.name}](mention:${mentionTarget.id}) before release.`,
+        ]
+      )
+    ).rows;
+
+    await client.query(
+      `INSERT INTO notifications (recipient_id, type, ticket_id, comment_id, actor_id, summary, dedupe_key, group_key, read_at)
+       VALUES
+         ($1, 'mention', $2, $3, $4, $5::jsonb, $6, $7, NULL),
+         ($1, 'assignment', $2, NULL, $4, $8::jsonb, $9, $10, NOW())
+       ON CONFLICT (dedupe_key) DO NOTHING`,
+      [
+        mentionTarget.id,
+        firstTicket.id,
+        mentionComment.id,
+        mentionActor.id,
+        JSON.stringify({
+          ticketKey: firstTicket.key,
+          eventKind: "comment.created",
+          count: 1,
+          snippet: `Please review @${mentionTarget.name} before release.`,
+        }),
+        `seed:mention:${firstTicket.id}:${mentionTarget.id}`,
+        `mention:seed:${firstTicket.id}`,
+        JSON.stringify({
+          ticketKey: firstTicket.key,
+          eventKind: "assigned",
+          count: 1,
+          snippet: null,
+        }),
+        `seed:assign:${firstTicket.id}:${mentionTarget.id}`,
+        `assignment:seed:${firstTicket.id}`,
+      ]
+    );
+
+    const rawKeyHex = (process.env.TOKEN_ENCRYPTION_KEY || "").trim();
+    const keyBuf = /^[0-9a-fA-F]{64}$/.test(rawKeyHex)
+      ? Buffer.from(rawKeyHex, "hex")
+      : Buffer.alloc(32, 0);
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv("aes-256-gcm", keyBuf, iv, { authTagLength: 16 });
+    const enc = Buffer.concat([cipher.update("whsec_seed_example_disabled", "utf8"), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    await client.query(
+      `INSERT INTO webhook_endpoints (
+         org_id, name, url, format, events, secret_ciphertext, secret_iv, secret_auth_tag, enabled, created_by_id
+       ) VALUES ($1, $2, $3, 'generic', $4, $5, $6, $7, false, $8)`,
+      [
+        orgId,
+        "Sample Webhook (Disabled)",
+        "https://example.com/patchwork-webhook",
+        ["ticket.created", "comment.created", "mention"],
+        enc.toString("base64"),
+        iv.toString("base64"),
+        tag.toString("base64"),
+        adminUser.id,
+      ]
+    );
+  }
+
   // COMMIT TRANSACTION
   await client.query("COMMIT");
 

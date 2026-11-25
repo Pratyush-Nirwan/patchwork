@@ -419,6 +419,229 @@ export const systemSettings = pgTable("system_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export type WatcherSource = "manual" | "creator" | "assignee" | "commenter" | "mentioned";
+export type NotificationType = "mention" | "assignment" | "unassignment" | "watched_update";
+export type EmailPreferenceMode = "off" | "immediate" | "digest";
+export type DigestFrequency = "daily" | "weekly";
+export type WebhookFormat = "generic" | "slack" | "discord" | "mattermost";
+
+export const domainEvents = pgTable(
+  "domain_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventType: text("event_type").notNull(),
+    aggregateType: text("aggregate_type").notNull().default("ticket"),
+    aggregateId: uuid("aggregate_id").notNull(),
+    orgId: uuid("org_id").notNull(),
+    teamId: uuid("team_id").notNull(),
+    boardId: uuid("board_id").notNull(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    lastError: text("last_error"),
+    deadLetteredAt: timestamp("dead_lettered_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("domain_events_pending_idx").on(table.nextAttemptAt, table.createdAt),
+    index("domain_events_aggregate_idx").on(table.aggregateId, table.createdAt),
+  ]
+);
+
+export const ticketWatchers = pgTable(
+  "ticket_watchers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    source: text("source").$type<WatcherSource>().notNull().default("manual"),
+    muted: boolean("muted").notNull().default(false),
+    unwatchedAt: timestamp("unwatched_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ticket_watchers_ticket_user_uidx").on(table.ticketId, table.userId),
+    index("ticket_watchers_user_idx").on(table.userId, table.muted),
+  ]
+);
+
+export const userNotificationPreferences = pgTable("user_notification_preferences", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  inAppMentions: boolean("in_app_mentions").notNull().default(true),
+  inAppAssignments: boolean("in_app_assignments").notNull().default(true),
+  inAppWatched: boolean("in_app_watched").notNull().default(true),
+  emailMentions: text("email_mentions").$type<EmailPreferenceMode>().notNull().default("immediate"),
+  emailAssignments: text("email_assignments")
+    .$type<EmailPreferenceMode>()
+    .notNull()
+    .default("immediate"),
+  emailWatched: text("email_watched").$type<EmailPreferenceMode>().notNull().default("off"),
+  digestFrequency: text("digest_frequency").$type<DigestFrequency>().notNull().default("daily"),
+  digestHour: integer("digest_hour").notNull().default(9),
+  digestDay: integer("digest_day").notNull().default(1),
+  autoWatchCreator: boolean("auto_watch_creator").notNull().default(true),
+  autoWatchAssignee: boolean("auto_watch_assignee").notNull().default(true),
+  autoWatchCommenter: boolean("auto_watch_commenter").notNull().default(true),
+  autoWatchMentioned: boolean("auto_watch_mentioned").notNull().default(true),
+  presenceEnabled: boolean("presence_enabled").notNull().default(true),
+  lastDigestSentAt: timestamp("last_digest_sent_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    recipientId: uuid("recipient_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<NotificationType>().notNull(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    commentId: uuid("comment_id").references(() => ticketComments.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    summary: jsonb("summary").$type<Record<string, unknown>>().notNull().default({}),
+    dedupeKey: text("dedupe_key").notNull().unique(),
+    groupKey: text("group_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("notifications_recipient_list_idx").on(
+      table.recipientId,
+      table.archivedAt,
+      table.readAt,
+      table.createdAt
+    ),
+    index("notifications_recipient_group_idx").on(
+      table.recipientId,
+      table.groupKey,
+      table.createdAt
+    ),
+  ]
+);
+
+export const emailOutbox = pgTable(
+  "email_outbox",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    recipientId: uuid("recipient_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    ticketId: uuid("ticket_id").references(() => tickets.id, { onDelete: "set null" }),
+    notificationIds: jsonb("notification_ids").$type<string[]>().notNull().default([]),
+    subject: text("subject").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull().default({}),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    status: text("status").$type<"pending" | "sent" | "dead_letter">().notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("email_outbox_pending_idx").on(table.status, table.nextAttemptAt),
+    index("email_outbox_recipient_idx").on(table.recipientId, table.createdAt),
+  ]
+);
+
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => orgs.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    format: text("format").$type<WebhookFormat>().notNull().default("generic"),
+    events: text("events")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    scopeTeamIds: uuid("scope_team_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    scopeProjectIds: uuid("scope_project_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    scopeBoardIds: uuid("scope_board_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    secretCiphertext: text("secret_ciphertext").notNull(),
+    secretIv: text("secret_iv").notNull(),
+    secretAuthTag: text("secret_auth_tag").notNull(),
+    secretKeyVersion: integer("secret_key_version").notNull().default(1),
+    enabled: boolean("enabled").notNull().default(true),
+    consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    disabledReason: text("disabled_reason"),
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
+    createdById: uuid("created_by_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("webhook_endpoints_org_idx").on(table.orgId, table.enabled)]
+);
+
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    endpointId: uuid("endpoint_id")
+      .notNull()
+      .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+    domainEventId: uuid("domain_event_id").references(() => domainEvents.id, {
+      onDelete: "set null",
+    }),
+    eventType: text("event_type").notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull().default({}),
+    status: text("status")
+      .$type<"pending" | "delivered" | "failed" | "dead_letter">()
+      .notNull()
+      .default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    responseStatus: integer("response_status"),
+    durationMs: integer("duration_ms"),
+    lastError: text("last_error"),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("webhook_deliveries_pending_idx").on(table.status, table.nextAttemptAt),
+    index("webhook_deliveries_endpoint_idx").on(table.endpointId, table.createdAt),
+  ]
+);
+
+export const workerHealth = pgTable("worker_health", {
+  id: text("id").primaryKey().default("default"),
+  workerId: text("worker_id").notNull(),
+  mode: text("mode").$type<"embedded" | "separate">().notNull().default("embedded"),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }).defaultNow().notNull(),
+  processedEvents: integer("processed_events").notNull().default(0),
+  lastError: text("last_error"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   orgMemberships: many(orgMembers),

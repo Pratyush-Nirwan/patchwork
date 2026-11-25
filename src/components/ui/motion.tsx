@@ -53,10 +53,16 @@ export function Presence({
         return;
       }
       setPhase("entering");
-      const raf = requestAnimationFrame(() => {
-        setPhase("entered");
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setPhase("entered");
+        });
       });
-      return () => cancelAnimationFrame(raf);
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (raf2) cancelAnimationFrame(raf2);
+      };
     }
 
     setPhase("exiting");

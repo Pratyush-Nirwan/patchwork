@@ -34,6 +34,9 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 | `/link` | `/link ticket url` | `member` | — | Attach a GitHub or GitLab URL to a ticket |
 | `/archive` | `/archive ticket` | `member` | destructive, no-history | Archive a ticket (hides it from active boards) |
 | `/delete` | `/delete ticket` | `member` | destructive, no-history | Permanently delete a ticket (requires confirmation) |
+| `/watch` | `/watch ticket` | `viewer` | — | Watch a ticket for updates (defaults to open ticket) |
+| `/unwatch` | `/unwatch ticket` | `viewer` | — | Stop watching a ticket (defaults to open ticket) |
+| `/mute` | `/mute ticket` | `viewer` | — | Mute or unmute watched-ticket notifications (defaults to open ticket) |
 
 #### `/new`
 
@@ -41,13 +44,13 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `member`
 - **Aliases:** `/create`
 - **Arguments:**
-  - `title` (text, required): Type the title. Add options like priority:high after it.
+  - `title` (ticket title, required): Type the title. Add options like priority: high after it.
 - **Options:**
   - `column:column` (example: `In Progress`): Target column on the active board
   - `priority:level` (example: `high`): Ticket priority (urgent, high, medium, low)
   - `assignee:@user` (example: `me`): Assign to a team member or me
   - `label:tag` (example: `bug`): Comma-separated label tags
-- **Examples:** `/new Fix SSE reconnect priority:high`, `/new Audit login rate limit`
+- **Examples:** `/new title: Fix SSE reconnect priority: high`, `/new title: Audit login rate limit`
 
 #### `/open`
 
@@ -56,7 +59,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Aliases:** `/ticket`
 - **Arguments:**
   - `ticket` (key, required): Ticket key to open (e.g. TELE-1)
-- **Examples:** `/open TELE-1`
+- **Examples:** `/open ticket: TELE-1`
 
 #### `/move`
 
@@ -66,7 +69,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to move
   - `column` (column, required): The column to move the ticket to
-- **Examples:** `/move TELE-1 "In Progress"`, `/move TELE-1 QA`
+- **Examples:** `/move ticket: TELE-1 column: In Progress`, `/move ticket: TELE-1 column: QA`
 
 #### `/assign`
 
@@ -75,7 +78,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to assign
   - `@user` (member, required): @name, email, me, or unassigned
-- **Examples:** `/assign TELE-1 me`, `/assign TELE-1 unassigned`
+- **Examples:** `/assign ticket: TELE-1 @user: me`, `/assign ticket: TELE-1 @user: unassigned`
 
 #### `/priority`
 
@@ -85,7 +88,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to update
   - `level` (priority, required): Priority level (urgent, high, medium, low)
-- **Examples:** `/priority TELE-1 urgent`
+- **Examples:** `/priority ticket: TELE-1 level: urgent`
 
 #### `/label`
 
@@ -94,7 +97,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to label
   - `tag` (label, required): Label (+add, -remove, or name)
-- **Examples:** `/label TELE-1 +bug`, `/label TELE-1 -wip`
+- **Examples:** `/label ticket: TELE-1 tag: +bug`, `/label ticket: TELE-1 tag: -wip`
 
 #### `/due`
 
@@ -103,7 +106,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to schedule
   - `date` (date, required): YYYY-MM-DD, today, tomorrow, or none
-- **Examples:** `/due TELE-1 tomorrow`, `/due TELE-1 2026-12-01`, `/due TELE-1 none`
+- **Examples:** `/due ticket: TELE-1 date: tomorrow`, `/due ticket: TELE-1 date: 2026-12-01`, `/due ticket: TELE-1 date: none`
 
 #### `/comment`
 
@@ -112,7 +115,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to comment on
   - `text` (markdown, required): Comment body in markdown
-- **Examples:** `/comment TELE-1 "Verified locally on Windows"`
+- **Examples:** `/comment ticket: TELE-1 text: Verified locally on Windows`
 
 #### `/link`
 
@@ -121,7 +124,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Arguments:**
   - `ticket` (key, required): Ticket key to link
   - `url` (url, required): Forge PR, issue, or commit URL
-- **Examples:** `/link TELE-1 https://github.com/org/repo/pull/42`
+- **Examples:** `/link ticket: TELE-1 url: https://github.com/org/repo/pull/42`
 
 #### `/archive`
 
@@ -129,7 +132,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `member`
 - **Arguments:**
   - `ticket` (key, required): Ticket key to archive
-- **Examples:** `/archive TELE-1`
+- **Examples:** `/archive ticket: TELE-1`
 
 #### `/delete`
 
@@ -137,7 +140,33 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `member`
 - **Arguments:**
   - `ticket` (key, required): Ticket key to permanently delete
-- **Examples:** `/delete TELE-1`
+- **Examples:** `/delete ticket: TELE-1`
+
+#### `/watch`
+
+- **Usage:** `/watch ticket`
+- **Minimum role:** `viewer`
+- **Aliases:** `/follow`
+- **Arguments:**
+  - `ticket` (key, optional): Optional ticket key (defaults to currently open ticket)
+- **Examples:** `/watch`, `/watch ticket: TELE-1`
+
+#### `/unwatch`
+
+- **Usage:** `/unwatch ticket`
+- **Minimum role:** `viewer`
+- **Aliases:** `/unfollow`
+- **Arguments:**
+  - `ticket` (key, optional): Optional ticket key (defaults to currently open ticket)
+- **Examples:** `/unwatch`, `/unwatch ticket: TELE-1`
+
+#### `/mute`
+
+- **Usage:** `/mute ticket`
+- **Minimum role:** `viewer`
+- **Arguments:**
+  - `ticket` (key, optional): Optional ticket key (defaults to currently open ticket)
+- **Examples:** `/mute`, `/mute ticket: TELE-1`
 
 ### Navigation
 
@@ -147,6 +176,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 | `/view` | `/view kanban|calendar` | `viewer` | — | Switch board view between Kanban and Calendar |
 | `/filter` | `/filter expr` | `viewer` | — | Filter the active board by priority, assignee, label, or clear filters |
 | `/sidebar` | `/sidebar` | `viewer` | — | Toggle the left workspace sidebar |
+| `/notifications` | `/notifications` | `viewer` | — | Open your notifications inbox |
 
 #### `/go`
 
@@ -155,7 +185,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Aliases:** `/board`
 - **Arguments:**
   - `target` (board, required): Board, project, or team name
-- **Examples:** `/go Core`, `/go TELE`
+- **Examples:** `/go target: Core`, `/go target: TELE`
 
 #### `/view`
 
@@ -163,7 +193,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `viewer`
 - **Arguments:**
   - `mode` (view, required): Board layout mode (kanban or calendar)
-- **Examples:** `/view calendar`, `/view kanban`
+- **Examples:** `/view mode: calendar`, `/view mode: kanban`
 
 #### `/filter`
 
@@ -171,7 +201,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `viewer`
 - **Arguments:**
   - `expr` (filter, required): Filter expression (priority:urgent, assignee:me, label:tag, or clear)
-- **Examples:** `/filter priority:urgent`, `/filter assignee:me`, `/filter clear`
+- **Examples:** `/filter expr: priority:urgent`, `/filter expr: assignee:me`, `/filter expr: clear`
 
 #### `/sidebar`
 
@@ -179,12 +209,20 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `viewer`
 - **Examples:** `/sidebar`
 
+#### `/notifications`
+
+- **Usage:** `/notifications`
+- **Minimum role:** `viewer`
+- **Aliases:** `/inbox`
+- **Examples:** `/notifications`
+
 ### Workspace
 
 | Command | Usage | Min Role | Flags | Description |
 | --- | --- | --- | --- | --- |
 | `/column` | `/column name wip:number` | `lead` | — | Create a new column on the active board |
 | `/members` | `/members` | `viewer` | — | Open team members for the active team |
+| `/read-all` | `/read-all` | `viewer` | — | Mark all unread notifications as read |
 
 #### `/column`
 
@@ -194,13 +232,20 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
   - `name` (text, required): Name for the new column
 - **Options:**
   - `wip:number` (example: `3`): Optional WIP limit for the column
-- **Examples:** `/column "Blocked" wip:3`
+- **Examples:** `/column name: Blocked wip: 3`
 
 #### `/members`
 
 - **Usage:** `/members`
 - **Minimum role:** `viewer`
 - **Examples:** `/members`
+
+#### `/read-all`
+
+- **Usage:** `/read-all`
+- **Minimum role:** `viewer`
+- **Aliases:** `/mark-all-read`
+- **Examples:** `/read-all`
 
 ### Appearance & Help
 
@@ -220,7 +265,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Minimum role:** `viewer`
 - **Arguments:**
   - `mode` (theme, optional): Theme mode (dark, light, or toggle)
-- **Examples:** `/theme dark`, `/theme toggle`
+- **Examples:** `/theme mode: dark`, `/theme mode: toggle`
 
 #### `/settings`
 
@@ -248,7 +293,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Aliases:** `/?`
 - **Arguments:**
   - `command` (command, optional): Optional command name to inspect
-- **Examples:** `/help`, `/help move`
+- **Examples:** `/help`, `/help command: move`
 
 #### `/docs`
 
@@ -257,7 +302,7 @@ This reference is generated from `src/data/generated/commands.json` and `shortcu
 - **Aliases:** `/doc`, `/manual`
 - **Arguments:**
   - `topic` (topic, optional): Optional documentation topic
-- **Examples:** `/docs`, `/docs command-palette`, `/docs troubleshooting`
+- **Examples:** `/docs`, `/docs topic: command-palette`, `/docs topic: troubleshooting`
 
 #### `/logout`
 

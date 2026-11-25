@@ -1,0 +1,33 @@
+# Allowlist for scripts/check-loading-states.mjs
+# Each entry requires: file, rule, justification, review
+
+entries:
+  - file: src/components/system/SearchSection.tsx
+    rule: spinner
+    justification: In-button RefreshCw animate-spin icon for user-initiated index rebuild action.
+    review: Review before v1.0.0 release.
+
+  - file: src/components/PatchworkApp.tsx
+    rule: loading-text
+    justification: In-button user-initiated pending labels (Authenticating..., Updating..., Uploading...).
+    review: Review before v1.0.0 release.
+
+  - file: src/components/UserSettingsModal.tsx
+    rule: loading-text
+    justification: Short inline autosave status text (Saving...) for notification preferences.
+    review: Review before v1.0.0 release.
+
+  - file: src/components/system/HoldToConfirmButton.tsx
+    rule: loading-text
+    justification: In-button user-initiated destructive confirmation hold progress.
+    review: Review before v1.0.0 release.
+
+  - file: src/app/register/page.tsx
+    rule: missing-loading-route
+    justification: Route synchronously calls notFound() with zero async data fetching.
+    review: Review if self-registration is ever added.
+
+  - file: src/app/dev/skeletons/page.tsx
+    rule: missing-loading-route
+    justification: Development-only skeleton gallery route (404 in production, no async data fetching).
+    review: Keep dev-only.

@@ -30,15 +30,60 @@ See the generated [Roles & Permissions Matrix](/documentation/reference/roles-an
 
 ## High-Level Architecture
 
-```
-Browser (Next.js App Router + SSE /api/events)
-   │
-   ├──► Next.js Server (Node.js)
-   │       ├──► PostgreSQL 16+ (Drizzle ORM, FTS tsvector + GIN, LISTEN/NOTIFY)
-   │       └──► MinIO Binary (S3-compatible presigned upload & download URLs)
-   │
-   └──► Direct browser PUT/GET to MINIO_PUBLIC_URL (presigned URLs)
-```
+<div class="pw-arch-diagram" role="region" aria-label="Patchwork high-level architecture">
+  <svg viewBox="0 0 760 360" fill="none" xmlns="http://www.w3.org/2000/svg" class="pw-arch-svg">
+    <defs>
+      <marker id="pw-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 1 1 L 9 5 L 1 9 z" fill="var(--sl-color-gray-3)" />
+      </marker>
+      <marker id="pw-arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 1 1 L 9 5 L 1 9 z" fill="var(--sl-color-accent)" />
+      </marker>
+    </defs>
+
+    {/* Browser (top center) */}
+    <rect x="210" y="16" width="340" height="72" rx="10" fill="var(--sl-color-bg-nav)" stroke="var(--sl-color-accent)" stroke-width="1.5" />
+    <text x="380" y="40" text-anchor="middle" class="pw-svg-kicker">CLIENT</text>
+    <text x="380" y="60" text-anchor="middle" class="pw-svg-title">Browser (Next.js App Router)</text>
+    <text x="380" y="77" text-anchor="middle" class="pw-svg-sub">Kanban UI, Command Bar, and SSE live updates</text>
+
+    {/* Arrow: Browser <-> Next.js Server */}
+    <line x1="295" y1="88" x2="215" y2="148" stroke="var(--sl-color-accent)" stroke-width="1.5" marker-start="url(#pw-arrow-accent)" marker-end="url(#pw-arrow-accent)" />
+    <text x="195" y="114" text-anchor="end" class="pw-svg-edge">HTTP &amp; Server Actions</text>
+    <text x="195" y="129" text-anchor="end" class="pw-svg-edge">SSE /api/events</text>
+
+    {/* Arrow: Browser <-> MinIO */}
+    <line x1="465" y1="88" x2="545" y2="148" stroke="var(--sl-color-gray-3)" stroke-width="1.5" stroke-dasharray="5 4" marker-start="url(#pw-arrow)" marker-end="url(#pw-arrow)" />
+    <text x="565" y="114" text-anchor="start" class="pw-svg-edge">Direct PUT / GET</text>
+    <text x="565" y="129" text-anchor="start" class="pw-svg-edge">via presigned URLs</text>
+
+    {/* Next.js Server (middle left) */}
+    <rect x="40" y="152" width="300" height="82" rx="10" fill="var(--sl-color-bg-nav)" stroke="var(--sl-color-hairline)" stroke-width="1.25" />
+    <text x="60" y="176" class="pw-svg-kicker">APPLICATION SERVER</text>
+    <text x="60" y="197" class="pw-svg-title">Next.js Server (Node.js)</text>
+    <text x="60" y="216" class="pw-svg-sub">RBAC, API routes, and embedded worker</text>
+
+    {/* MinIO (middle right) */}
+    <rect x="420" y="152" width="300" height="82" rx="10" fill="var(--sl-color-bg-nav)" stroke="var(--sl-color-hairline)" stroke-width="1.25" />
+    <text x="440" y="176" class="pw-svg-kicker">OBJECT STORAGE</text>
+    <text x="440" y="197" class="pw-svg-title">MinIO (MINIO_PUBLIC_URL)</text>
+    <text x="440" y="216" class="pw-svg-sub">S3-compatible attachment buckets</text>
+
+    {/* Arrow: Next.js Server -> MinIO (sign URLs) */}
+    <line x1="340" y1="193" x2="416" y2="193" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pw-arrow)" />
+    <text x="378" y="184" text-anchor="middle" class="pw-svg-edge">Signs URLs</text>
+
+    {/* Arrow: Next.js Server <-> PostgreSQL */}
+    <line x1="190" y1="234" x2="190" y2="274" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-start="url(#pw-arrow)" marker-end="url(#pw-arrow)" />
+    <text x="204" y="259" class="pw-svg-edge">Drizzle ORM · LISTEN/NOTIFY</text>
+
+    {/* PostgreSQL (bottom left) */}
+    <rect x="40" y="278" width="300" height="72" rx="10" fill="var(--sl-color-bg-nav)" stroke="var(--sl-color-hairline)" stroke-width="1.25" />
+    <text x="60" y="302" class="pw-svg-kicker">DATABASE</text>
+    <text x="60" y="322" class="pw-svg-title">PostgreSQL 16+</text>
+    <text x="60" y="339" class="pw-svg-sub">Relational state &amp; FTS (tsvector + GIN)</text>
+  </svg>
+</div>
 
 ## Expected Result
 

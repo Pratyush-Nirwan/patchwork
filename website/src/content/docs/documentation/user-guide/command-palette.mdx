@@ -19,12 +19,12 @@ This guide is for all workspace users (`admin`, `lead`, `member`, `viewer`).
 
 ![Patchwork Spotlight Command Bar with inline ghost hints](../../../../assets/screenshots/command-palette-light.png)
 
-## Inline Ghost Hints & Option Completion
+## Inline Argument Pills & Option Completion
 
-- **Required and optional hints**: After typing a command and a space (e.g., `/move `), Patchwork renders inline ghost hints after the caret.
-- **`/new` unquoted titles**: Type `/new Fix SSE reconnect` directly without quotes. Quotes are only needed if the title literally contains a `key:` token.
-- **Option keys**: Once required arguments are filled, Patchwork lists remaining `key:` options (`column:`, `priority:`, `assignee:`, `label:`). Press `Tab`, `Enter`, or click a row to insert `key:` and open value suggestions.
-- **Backspace rewind**: Pressing `Backspace` on an empty argument removes the previous token as a whole (including `key:value` options) and restores its hint.
+- **Inline labeled fields**: After typing a valid command and a space (e.g., `/new ` or `/move `), Patchwork turns each argument into an inline labeled pill (`title: ...`, `ticket: ...`, `column: ...`) whose typed value stays inside the pill.
+- **Argument types**: `word` arguments (such as ticket keys or users) advance to the next pill on `Space`; `text` arguments (such as ticket titles or comments) keep `Space` literal; `choice` arguments (such as columns) keep `Space` literal while matching a multi-word option name.
+- **Optional pills**: Once the active argument has a value, unused optional keys (`column:`, `priority:`, `assignee:`, `label:`) appear as ghost pills. Press `Tab`, click a ghost pill, or choose an option from the list to turn it into an editable pill; click `×` or press `Backspace` when empty to remove it.
+- **Navigation, Paste & Undo**: Use `ArrowLeft`/`ArrowRight`, `Tab`/`Shift+Tab`, and `Backspace` to move across pills, paste full positional or `label: value` commands directly into pills, and press `Ctrl+Z` / `Shift+Ctrl+Z` (`Cmd+Z` / `Shift+Cmd+Z` on macOS) to undo or redo pill edits.
 
 ## Execution, `Shift+Enter`, Undo & History
 

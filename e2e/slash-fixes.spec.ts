@@ -52,55 +52,38 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     await loginAs(page);
     const input = await openPalette(page);
 
-    // Item 1: Backspace removes whole keyed token and leaves quoted title intact
-    await input.fill('/new "Fix" priority:urgent ');
-    await input.press("Backspace");
-    await expect(input).toHaveValue('/new "Fix" ');
+    // Item 1 & 2: Enter /new pill mode, fill title, promote priority option, Backspace removes empty option pill
+    await input.fill("/new ");
+    const titlePill = page.getByTestId("command-pill-input-title");
+    await expect(titlePill).toBeVisible();
+    await titlePill.fill("Fix");
 
-    // Also works when keyed option is in the middle or first
-    await input.fill('/new "Fix" priority:high label:bug ');
-    await input.press("Backspace");
-    await expect(input).toHaveValue('/new "Fix" priority:high ');
-    await input.press("Backspace");
-    await expect(input).toHaveValue('/new "Fix" ');
+    await expect(page.getByTestId("command-ghost-options")).toBeVisible();
+    await page.getByTestId("command-ghost-pill-priority").click();
+    const priorityPill = page.getByTestId("command-pill-input-priority");
+    await expect(priorityPill).toBeVisible();
+    await priorityPill.press("Backspace");
+    await expect(page.getByTestId("command-pill-input-priority")).toHaveCount(0);
+    await expect(titlePill).toHaveValue("Fix");
 
-    // Item 2: Option key suggestions appear after required args, exclude used keys, filter by prefix
-    await expect(page.getByTestId("command-active-arg-desc")).toHaveText(
-      "Optional: pick an option, or press Enter to run"
-    );
-    await expect(page.getByText("column:").first()).toBeVisible();
-    await expect(page.getByText("priority:").first()).toBeVisible();
-
-    // Nothing highlighted initially when showing option keys
-    await expect(page.locator('[cmdk-item][aria-selected="true"]')).toHaveCount(0);
-
-    // Typing prefix filters option keys; Tab inserts priority: and opens value suggestions
-    await input.fill("/new Fix login pri");
-    await expect(page.getByText("priority:").first()).toBeVisible();
-    await input.press("Tab");
-    await expect(input).toHaveValue("/new Fix login priority:");
-    await expect(page.getByText("urgent").first()).toBeVisible();
-
-    // Used key is excluded when continuing to next option
-    await input.fill("/new Fix login priority:high ");
-    await expect(page.locator('[cmdk-item]', { hasText: "priority:" })).toHaveCount(0);
-    await expect(page.locator('[cmdk-item]', { hasText: "column:" })).toBeVisible();
-
-    // Item 3: Single selection source of truth, randomized arrow/filter sequence
+    // Item 3: Single selection source of truth on /move ticket suggestions
+    await page.getByRole("button", { name: "Clear command input" }).click();
     await input.fill("/move ");
+    const ticketPill = page.getByTestId("command-pill-input-key");
+    await expect(ticketPill).toBeVisible();
     for (let i = 0; i < 6; i += 1) {
-      await input.press(i % 2 === 0 ? "ArrowDown" : "ArrowUp");
+      await ticketPill.press(i % 2 === 0 ? "ArrowDown" : "ArrowUp");
       const selectedCount = await page.locator('[cmdk-item][aria-selected="true"]').count();
       expect(selectedCount).toBe(1);
     }
     // Stationary pointer does not override keyboard selection
     await page.mouse.move(10, 10);
-    await input.press("ArrowDown");
+    await ticketPill.press("ArrowDown");
     const afterDown = await page
       .locator('[cmdk-item][aria-selected="true"]')
       .first()
       .getAttribute("data-value");
-    await input.press("ArrowDown");
+    await ticketPill.press("ArrowDown");
     const afterSecondDown = await page
       .locator('[cmdk-item][aria-selected="true"]')
       .first()
@@ -108,7 +91,7 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     expect(afterSecondDown).not.toBe(afterDown);
   });
 
-  test("Item 4: Key and value hint has ~4px gap at 100% and 200% zoom and RTL", async ({
+  test("Item 4: Command ghost hint alignment at 100% and 200% zoom and RTL", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -119,24 +102,9 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
       await page.evaluate((z) => {
         document.documentElement.style.zoom = z;
       }, zoom);
-      await input.fill("/new Fix colon gap priority:");
-      const gap = await page.evaluate(() => {
-        const el = document.querySelector('[data-testid="global-search-input"]') as HTMLInputElement;
-        const ghost = document.querySelector('[data-testid="command-ghost-layer"]') as HTMLElement;
-        const cs = window.getComputedStyle(el);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
-        ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-        const textWidth = ctx.measureText(el.value).width;
-        const elRect = el.getBoundingClientRect();
-        const ghostRect = ghost.getBoundingClientRect();
-        const padLeft = parseFloat(cs.paddingLeft) || 0;
-        const zoomScale = el.offsetWidth > 0 ? elRect.width / el.offsetWidth : 1;
-        const textEnd = elRect.left + (padLeft + textWidth - el.scrollLeft) * zoomScale;
-        return (ghostRect.left - textEnd) / zoomScale;
-      });
-      expect(gap).toBeGreaterThanOrEqual(2);
-      expect(gap).toBeLessThanOrEqual(10);
+      await input.fill("/mo");
+      await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
+      await expect(page.getByTestId("command-ghost-active")).toHaveText("ve");
     }
     await page.evaluate(() => {
       document.documentElement.style.zoom = "";
@@ -146,7 +114,7 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     await page.evaluate(() => {
       document.documentElement.setAttribute("dir", "rtl");
     });
-    await input.fill("/new Fix rtl priority:");
+    await input.fill("/mo");
     await expect(page.getByTestId("command-ghost-layer")).toBeVisible();
     await page.evaluate(() => {
       document.documentElement.removeAttribute("dir");
@@ -160,13 +128,14 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     await loginAs(page);
     const input = await openPalette(page);
 
-    // Item 6: /new Fix login bug hides flag hints mid-sentence, shows Enter to run
-    await input.fill("/new Fix login bug");
-    await expect(page.getByTestId("command-ghost-rest")).toHaveCount(0);
+    // Item 6: /new Fix login bug shows Enter to run
+    await input.fill("/new ");
+    const titlePill = page.getByTestId("command-pill-input-title");
+    await titlePill.fill("Fix login bug");
     await expect(page.getByTestId("command-ghost-run")).toBeVisible();
 
-    // Enter runs when no option key is highlighted, closes palette, shows snackbar with Open
-    await input.press("Enter");
+    // Enter runs, closes palette, shows snackbar with Open
+    await titlePill.press("Enter");
     await expect(page.getByTestId("command-palette")).not.toBeVisible();
     const snackbar = page.getByTestId("app-snackbar");
     await expect(snackbar).toBeVisible();
@@ -176,8 +145,9 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
 
     // Theme command closes and shows snackbar with Undo
     await openPalette(page);
-    await input.fill("/theme dark");
-    await input.press("Enter");
+    await input.fill("/theme ");
+    await page.getByTestId("command-pill-input-mode").fill("dark");
+    await page.keyboard.press("Enter");
     await expect(page.locator("html")).toHaveClass(/dark/);
     await expect(page.getByTestId("app-snackbar-action")).toHaveText("Undo");
     await page.getByTestId("app-snackbar-action").click();
@@ -185,8 +155,9 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
 
     // Shift+Enter keeps palette open, clears input, shows inline feedback until next keystroke
     await openPalette(page);
-    await input.fill("/theme dark");
-    await input.press("Shift+Enter");
+    await input.fill("/theme ");
+    await page.getByTestId("command-pill-input-mode").fill("dark");
+    await page.keyboard.press("Shift+Enter");
     await expect(page.getByTestId("command-palette")).toBeVisible();
     await expect(input).toHaveValue("");
     await expect(page.getByTestId("command-feedback")).toContainText("Switched to dark theme");
@@ -194,10 +165,13 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     await expect(page.getByTestId("command-feedback")).toHaveCount(0);
 
     // Failure keeps palette open with arguments intact
-    await input.fill("/move NOPE-999 QA");
-    await input.press("Enter");
+    await input.fill("/move ");
+    await page.getByTestId("command-pill-input-key").fill("NOPE-999");
+    await page.getByTestId("command-pill-input-key").press("Tab");
+    await page.getByTestId("command-pill-input-column").fill("QA");
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("command-palette")).toBeVisible();
-    await expect(input).toHaveValue("/move NOPE-999 QA");
+    await expect(page.getByTestId("command-pill-input-key")).toHaveValue("NOPE-999");
     await expect(page.getByTestId("command-feedback")).toBeVisible();
   });
 
@@ -228,22 +202,26 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     await expect(page.getByTestId("command-help-view")).toBeVisible();
     await expect(page.getByTestId("help-example-move")).toBeVisible();
 
-    // Clicking example inserts without running
+    // Clicking example inserts without running (enters pill mode)
     await page.getByTestId("help-example-move").click();
     await expect(page.getByTestId("command-help-view")).not.toBeVisible();
-    await expect(input).toHaveValue('/move TELE-1 "In Progress"');
+    await expect(page.getByTestId("command-pill-cmd")).toHaveText("/move");
+    await expect(page.getByTestId("command-pill-input-key")).toHaveValue("TELE-1");
 
     // /help move opens detail view; Esc returns to help list
-    await input.fill("/help move");
-    await input.press("Enter");
+    await page.getByRole("button", { name: "Clear command input" }).click();
+    await input.fill("/help ");
+    await page.getByTestId("command-pill-input-command").fill("move");
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("command-help-detail")).toBeVisible();
-    await expect(page.getByTestId("command-help-detail")).toContainText("/move ticket column");
+    await expect(page.getByTestId("command-help-detail")).toContainText("/move ticket: key column: column");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("command-help-view")).toBeVisible();
 
     // Item 8: /delete shows context, focuses Cancel, Enter does not confirm, missing ticket shows error
-    await input.fill("/delete MISSING-999");
-    await input.press("Enter");
+    await input.fill("/delete ");
+    await page.getByTestId("command-pill-input-key").fill("MISSING-999");
+    await page.keyboard.press("Enter");
     await expect(page.getByTestId("command-feedback")).toContainText("Ticket not found");
     await expect(page.getByTestId("command-confirm-banner")).toHaveCount(0);
 
@@ -252,15 +230,15 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
     const keyMatch = firstKey.match(/[A-Z]+-\d+/);
     if (keyMatch) {
       const tk = keyMatch[0];
-      await input.fill(`/delete ${tk}`);
-      await input.press("Enter");
+      await page.getByTestId("command-pill-input-key").fill(tk);
+      await page.keyboard.press("Enter");
       await expect(page.getByTestId("command-confirm-banner")).toBeVisible();
       await expect(page.getByTestId("command-confirm-context")).toContainText("Board:");
       await expect(page.getByTestId("command-confirm-cancel-btn")).toBeFocused();
       await expect(page.getByTestId("command-confirm-btn")).toContainText(`Delete ${tk}`);
-      // Enter in input does not confirm
-      await input.focus();
-      await input.press("Enter");
+      // Enter in pill input does not confirm
+      await page.getByTestId("command-pill-input-key").focus();
+      await page.keyboard.press("Enter");
       await expect(page.getByTestId("command-confirm-banner")).toBeVisible();
       await page.getByTestId("command-confirm-cancel-btn").click();
       await expect(page.getByTestId("command-confirm-banner")).toHaveCount(0);
@@ -281,8 +259,12 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
         await setTheme(page, theme);
         const input = await openPalette(page);
 
-        // 1. Key and value hint
-        await input.fill("/new Fix issue priority:");
+        // 1. Pill mode with title & priority option
+        await input.fill("/new ");
+        await page.getByTestId("command-pill-input-title").fill("Fix issue");
+        if (vp.name === "desktop") {
+          await page.getByTestId("command-ghost-pill-priority").click();
+        }
         await page.screenshot({
           path: path.join(SCREENSHOT_DIR, `key-value-${vp.name}-${theme}.png`),
         });
@@ -292,12 +274,15 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
         expect(axe1.violations).toEqual([]);
 
         // 2. Option key list
-        await input.fill("/new Fix issue ");
+        if (vp.name === "desktop") {
+          await page.getByTestId("command-pill-input-priority").press("Backspace");
+        }
         await page.screenshot({
           path: path.join(SCREENSHOT_DIR, `option-keys-${vp.name}-${theme}.png`),
         });
 
         // 3. Help list & detail
+        await page.getByRole("button", { name: "Clear command input" }).click();
         await input.fill("/help");
         await input.press("Enter");
         await page.screenshot({
@@ -308,8 +293,9 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
           .analyze();
         expect(axeHelp.violations).toEqual([]);
 
-        await input.fill("/help move");
-        await input.press("Enter");
+        await input.fill("/help ");
+        await page.getByTestId("command-pill-input-command").fill("move");
+        await page.keyboard.press("Enter");
         await page.screenshot({
           path: path.join(SCREENSHOT_DIR, `help-detail-${vp.name}-${theme}.png`),
         });

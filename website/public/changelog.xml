@@ -6,6 +6,13 @@
     <description>Release notes for Patchwork.</description>
     <language>en-us</language>
     <item>
+      <title>Patchwork v0.8.0-beta</title>
+      <link>https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-8-0-beta/</link>
+      <guid isPermaLink="true">https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-8-0-beta/</guid>
+      <pubDate>Tue, 24 Nov 2026 00:00:00 GMT</pubDate>
+      <description>You can now watch tickets, `@mention` teammates with real-time notifications, and see live viewers and typing indicators on tickets. You can now send immediate or digest SMTP emails and signed outbound webhooks to Slack, Discord, Mattermost, or custom HTTP endpoints. Every loading state now uses surface-derived OKLCH skeletons with command bar inline argument pills and compact ticket header controls.</description>
+    </item>
+    <item>
       <title>Patchwork v0.7.1-beta</title>
       <link>https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-1-beta/</link>
       <guid isPermaLink="true">https://pratyush-nirwan.github.io/patchwork/documentation/changelog/v0-7-1-beta/</guid>

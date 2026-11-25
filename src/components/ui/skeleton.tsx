@@ -4,17 +4,65 @@ import React from "react";
 import { useAntiFlashLoading, useReducedMotion, MOTION_DURATIONS, MOTION_EASINGS } from "@/lib/motion";
 import { RouteProgressBar } from "@/components/ui/motion";
 
-interface SkeletonProps {
+export type SkeletonSurfaceVariant =
+  | "page"
+  | "surface"
+  | "rail"
+  | "card"
+  | "panel"
+  | "popover"
+  | "dropdown"
+  | "dialog"
+  | "sheet"
+  | "table-header"
+  | "table-row"
+  | "table-stripe"
+  | "table-hover"
+  | "table-selected"
+  | "input"
+  | "toast"
+  | "tooltip"
+  | "command"
+  | "code"
+  | "accent"
+  | "success"
+  | "warning"
+  | "destructive"
+  | "info"
+  | "chip";
+
+interface SurfaceProps extends React.HTMLAttributes<HTMLElement> {
+  variant?: SkeletonSurfaceVariant;
+  as?: "div" | "section" | "aside" | "header" | "main" | "nav" | "tr" | "li" | "article";
+  children?: React.ReactNode;
+}
+
+export function Surface({
+  variant = "surface",
+  as: Tag = "div",
+  className = "",
+  children,
+  ...rest
+}: SurfaceProps) {
+  return (
+    <Tag data-sk-surface={variant} className={className} {...rest}>
+      {children}
+    </Tag>
+  );
+}
+
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   style?: React.CSSProperties;
 }
 
-export function Skeleton({ className = "", style }: SkeletonProps) {
+export function Skeleton({ className = "", style, ...rest }: SkeletonProps) {
   return (
     <div
       aria-hidden="true"
       className={`pw-skeleton rounded ${className}`}
       style={style}
+      {...rest}
     />
   );
 }

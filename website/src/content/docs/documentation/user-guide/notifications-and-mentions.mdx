@@ -1,0 +1,33 @@
+---
+title: Notifications and @Mentions
+description: Use @mentions in markdown, manage your notification inbox, and configure channel preferences.
+---
+
+Patchwork delivers real-time in-app notifications for `@mentions`, ticket assignments, and watched-ticket updates.
+
+## @Mentions
+
+In ticket descriptions and comments, type `@` to open the accessible member picker:
+
+- Only active users with view access to the ticket appear in the picker.
+- Mentions are stored as stable user-ID tokens (`@[Name](mention:<id>)`), so renaming a user never breaks existing mentions.
+- Mentions inside fenced code blocks, inline code, or blockquotes are ignored.
+- Editing a comment or description notifies only newly added mentions.
+- You never receive notifications for your own actions.
+
+## Notification Inbox
+
+Click the **bell icon** in the top header (or run `/notifications`) to open your inbox:
+
+- **Tabs:** `All`, `Unread`, `Mentions`, `Assigned`, `Watching`, and `Archived`.
+- **Keyboard navigation:** Use `j` / `k` or `ArrowDown` / `ArrowUp` to move between items, and `Enter` to open the ticket and scroll directly to the referenced comment.
+- **Coalescing:** Repeated watched updates and comments on the same ticket within 5 minutes merge into a single row with an update count. Mentions and assignments never merge away.
+- **Real-time & cross-tab sync:** New notifications arrive over an authenticated per-user SSE stream and stay synchronized across open tabs.
+- **Slash commands:** `/notifications` opens the inbox; `/read-all` marks all unread notifications as read.
+
+## Channel Preferences
+
+Open **Account Settings → Notifications** to configure:
+
+- **In-app** toggles for Mentions, Assignments, and Watched updates.
+- **Email** mode (`Off`, `Immediate`, or `Digest`) and digest schedule (shown only when an administrator has configured SMTP).

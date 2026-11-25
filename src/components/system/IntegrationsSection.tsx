@@ -1,6 +1,8 @@
 "use client";
 
-import React,{ useState,useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { SystemSectionSkeleton } from "@/components/skeletons/SystemConfigSkeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
 
 export function IntegrationsSection({
   csrfToken,
@@ -16,6 +18,7 @@ export function IntegrationsSection({
   const [hasGitlabToken, setHasGitlabToken] = useState(false);
   const [cacheDurationSec, setCacheDurationSec] = useState(300);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -32,6 +35,8 @@ export function IntegrationsSection({
       }
     } catch {
       // ignore
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -97,6 +102,18 @@ export function IntegrationsSection({
       setTestingProvider(null);
     }
   };
+
+  if (loading) {
+    return (
+      <SkeletonRegion
+        isLoading={loading}
+        hasData={false}
+        loadingLabel="Loading integration settings"
+        readyLabel="Integration settings loaded"
+        skeleton={<SystemSectionSkeleton variant="section" />}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

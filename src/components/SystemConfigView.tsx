@@ -15,6 +15,7 @@ HardDrive,
 Search,
 Share2,
 Palette,
+Bell,
 Activity,
 Database,
 AlertTriangle,
@@ -35,6 +36,7 @@ import { SecuritySection } from "./system/SecuritySection";
 import { StorageSection } from "./system/StorageSection";
 import { SearchSection } from "./system/SearchSection";
 import { IntegrationsSection } from "./system/IntegrationsSection";
+import { NotificationsSection } from "./system/NotificationsSection";
 import { AppearanceSection } from "./system/AppearanceSection";
 import { HealthDiagnosticsSection } from "./system/HealthDiagnosticsSection";
 import { DataBackupSection } from "./system/DataBackupSection";
@@ -158,6 +160,7 @@ export function SystemConfigView({
     { id: "storage", label: "Storage & Files", icon: <HardDrive className="h-4 w-4" /> },
     { id: "search", label: "Search Index", icon: <Search className="h-4 w-4" /> },
     { id: "integrations", label: "Integrations", icon: <Share2 className="h-4 w-4" /> },
+    { id: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
     { id: "appearance", label: "Appearance & Defaults", icon: <Palette className="h-4 w-4" /> },
     { id: "health", label: "Health & Diagnostics", icon: <Activity className="h-4 w-4" /> },
     { id: "data-backup", label: "Data & Backup", icon: <Database className="h-4 w-4" /> },
@@ -341,6 +344,9 @@ export function SystemConfigView({
             )}
             {activeSection === "integrations" && (
               <IntegrationsSection csrfToken={csrfToken} showToast={showToast} />
+            )}
+            {activeSection === "notifications" && (
+              <NotificationsSection csrfToken={csrfToken} showToast={showToast} />
             )}
             {activeSection === "appearance" && (
               <AppearanceSection csrfToken={csrfToken} showToast={showToast} />

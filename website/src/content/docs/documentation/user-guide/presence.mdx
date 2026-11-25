@@ -1,0 +1,21 @@
+---
+title: Real-Time Presence & Typing
+description: See who is currently viewing or typing on a ticket, and control your presence privacy.
+---
+
+When you open a ticket, Patchwork shows lightweight real-time presence:
+
+- **Viewer avatars:** Up to 5 avatars of other team members currently viewing the ticket appear in the ticket header (with a `+N` overflow badge and name tooltip). Multiple tabs of the same user are counted once.
+- **Typing indicator:** When someone types in the comment editor, `"Alex is typing…"` appears above the comment box. Draft text is never transmitted or stored.
+
+## Ephemeral Lifecycle
+
+- View heartbeats run every 15 seconds while the tab is visible and pause automatically when the tab is hidden.
+- Typing heartbeats are throttled to once every 3 seconds and expire after 5 seconds of inactivity.
+- Closing a tab sends an immediate leave beacon; stale viewers expire after 35 seconds.
+- Presence state is kept strictly in memory and never written to the database.
+
+## Privacy Controls
+
+- **Personal toggle:** Disable **"Show when I'm viewing or typing on a ticket"** in **Account Settings → Notifications**.
+- **Organization toggle:** Administrators can disable presence globally in **System Configuration → Notifications → General & Privacy**.

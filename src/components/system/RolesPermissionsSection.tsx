@@ -48,11 +48,17 @@ export function RolesPermissionsSection() {
           </thead>
           <tbody className="divide-y divide-[var(--pw-border)]">
             {loading ? (
-              Array.from({ length: 4 }).map((_, rIdx) => (
-                <tr key={rIdx} aria-hidden="true">
-                  <td colSpan={5} className="px-3 py-2.5">
-                    <Skeleton className="h-4 w-full" />
+              Array.from({ length: 5 }).map((_, rIdx) => (
+                <tr key={rIdx} data-sk-surface="table-row" aria-hidden="true">
+                  <td className="px-3 py-2.5 space-y-1">
+                    <Skeleton className="h-3.5 w-36" />
+                    <Skeleton className="h-2.5 w-52" />
                   </td>
+                  {[0, 1, 2, 3].map((cIdx) => (
+                    <td key={cIdx} className="px-3 py-2.5 text-center">
+                      <Skeleton className="mx-auto h-5 w-5" />
+                    </td>
+                  ))}
                 </tr>
               ))
             ) : (

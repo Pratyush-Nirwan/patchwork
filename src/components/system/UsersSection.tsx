@@ -340,11 +340,15 @@ export function UsersSection({
           </thead>
           <tbody className="divide-y divide-[var(--pw-border)]">
             {loading ? (
-              Array.from({ length: 4 }).map((_, rIdx) => (
-                <tr key={rIdx} aria-hidden="true">
-                  <td colSpan={7} className="px-3 py-2.5">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+              Array.from({ length: 5 }).map((_, rIdx) => (
+                <tr key={rIdx} data-sk-surface="table-row" aria-hidden="true">
+                  <td className="px-3 py-2.5"><Skeleton className="h-4 w-4" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="h-3.5 w-32" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="h-3.5 w-40" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="h-5 w-14 rounded-full" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="h-3.5 w-20" /></td>
+                  <td className="px-3 py-2.5"><Skeleton className="ml-auto h-6 w-16" /></td>
                 </tr>
               ))
             ) : users.length === 0 ? (

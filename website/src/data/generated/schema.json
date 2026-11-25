@@ -1,5 +1,6 @@
 {
   "apiRouteGroups": [
+    "account",
     "attachments",
     "auth",
     "boards",
@@ -8,6 +9,7 @@
     "events",
     "health",
     "links",
+    "notifications",
     "orgs",
     "projects",
     "search",
@@ -1431,6 +1433,1035 @@
       ],
       "tableName": "system_settings",
       "varName": "systemSettings"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "event_type",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "eventType",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "aggregate_type",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "aggregateType",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "aggregate_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "aggregateId",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "team_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "teamId",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "board_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "boardId",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "actor_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "actorId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "idempotency_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "idempotencyKey",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "metadata",
+          "colType": "jsonb",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "metadata",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "processed_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "processedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "attempts",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "attempts",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "next_attempt_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "nextAttemptAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_error",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastError",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "dead_lettered_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "deadLetteredAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "domain_events",
+      "varName": "domainEvents"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "source",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "source",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "muted",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "muted",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "unwatched_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "unwatchedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "ticket_watchers",
+      "varName": "ticketWatchers"
+    },
+    {
+      "columns": [
+        {
+          "colName": "user_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "userId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "in_app_mentions",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "inAppMentions",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "in_app_assignments",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "inAppAssignments",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "in_app_watched",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "inAppWatched",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "email_mentions",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "emailMentions",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "email_assignments",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "emailAssignments",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "email_watched",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "emailWatched",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "digest_frequency",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "digestFrequency",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "digest_hour",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "digestHour",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "digest_day",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "digestDay",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auto_watch_creator",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "autoWatchCreator",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auto_watch_assignee",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "autoWatchAssignee",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auto_watch_commenter",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "autoWatchCommenter",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "auto_watch_mentioned",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "autoWatchMentioned",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "presence_enabled",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "presenceEnabled",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_digest_sent_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastDigestSentAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "user_notification_preferences",
+      "varName": "userNotificationPreferences"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "recipient_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "recipientId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "type",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "type",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "comment_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "commentId",
+          "references": "ticketComments.id",
+          "unique": false
+        },
+        {
+          "colName": "actor_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "actorId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "summary",
+          "colType": "jsonb",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "summary",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "dedupe_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "dedupeKey",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "group_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "groupKey",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "read_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "readAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "archived_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "archivedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "notifications",
+      "varName": "notifications"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "recipient_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "recipientId",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "category",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "category",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "ticket_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "ticketId",
+          "references": "tickets.id",
+          "unique": false
+        },
+        {
+          "colName": "notification_ids",
+          "colType": "jsonb",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "notificationIds",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "subject",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "subject",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "payload",
+          "colType": "jsonb",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "payload",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "idempotency_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "idempotencyKey",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "status",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "status",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "attempts",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "attempts",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "next_attempt_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "nextAttemptAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "sent_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "sentAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_error",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastError",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "email_outbox",
+      "varName": "emailOutbox"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "org_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "orgId",
+          "references": "orgs.id",
+          "unique": false
+        },
+        {
+          "colName": "name",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "name",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "url",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "url",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "format",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "format",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "events",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "events",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "scope_team_ids",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "scopeTeamIds",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "scope_project_ids",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "scopeProjectIds",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "scope_board_ids",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "scopeBoardIds",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "secret_ciphertext",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "secretCiphertext",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "secret_iv",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "secretIv",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "secret_auth_tag",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "secretAuthTag",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "secret_key_version",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "secretKeyVersion",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "enabled",
+          "colType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "enabled",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "consecutive_failures",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "consecutiveFailures",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "disabled_reason",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "disabledReason",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "disabled_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "disabledAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_by_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "createdById",
+          "references": "users.id",
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "webhook_endpoints",
+      "varName": "webhookEndpoints"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "endpoint_id",
+          "colType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "endpointId",
+          "references": "webhookEndpoints.id",
+          "unique": false
+        },
+        {
+          "colName": "domain_event_id",
+          "colType": "uuid",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "domainEventId",
+          "references": "domainEvents.id",
+          "unique": false
+        },
+        {
+          "colName": "event_type",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "eventType",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "idempotency_key",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "idempotencyKey",
+          "references": null,
+          "unique": true
+        },
+        {
+          "colName": "payload",
+          "colType": "jsonb",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "payload",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "status",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "status",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "attempts",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "attempts",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "next_attempt_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "nextAttemptAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "response_status",
+          "colType": "integer",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "responseStatus",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "duration_ms",
+          "colType": "integer",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "durationMs",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_error",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastError",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "delivered_at",
+          "colType": "timestamp",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "deliveredAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "created_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "createdAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "webhook_deliveries",
+      "varName": "webhookDeliveries"
+    },
+    {
+      "columns": [
+        {
+          "colName": "id",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": true,
+          "propName": "id",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "worker_id",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "workerId",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "mode",
+          "colType": "text",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "mode",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "started_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "startedAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_heartbeat_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "lastHeartbeatAt",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "processed_events",
+          "colType": "integer",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "processedEvents",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "last_error",
+          "colType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "propName": "lastError",
+          "references": null,
+          "unique": false
+        },
+        {
+          "colName": "updated_at",
+          "colType": "timestamp",
+          "nullable": false,
+          "primaryKey": false,
+          "propName": "updatedAt",
+          "references": null,
+          "unique": false
+        }
+      ],
+      "tableName": "worker_health",
+      "varName": "workerHealth"
     }
   ]
 }

@@ -9,6 +9,7 @@ Generated from `src/data/generated/schema.json`.
 
 ## Top-Level API Route Groups
 
+- `/api/account`
 - `/api/attachments`
 - `/api/auth`
 - `/api/boards`
@@ -17,6 +18,7 @@ Generated from `src/data/generated/schema.json`.
 - `/api/events`
 - `/api/health`
 - `/api/links`
+- `/api/notifications`
 - `/api/orgs`
 - `/api/projects`
 - `/api/search`
@@ -262,4 +264,153 @@ Generated from `src/data/generated/schema.json`.
 | `key` | `text` | No | PRIMARY KEY |
 | `value` | `jsonb` | No | — |
 | `updated_by_id` | `uuid` | Yes | REFERENCES users.id |
+| `updated_at` | `timestamp` | No | — |
+
+### `domain_events`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `event_type` | `text` | No | — |
+| `aggregate_type` | `text` | No | — |
+| `aggregate_id` | `uuid` | No | — |
+| `org_id` | `uuid` | No | — |
+| `team_id` | `uuid` | No | — |
+| `board_id` | `uuid` | No | — |
+| `actor_id` | `uuid` | Yes | REFERENCES users.id |
+| `idempotency_key` | `text` | No | UNIQUE |
+| `metadata` | `jsonb` | Yes | — |
+| `created_at` | `timestamp` | No | — |
+| `processed_at` | `timestamp` | Yes | — |
+| `attempts` | `integer` | No | — |
+| `next_attempt_at` | `timestamp` | No | — |
+| `last_error` | `text` | Yes | — |
+| `dead_lettered_at` | `timestamp` | Yes | — |
+
+### `ticket_watchers`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `ticket_id` | `uuid` | No | REFERENCES tickets.id |
+| `user_id` | `uuid` | No | REFERENCES users.id |
+| `source` | `text` | No | — |
+| `muted` | `boolean` | No | — |
+| `unwatched_at` | `timestamp` | Yes | — |
+| `created_at` | `timestamp` | No | — |
+
+### `user_notification_preferences`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `user_id` | `uuid` | No | PRIMARY KEY, REFERENCES users.id |
+| `in_app_mentions` | `boolean` | No | — |
+| `in_app_assignments` | `boolean` | No | — |
+| `in_app_watched` | `boolean` | No | — |
+| `email_mentions` | `text` | No | — |
+| `email_assignments` | `text` | No | — |
+| `email_watched` | `text` | No | — |
+| `digest_frequency` | `text` | No | — |
+| `digest_hour` | `integer` | No | — |
+| `digest_day` | `integer` | No | — |
+| `auto_watch_creator` | `boolean` | No | — |
+| `auto_watch_assignee` | `boolean` | No | — |
+| `auto_watch_commenter` | `boolean` | No | — |
+| `auto_watch_mentioned` | `boolean` | No | — |
+| `presence_enabled` | `boolean` | No | — |
+| `last_digest_sent_at` | `timestamp` | Yes | — |
+| `updated_at` | `timestamp` | No | — |
+
+### `notifications`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `recipient_id` | `uuid` | No | REFERENCES users.id |
+| `type` | `text` | No | — |
+| `ticket_id` | `uuid` | No | REFERENCES tickets.id |
+| `comment_id` | `uuid` | Yes | REFERENCES ticketComments.id |
+| `actor_id` | `uuid` | Yes | REFERENCES users.id |
+| `summary` | `jsonb` | Yes | — |
+| `dedupe_key` | `text` | No | UNIQUE |
+| `group_key` | `text` | No | — |
+| `created_at` | `timestamp` | No | — |
+| `updated_at` | `timestamp` | No | — |
+| `read_at` | `timestamp` | Yes | — |
+| `archived_at` | `timestamp` | Yes | — |
+
+### `email_outbox`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `recipient_id` | `uuid` | No | REFERENCES users.id |
+| `category` | `text` | No | — |
+| `ticket_id` | `uuid` | Yes | REFERENCES tickets.id |
+| `notification_ids` | `jsonb` | No | — |
+| `subject` | `text` | No | — |
+| `payload` | `jsonb` | Yes | — |
+| `idempotency_key` | `text` | No | UNIQUE |
+| `status` | `text` | No | — |
+| `attempts` | `integer` | No | — |
+| `next_attempt_at` | `timestamp` | No | — |
+| `sent_at` | `timestamp` | Yes | — |
+| `last_error` | `text` | Yes | — |
+| `created_at` | `timestamp` | No | — |
+
+### `webhook_endpoints`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `org_id` | `uuid` | No | REFERENCES orgs.id |
+| `name` | `text` | No | — |
+| `url` | `text` | No | — |
+| `format` | `text` | No | — |
+| `events` | `text` | No | — |
+| `scope_team_ids` | `uuid` | No | — |
+| `scope_project_ids` | `uuid` | No | — |
+| `scope_board_ids` | `uuid` | No | — |
+| `secret_ciphertext` | `text` | No | — |
+| `secret_iv` | `text` | No | — |
+| `secret_auth_tag` | `text` | No | — |
+| `secret_key_version` | `integer` | No | — |
+| `enabled` | `boolean` | No | — |
+| `consecutive_failures` | `integer` | No | — |
+| `disabled_reason` | `text` | Yes | — |
+| `disabled_at` | `timestamp` | Yes | — |
+| `created_by_id` | `uuid` | Yes | REFERENCES users.id |
+| `created_at` | `timestamp` | No | — |
+| `updated_at` | `timestamp` | No | — |
+
+### `webhook_deliveries`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `uuid` | No | PRIMARY KEY |
+| `endpoint_id` | `uuid` | No | REFERENCES webhookEndpoints.id |
+| `domain_event_id` | `uuid` | Yes | REFERENCES domainEvents.id |
+| `event_type` | `text` | No | — |
+| `idempotency_key` | `text` | No | UNIQUE |
+| `payload` | `jsonb` | Yes | — |
+| `status` | `text` | No | — |
+| `attempts` | `integer` | No | — |
+| `next_attempt_at` | `timestamp` | No | — |
+| `response_status` | `integer` | Yes | — |
+| `duration_ms` | `integer` | Yes | — |
+| `last_error` | `text` | Yes | — |
+| `delivered_at` | `timestamp` | Yes | — |
+| `created_at` | `timestamp` | No | — |
+
+### `worker_health`
+
+| Column | Drizzle Type | Nullable | Constraints / References |
+| --- | --- | :---: | --- |
+| `id` | `text` | No | PRIMARY KEY |
+| `worker_id` | `text` | No | — |
+| `mode` | `text` | No | — |
+| `started_at` | `timestamp` | No | — |
+| `last_heartbeat_at` | `timestamp` | No | — |
+| `processed_events` | `integer` | No | — |
+| `last_error` | `text` | Yes | — |
 | `updated_at` | `timestamp` | No | — |

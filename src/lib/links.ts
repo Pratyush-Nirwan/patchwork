@@ -6,6 +6,7 @@ import { AppError, NotFoundError } from "./errors";
 import { recordActivity } from "./tickets";
 import { realtimeHub } from "./realtime";
 import { getSystemSetting, decryptIntegrationToken } from "./settings";
+import { emitDomainEvent, notifyDomainEventWorker } from "./domain-events";
 
 export interface ParsedForgeUrl {
   provider: "github" | "gitlab";
@@ -240,32 +241,56 @@ export async function addTicketLink(
   const parsed = parseForgeUrl(input.url);
   const metadata = await fetchForgeMetadata(parsed);
 
-  const [link] = await db
-    .insert(ticketLinks)
-    .values({
-      ticketId: ticket.id,
-      createdById: actorId,
-      provider: parsed.provider,
-      kind: parsed.kind,
-      url: input.url.trim(),
-      title: metadata.title,
-      status: metadata.status,
-      externalRef: parsed.externalRef,
-    })
-    .returning();
+  const { link, domainEvent } = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(ticketLinks)
+      .values({
+        ticketId: ticket.id,
+        createdById: actorId,
+        provider: parsed.provider,
+        kind: parsed.kind,
+        url: input.url.trim(),
+        title: metadata.title,
+        status: metadata.status,
+        externalRef: parsed.externalRef,
+      })
+      .returning();
 
-  await recordActivity({
-    ticketId: ticket.id,
-    actorId,
-    action: "link.added",
-    details: {
-      linkId: link.id,
-      provider: link.provider,
-      kind: link.kind,
-      externalRef: link.externalRef,
-      title: link.title,
-    },
+    await recordActivity(
+      {
+        ticketId: ticket.id,
+        actorId,
+        action: "link.added",
+        details: {
+          linkId: inserted.id,
+          provider: inserted.provider,
+          kind: inserted.kind,
+          externalRef: inserted.externalRef,
+          title: inserted.title,
+        },
+      },
+      tx
+    );
+
+    const ev = await emitDomainEvent(tx, {
+      eventType: "link.added",
+      aggregateId: ticket.id,
+      orgId: ticket.orgId,
+      teamId: ticket.teamId,
+      boardId: ticket.boardId,
+      actorId,
+      metadata: {
+        ticketKey: ticket.key,
+        linkId: inserted.id,
+        provider: inserted.provider,
+        kind: inserted.kind,
+      },
+    });
+
+    return { link: inserted, domainEvent: ev };
   });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "link.added",
@@ -289,18 +314,38 @@ export async function removeTicketLink(actorId: string, linkId: string) {
   if (!link) throw new NotFoundError("Link not found");
 
   const { ticket } = await requireTicketRole(actorId, link.ticketId, "member");
-  await db.delete(ticketLinks).where(eq(ticketLinks.id, linkId));
+  const domainEvent = await db.transaction(async (tx) => {
+    await tx.delete(ticketLinks).where(eq(ticketLinks.id, linkId));
 
-  await recordActivity({
-    ticketId: ticket.id,
-    actorId,
-    action: "link.removed",
-    details: {
-      linkId: link.id,
-      externalRef: link.externalRef,
-      url: link.url,
-    },
+    await recordActivity(
+      {
+        ticketId: ticket.id,
+        actorId,
+        action: "link.removed",
+        details: {
+          linkId: link.id,
+          externalRef: link.externalRef,
+          url: link.url,
+        },
+      },
+      tx
+    );
+
+    return emitDomainEvent(tx, {
+      eventType: "link.removed",
+      aggregateId: ticket.id,
+      orgId: ticket.orgId,
+      teamId: ticket.teamId,
+      boardId: ticket.boardId,
+      actorId,
+      metadata: {
+        ticketKey: ticket.key,
+        linkId: link.id,
+      },
+    });
   });
+
+  await notifyDomainEventWorker(domainEvent?.id);
 
   await realtimeHub.publish({
     type: "link.removed",

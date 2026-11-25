@@ -32,3 +32,10 @@ If a browser upload fails after requesting a presigned URL or after ticket delet
 
 - [Backups & Upgrades](/documentation/operations/backups-and-upgrades/)
 - [Troubleshooting & FAQ](/documentation/operations/troubleshooting/)
+
+## Background Worker, Queues & Retention
+
+Patchwork runs an in-process background worker by default (`WORKER_MODE=embedded`, started from `instrumentation.ts` with a PostgreSQL advisory lock so only one instance processes). For larger deployments, set `WORKER_MODE=separate` and run `npm run worker` as a standalone process.
+
+- **Queue health:** **System Configuration → Health & Diagnostics** and `npm run setup -- --check` report worker heartbeat status, processed event counts, pending queue depth, oldest pending age, and dead-lettered items for `domain_events`, `email_outbox`, and `webhook_deliveries`.
+- **Delivery logs & retention:** Read/archived notifications are retained for 90 days by default (`retentionReadDays`, unread cap `500`), and email/webhook delivery logs are retained for 30 days (`deliveryLogRetentionDays`). All retention settings can be adjusted in **System Configuration → Notifications**.

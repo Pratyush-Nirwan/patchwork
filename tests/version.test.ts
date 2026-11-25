@@ -46,21 +46,26 @@ function createTempRepoCopy({ includeLocksAndBuildInfo = true } = {}): string {
   return tmp;
 }
 
-describe("Single-Source Versioning (v0.7.0-beta)", () => {
-  it("app and script helpers return 0.7.0-beta, v0.7.0-beta, tag v0.7.0-beta, and beta channel", () => {
-    expect(version).toBe("0.7.0-beta");
-    expect(displayVersion).toBe("v0.7.0-beta");
-    expect(tag).toBe("v0.7.0-beta");
+const PKG_VERSION = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+).version as string;
+const PKG_DISPLAY_VERSION = `v${PKG_VERSION}`;
+
+describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
+  it("app and script helpers return package.json version, v-prefixed displayVersion, tag, and channel", () => {
+    expect(version).toBe(PKG_VERSION);
+    expect(displayVersion).toBe(PKG_DISPLAY_VERSION);
+    expect(tag).toBe(PKG_DISPLAY_VERSION);
     expect(channel).toBe("beta");
     expect(buildDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-    expect(scriptVersion.version).toBe("0.7.0-beta");
-    expect(scriptVersion.displayVersion).toBe("v0.7.0-beta");
-    expect(scriptVersion.tag).toBe("v0.7.0-beta");
+    expect(scriptVersion.version).toBe(PKG_VERSION);
+    expect(scriptVersion.displayVersion).toBe(PKG_DISPLAY_VERSION);
+    expect(scriptVersion.tag).toBe(PKG_DISPLAY_VERSION);
     expect(scriptVersion.channel).toBe("beta");
-    expect(scriptVersion.isValidSemver("0.7.0-beta")).toBe(true);
-    expect(scriptVersion.compareSemver("0.6.0", "0.7.0-beta")).toBeLessThan(0);
-    expect(scriptVersion.compareSemver("0.7.0-beta", "0.7.0")).toBeLessThan(0);
+    expect(scriptVersion.isValidSemver(PKG_VERSION)).toBe(true);
+    expect(scriptVersion.compareSemver("0.6.0", PKG_VERSION)).toBeLessThan(0);
+    expect(scriptVersion.compareSemver(PKG_VERSION, "0.8.0")).toBeLessThan(0);
   });
 
   it("/api/health returns version and channel, and diagnostics bundle includes version without secrets", async () => {
@@ -68,18 +73,18 @@ describe("Single-Source Versioning (v0.7.0-beta)", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe("ok");
-    expect(body.version).toBe("0.7.0-beta");
-    expect(body.displayVersion).toBe("v0.7.0-beta");
+    expect(body.version).toBe(PKG_VERSION);
+    expect(body.displayVersion).toBe(PKG_DISPLAY_VERSION);
     expect(body.channel).toBe("beta");
 
     const bundle = await generateDiagnosticsBundle();
-    expect(bundle.appVersion).toBe("0.7.0-beta");
+    expect(bundle.appVersion).toBe(PKG_VERSION);
     expect(bundle.channel).toBe("beta");
     const serialized = JSON.stringify(bundle);
     expect(serialized).not.toMatch(/SESSION_SECRET|CSRF_SECRET|TOKEN_ENCRYPTION_KEY|minioadmin/i);
   });
 
-  it("installer state-detect formats v0.7.0-beta and Repair flags an older installed version", async () => {
+  it("installer state-detect formats displayVersion and Repair flags an older installed version", async () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-upgrade-"));
     try {
       const state = await detectInstallState({
@@ -89,13 +94,13 @@ describe("Single-Source Versioning (v0.7.0-beta)", () => {
         drizzleDir: path.join(process.cwd(), "drizzle"),
         installedVersion: "0.6.0-beta",
       });
-      expect(state.diskVersion).toBe("0.7.0-beta");
-      expect(state.diskDisplayVersion).toBe("v0.7.0-beta");
+      expect(state.diskVersion).toBe(PKG_VERSION);
+      expect(state.diskDisplayVersion).toBe(PKG_DISPLAY_VERSION);
       expect(state.installedVersion).toBe("0.6.0-beta");
       expect(state.upgradeAvailable).toBe(true);
 
       const table = formatStateTable(state);
-      expect(table).toContain("v0.7.0-beta");
+      expect(table).toContain(PKG_DISPLAY_VERSION);
       expect(table).toContain("Upgrade available: run migrations");
       expect(table).toContain("/documentation/operations/backups-and-upgrades/");
 
@@ -117,12 +122,12 @@ describe("Single-Source Versioning (v0.7.0-beta)", () => {
     }
   });
 
-  it("documentation-dist/.build-info.json records version 0.7.0-beta", () => {
+  it("documentation-dist/.build-info.json records current version", () => {
     const buildInfoPath = path.join(process.cwd(), "documentation-dist/.build-info.json");
     if (fs.existsSync(buildInfoPath)) {
       const info = JSON.parse(fs.readFileSync(buildInfoPath, "utf8"));
-      expect(info.version).toBe("0.7.0-beta");
-      expect(info.displayVersion).toBe("v0.7.0-beta");
+      expect(info.version).toBe(PKG_VERSION);
+      expect(info.displayVersion).toBe(PKG_DISPLAY_VERSION);
     }
   });
 

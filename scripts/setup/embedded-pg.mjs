@@ -1,10 +1,13 @@
 import { execFileSync } from "node:child_process";
 import fs from "fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "path";
 import pg from "pg";
 import EmbeddedPostgres from "embedded-postgres";
 import { isPidAlive, isWindows } from "../lib/platform.mjs";
+
+const require = createRequire(import.meta.url);
 import { isPortFree } from "./preflight.mjs";
 import { buildDatabaseUrl } from "./db.mjs";
 
@@ -48,6 +51,22 @@ export function cleanStalePostgresPid(dataDir) {
   }
   fs.rmSync(pidPath, { force: true });
   return { removed: true, reason: "stale", pid: pid || null };
+}
+
+function resolveWindowsPgCtl() {
+  const pkgJson = require.resolve("@embedded-postgres/windows-x64/package.json");
+  return path.join(path.dirname(pkgJson), "native", "bin", "pg_ctl.exe");
+}
+
+async function stopViaPgCtl(pgCtlPath, dataDir, { retries = 6, delayMs = 300 } = {}) {
+  execFileSync(pgCtlPath, ["-D", dataDir, "-m", "fast", "-w", "stop"], {
+    stdio: "pipe",
+    shell: false,
+  });
+  for (let i = 0; i < retries; i++) {
+    if (!fs.existsSync(path.join(dataDir, "postmaster.pid"))) return;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
 }
 
 export async function stopEmbeddedPostgresWithRetry(instance, { retries = 6, delayMs = 300 } = {}) {
@@ -129,7 +148,26 @@ export async function startEmbeddedPostgres({
   if (!versionInfo.initialized) {
     await runPhase("initialise", () => instance.initialise());
   }
-  await runPhase("start", () => instance.start());
+
+  let startedViaPgCtl = false;
+  let pgCtlPath = null;
+  try {
+    await runPhase("start", () => instance.start());
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!isWindows || !/administrative permissions|unprivileged user ID/i.test(msg)) {
+      throw err;
+    }
+    // embedded-postgres spawns postgres.exe directly, which refuses elevated Windows tokens (e.g. CI runneradmin).
+    // pg_ctl.exe natively drops admin privileges via CreateRestrictedToken() before starting postgres.exe.
+    pgCtlPath = resolveWindowsPgCtl();
+    execFileSync(
+      pgCtlPath,
+      ["-D", dataDir, "-l", path.join(dataDir, "postgres.log"), "-o", `-p ${Number(port)}`, "-w", "start"],
+      { stdio: "pipe", shell: false }
+    );
+    startedViaPgCtl = true;
+  }
 
   const databaseUrl = buildDatabaseUrl({
     host: "127.0.0.1",
@@ -163,6 +201,9 @@ export async function startEmbeddedPostgres({
     dataDir,
     port: Number(port),
     databaseUrl,
-    stop: () => stopEmbeddedPostgresWithRetry(instance),
+    stop: () =>
+      startedViaPgCtl && pgCtlPath
+        ? stopViaPgCtl(pgCtlPath, dataDir)
+        : stopEmbeddedPostgresWithRetry(instance),
   };
 }

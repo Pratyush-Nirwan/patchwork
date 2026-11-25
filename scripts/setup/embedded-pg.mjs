@@ -59,7 +59,7 @@ function resolveWindowsPgCtl() {
 
 async function stopViaPgCtl(pgCtlPath, dataDir, { retries = 6, delayMs = 300 } = {}) {
   execFileSync(pgCtlPath, ["-D", dataDir, "-m", "fast", "-w", "stop"], {
-    stdio: "pipe",
+    stdio: "ignore",
     shell: false,
   });
   for (let i = 0; i < retries; i++) {
@@ -163,7 +163,7 @@ export async function startEmbeddedPostgres({
     execFileSync(
       pgCtlPath,
       ["-D", dataDir, "-l", path.join(dataDir, "postgres.log"), "-o", `-p ${Number(port)}`, "-w", "start"],
-      { stdio: "pipe", shell: false }
+      { stdio: "ignore", shell: false }
     );
     startedViaPgCtl = true;
   }

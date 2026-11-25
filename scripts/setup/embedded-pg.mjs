@@ -54,8 +54,7 @@ export function cleanStalePostgresPid(dataDir) {
 }
 
 function resolveWindowsPgCtl() {
-  const pkgJson = require.resolve("@embedded-postgres/windows-x64/package.json");
-  return path.join(path.dirname(pkgJson), "native", "bin", "pg_ctl.exe");
+  return require("@embedded-postgres/windows-x64").pg_ctl;
 }
 
 async function stopViaPgCtl(pgCtlPath, dataDir, { retries = 6, delayMs = 300 } = {}) {

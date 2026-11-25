@@ -100,7 +100,7 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag=${tag}\nprerelease=${isPrerelease}\n`);
           '
 
-          TAG="${{ steps.notes.outputs.tag }}"
+          TAG="$RELEASE_TAG"
           mkdir -p release-assets
           tar -C release-stage -czf "release-assets/patchwork-${TAG}.tar.gz" "patchwork-${TAG}"
           (cd release-stage && zip -qr "../release-assets/patchwork-${TAG}.zip" "patchwork-${TAG}")

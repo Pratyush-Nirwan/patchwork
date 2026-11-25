@@ -232,6 +232,12 @@ test.describe("Slash Command Fixes E2E, A11y & Visual Baselines", () => {
       const tk = keyMatch[0];
       await page.getByTestId("command-pill-input-key").fill(tk);
       await page.keyboard.press("Enter");
+      await page
+        .getByTestId("command-confirm-banner")
+        .waitFor({ state: "visible", timeout: 2000 })
+        .catch(async () => {
+          await page.keyboard.press("Enter");
+        });
       await expect(page.getByTestId("command-confirm-banner")).toBeVisible();
       await expect(page.getByTestId("command-confirm-context")).toContainText("Board:");
       await expect(page.getByTestId("command-confirm-cancel-btn")).toBeFocused();

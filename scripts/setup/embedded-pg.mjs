@@ -73,6 +73,14 @@ export async function startEmbeddedPostgres({
     cleanStalePostgresPid(dataDir);
   }
 
+  const pgLogs = [];
+  const pushLog = (prefix) => (msg) => {
+    const text = String(msg ?? "").trim();
+    if (!text) return;
+    pgLogs.push(`${prefix}${text}`);
+    if (pgLogs.length > 40) pgLogs.shift();
+  };
+
   const instance = new EmbeddedPostgres({
     databaseDir: dataDir,
     user: dbUser,
@@ -80,15 +88,27 @@ export async function startEmbeddedPostgres({
     port: Number(port),
     persistent: true,
     initdbFlags: ["--encoding=UTF8", "--locale=C"],
-    onLog: () => {},
-    onError: () => {},
+    onLog: pushLog(""),
+    onError: pushLog("[stderr] "),
   });
   instance.databaseDir = dataDir;
 
+  const runPhase = async (phase, fn) => {
+    try {
+      await fn();
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : err ? String(err) : "";
+      const logs = pgLogs.slice(-15).join(" | ");
+      throw new Error(
+        `Embedded PostgreSQL ${phase} failed${detail ? `: ${detail}` : ""}${logs ? ` (${logs})` : ""}`
+      );
+    }
+  };
+
   if (!versionInfo.initialized) {
-    await instance.initialise();
+    await runPhase("initialise", () => instance.initialise());
   }
-  await instance.start();
+  await runPhase("start", () => instance.start());
 
   const databaseUrl = buildDatabaseUrl({
     host: "127.0.0.1",

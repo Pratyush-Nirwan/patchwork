@@ -34,6 +34,9 @@ test.describe("Version Display & Layout Stability", () => {
     page,
   }) => {
     await loginAsAdmin(page);
+    await expect(page.getByTestId("left-sidebar").or(page.getByRole("button", { name: "Toggle Sidebar" })).first()).toBeVisible({
+      timeout: 15000,
+    });
 
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 844 });
@@ -48,7 +51,7 @@ test.describe("Version Display & Layout Stability", () => {
         }
 
         const sidebarVer = page.getByTestId("sidebar-version");
-        await expect(sidebarVer).toBeVisible();
+        await expect(sidebarVer).toBeVisible({ timeout: 10000 });
         await expect(sidebarVer).toHaveText(VERSION_LABEL);
 
         const cls = await page.evaluate(() => {

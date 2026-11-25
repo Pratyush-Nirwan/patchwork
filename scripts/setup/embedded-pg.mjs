@@ -1,8 +1,10 @@
+import { execFileSync } from "node:child_process";
 import fs from "fs";
+import os from "node:os";
 import path from "path";
 import pg from "pg";
 import EmbeddedPostgres from "embedded-postgres";
-import { isPidAlive } from "../lib/platform.mjs";
+import { isPidAlive, isWindows } from "../lib/platform.mjs";
 import { isPortFree } from "./preflight.mjs";
 import { buildDatabaseUrl } from "./db.mjs";
 
@@ -27,8 +29,8 @@ export function checkEmbeddedPgMajorVersion(dataDir) {
   if (major !== EMBEDDED_PG_MAJOR) {
     throw new Error(
       `Existing PostgreSQL data directory at ${dataDir} uses major version ${raw}, ` +
-        `but Patchwork Easy mode expects PostgreSQL ${EMBEDDED_PG_MAJOR}. ` +
-        `Refusing automatic cross-major upgrade. Back up with pg_dump and migrate manually (see /documentation/operations/backups-and-upgrades/).`
+      `but Patchwork Easy mode expects PostgreSQL ${EMBEDDED_PG_MAJOR}. ` +
+      `Refusing automatic cross-major upgrade. Back up with pg_dump and migrate manually (see /documentation/operations/backups-and-upgrades/).`
     );
   }
   return { initialized: true, major };
@@ -68,6 +70,25 @@ export async function startEmbeddedPostgres({
   dbName = "patchwork",
 }) {
   fs.mkdirSync(dataDir, { recursive: true });
+  if (isWindows) {
+    // PostgreSQL's initdb/pg_ctl drops Administrator privileges into a restricted token on Windows;
+    // grant the current user explicit full control so elevated shells (e.g. CI runneradmin) can initialize dataDir.
+    try {
+      const username = os.userInfo().username;
+      if (username) {
+        execFileSync("icacls", [path.dirname(dataDir), "/grant", `${username}:(OI)(CI)F`, "/Q"], {
+          stdio: "ignore",
+          shell: false,
+        });
+        execFileSync("icacls", [dataDir, "/grant", `${username}:(OI)(CI)F`, "/T", "/Q"], {
+          stdio: "ignore",
+          shell: false,
+        });
+      }
+    } catch {
+      // Best-effort ACL setup; proceed to initdb/start
+    }
+  }
   const versionInfo = checkEmbeddedPgMajorVersion(dataDir);
   if (versionInfo.initialized) {
     cleanStalePostgresPid(dataDir);

@@ -198,7 +198,7 @@ const jsonLd = !noindex
               Self-hosted engineering ticketing. No Docker, no seat tiers.
             </p>
             <p class="pw-footer-meta pw-tabular">
-              {appMeta.displayVersion} &middot; {appMeta.license} &middot; No cookies, no tracking.
+              {appMeta.displayVersion} &middot; {appMeta.license} &middot; No cookies.
             </p>
           </div>
 
@@ -310,6 +310,9 @@ const jsonLd = !noindex
         reveals.forEach((el) => io.observe(el));
       }
     </script>
+    {process.env.BUILD_TARGET !== "embedded" && (
+      <Fragment set:html={`<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "52008c0fd3db4049ad5616ab9874d798"}'></script><!-- End Cloudflare Web Analytics -->`} />
+    )}
   </body>
 </html>
 

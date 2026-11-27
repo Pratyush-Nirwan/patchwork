@@ -10,7 +10,7 @@
       <link>https://getpatchwork.in/documentation/changelog/v0-8-1-beta/</link>
       <guid isPermaLink="true">https://getpatchwork.in/documentation/changelog/v0-8-1-beta/</guid>
       <pubDate>Sat, 28 Nov 2026 00:00:00 GMT</pubDate>
-      <description>Patchwork v0.8.1-beta release notes (2 added, 2 changed).</description>
+      <description>Patchwork now has a new angled ticket logo across the website header, footer, favicons, and Open Graph previews. Every public page on `getpatchwork.in` now ships per-section Open Graph cards, JSON-LD structured data, and sitemap indexing. The website now features a streamlined header, a multi-column footer with a Made in India tribute, and mobile tap-target fixes.</description>
     </item>
     <item>
       <title>Patchwork v0.8.0-beta</title>

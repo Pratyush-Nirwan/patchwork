@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [v0.8.1-beta] - 2026-11-28
 
+### Highlights
+- Patchwork now has a new angled ticket logo across the website header, footer, favicons, and Open Graph previews.
+- Every public page on `getpatchwork.in` now ships per-section Open Graph cards, JSON-LD structured data, and sitemap indexing.
+- The website now features a streamlined header, a multi-column footer with a Made in India tribute, and mobile tap-target fixes.
+
 ### Added
 - **Documentation:** Added a multi-column site footer with release info and Made in India tribute.
 - **Documentation:** Added per-section Open Graph images, sitemap defaults, and JSON-LD SEO metadata ([docs](/introduction/overview/)).

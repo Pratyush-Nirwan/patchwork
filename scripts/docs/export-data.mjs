@@ -55,7 +55,7 @@ export function exportWebsiteData(
     supportedOs: ["Windows 10/11", "Linux (Ubuntu 22.04/24.04, Debian 12)"],
     repositoryUrl: repoUrl,
     cloneUrl: rawRepoUrl.replace(/^git\+/, ""),
-    docsSiteUrl: process.env.DOCS_SITE_URL || "https://pratyush-nirwan.github.io/patchwork/",
+    docsSiteUrl: process.env.DOCS_SITE_URL || "https://getpatchwork.in/",
   };
 
   const snapshots = new Map([

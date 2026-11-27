@@ -90,7 +90,7 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
   const cloneUrl = rawRepoUrl.replace(/^git\+/, "");
   const nodeReq = pkg.engines?.node || ">=20";
   const license = (pkg.license || "AGPL-3.0-only").replace("-only", "");
-  const docsSiteUrl = "https://pratyush-nirwan.github.io/patchwork/";
+  const docsSiteUrl = "https://getpatchwork.in/";
 
   const badgeVer = displayVersion.replace(/-/g, "--");
   const badgeLicense = encodeURIComponent(license.replace(/-/g, "--"));

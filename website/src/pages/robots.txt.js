@@ -1,6 +1,16 @@
+import appMeta from "../data/generated/app-meta.json";
+
 export const GET = () => {
   const isEmbedded = process.env.BUILD_TARGET === "embedded";
-  const siteUrl = (process.env.SITE_URL || "").replace(/\/+$/, "");
+  const defaultOrigin = new URL(appMeta.docsSiteUrl || "https://getpatchwork.in/").origin;
+  const rawSiteUrl =
+    process.env.SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : defaultOrigin);
+  const siteUrl = rawSiteUrl.replace(/\/+$/, "");
   const rawBase = process.env.SITE_BASE || "/";
   const basePrefix = rawBase === "/" ? "" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
 
@@ -9,7 +19,7 @@ export const GET = () => {
     : [
         "User-agent: *",
         "Allow: /",
-        ...(siteUrl ? [`Sitemap: ${siteUrl}${basePrefix}/sitemap-index.xml`] : []),
+        `Sitemap: ${siteUrl}${basePrefix}/sitemap-index.xml`,
         "",
       ].join("\n");
 

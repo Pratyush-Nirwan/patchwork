@@ -1,11 +1,10 @@
-@import "@fontsource/space-grotesk/500.css";
-@import "@fontsource/space-grotesk/600.css";
-@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/archivo/700.css";
 @import "@fontsource/ibm-plex-sans/400.css";
 @import "@fontsource/ibm-plex-sans/500.css";
 @import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 :root {
   --pw-bg: #f6f5f2;
@@ -21,9 +20,9 @@
   --pw-rail-bg: #141920;
   --pw-rail-ink: #eaeef3;
 
-  --pw-font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --pw-font-display: "Archivo", system-ui, -apple-system, sans-serif;
   --pw-font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-  --pw-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --pw-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --pw-radius-sm: 4px;
   --pw-radius-md: 8px;

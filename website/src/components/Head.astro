@@ -1,8 +1,68 @@
 ---
 import Default from "@astrojs/starlight/components/Head.astro";
+import appMeta from "../data/generated/app-meta.json";
+
+const pathname = Astro.url.pathname;
+const isChangelog = pathname.includes("/documentation/changelog");
+const ogFile = isChangelog ? "og-changelog.png" : "og-docs.png";
+const ogAlt = isChangelog
+  ? "Patchwork Changelog — Release notes, upgrades, and roadmap."
+  : "Patchwork Documentation — Guides, reference, and architecture.";
+
+const isEmbedded = !Astro.site;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+const ogPath = isEmbedded ? `/documentation/${ogFile}` : `${base}/${ogFile}`;
+const ogImageUrl = Astro.site ? new URL(ogPath, Astro.site).toString() : ogPath;
+
+const entryTitle = Astro.props.entry?.data?.title || "Patchwork Documentation";
+const entryDesc =
+  Astro.props.entry?.data?.description ||
+  "Official documentation for Patchwork, a self-hosted engineering ticketing platform.";
+
+const siteRoot = Astro.site ? new URL(`${base || ""}/`, Astro.site).toString() : "/";
+const docsRoot = Astro.site ? new URL(`${base || ""}/documentation/`, Astro.site).toString() : "/documentation/";
+const isDocsHome = pathname === `${base}/documentation/` || pathname === "/documentation/";
+
+const jsonLd = !isEmbedded
+  ? [
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        headline: entryTitle,
+        description: entryDesc,
+        url: Astro.url.toString(),
+        image: ogImageUrl,
+        publisher: {
+          "@type": "Organization",
+          name: appMeta.name,
+          url: appMeta.repositoryUrl,
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: siteRoot },
+          { "@type": "ListItem", position: 2, name: "Documentation", item: docsRoot },
+          ...(!isDocsHome
+            ? [{ "@type": "ListItem", position: 3, name: entryTitle, item: Astro.url.toString() }]
+            : []),
+        ],
+      },
+    ]
+  : null;
 ---
 
 <Default {...Astro.props} />
+<meta property="og:site_name" content="Patchwork" />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={ogAlt} />
+<meta name="twitter:title" content={entryTitle} />
+<meta name="twitter:description" content={entryDesc} />
+<meta name="twitter:image" content={ogImageUrl} />
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 <script is:inline>
   try {
     var pwTheme =

@@ -14,6 +14,7 @@ const rawBase = isEmbedded ? "/" : process.env.SITE_BASE || "/";
 const siteBase =
   rawBase === "" || rawBase === "/" ? "/" : `/${rawBase.replace(/^\/+|\/+$/g, "")}`;
 const basePrefix = siteBase === "/" ? "" : siteBase;
+const defaultSiteOrigin = new URL(meta.docsSiteUrl || "https://getpatchwork.in/").origin;
 const rawSiteUrl =
   !isEmbedded
     ? process.env.SITE_URL ||
@@ -21,14 +22,9 @@ const rawSiteUrl =
         ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
         : process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : "")
+          : defaultSiteOrigin)
     : "";
 const siteUrl = rawSiteUrl ? rawSiteUrl.replace(/\/+$/, "") : undefined;
-const ogImage = isEmbedded
-  ? "/documentation/og-image.png"
-  : siteUrl
-    ? `${siteUrl}${basePrefix}/og-image.png`
-    : `${basePrefix}/og-image.png`;
 const repoUrl = process.env.REPO_URL || meta.repositoryUrl;
 
 function prefixHref(href) {
@@ -74,14 +70,6 @@ const headTags = [
   {
     tag: "meta",
     attrs: { name: "patchwork:version", content: meta.version },
-  },
-  {
-    tag: "meta",
-    attrs: { property: "og:image", content: ogImage },
-  },
-  {
-    tag: "meta",
-    attrs: { name: "twitter:image", content: ogImage },
   },
 ];
 

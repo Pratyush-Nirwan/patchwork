@@ -1,11 +1,20 @@
 # Changelog
 
-All notable changes to Patchwork are documented in this file. Read the scannable release pages in the [Patchwork Changelog docs](https://pratyush-nirwan.github.io/patchwork/changelog/) or check the [v1.0.0 Roadmap](website/src/content/docs/documentation/project/roadmap.mdx) for upcoming work.
+All notable changes to Patchwork are documented in this file. Read the scannable release pages in the [Patchwork Changelog docs](https://getpatchwork.in/documentation/changelog/) or check the [v1.0.0 Roadmap](website/src/content/docs/documentation/project/roadmap.mdx) for upcoming work.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html), with a bold product scope tag at the start of every entry.
 
 ## [Unreleased]
 
+## [v0.8.1-beta] - 2026-11-28
+
+### Added
+- **Documentation:** Added a multi-column site footer with release info and Made in India tribute.
+- **Documentation:** Added per-section Open Graph images, sitemap defaults, and JSON-LD SEO metadata ([docs](/introduction/overview/)).
+
+### Changed
+- **Documentation:** Replaced the generic grid mark with an angled ticket logo across headers, favicons, and Open Graph cards.
+- **Documentation:** Streamlined the site header with borderless controls, a GitHub Star link, and mobile responsiveness.
 ## [v0.8.0-beta] - 2026-11-24
 
 ### Highlights
@@ -77,7 +86,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - **Documentation:** Added the Astro Starlight documentation site with generated references, coverage checks, and automated screenshots ([docs](/introduction/overview/)).
 - **Performance:** Added shared UI motion primitives, geometry-matched skeleton loaders, error boundaries, and a Reduce motion toggle ([docs](/user-guide/shortcuts-and-themes/)).
 
-[Unreleased]: https://github.com/Pratyush-Nirwan/patchwork/compare/v0.8.0-beta...HEAD
+[Unreleased]: https://github.com/Pratyush-Nirwan/patchwork/compare/v0.8.1-beta...HEAD
+[v0.8.1-beta]: https://github.com/Pratyush-Nirwan/patchwork/compare/v0.8.0-beta...v0.8.1-beta
 [v0.8.0-beta]: https://github.com/Pratyush-Nirwan/patchwork/compare/v0.7.1-beta...v0.8.0-beta
 [v0.7.1-beta]: https://github.com/Pratyush-Nirwan/patchwork/compare/v0.7.0-beta...v0.7.1-beta
 [v0.7.0-beta]: https://github.com/Pratyush-Nirwan/patchwork/releases/tag/v0.7.0-beta

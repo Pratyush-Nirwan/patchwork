@@ -13,6 +13,8 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
   title={`Get started — Patchwork ${appMeta.displayVersion}`}
   description="Install Patchwork in three steps on Windows and Linux with only Node.js and git."
   canonicalPath="/get-started/"
+  ogImage="/og-get-started.png"
+  ogImageAlt="Get started with Patchwork — Native installation in three steps."
 >
   <div class="pw-scroll-progress" aria-hidden="true">
     <div class="pw-scroll-progress-bar" data-pw-scroll-progress></div>
@@ -25,9 +27,6 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
     </div>
 
     <div class="pw-container pw-subhero-inner">
-      <p class="pw-eyebrow pw-tabular" data-pw-stagger="0">
-        Native Install &middot; {appMeta.displayVersion} &middot; Node.js {appMeta.nodeRequirement} + git
-      </p>
       <h1 class="pw-subhero-h1" aria-label="Running in three steps.">
         {heroWords.map((w, i) => (
           <span class="pw-h1-clip">
@@ -36,8 +35,7 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
         ))}
       </h1>
       <p class="pw-lead" data-pw-stagger="2">
-        No Docker daemon or container registry. Choose Easy mode for automatic PostgreSQL and MinIO,
-        or Advanced mode to connect your existing services.
+        No Docker needed. Pick Easy mode for automatic setup, or Advanced for existing services.
       </p>
 
       <div class="pw-mode-switch" role="group" aria-label="Install mode" data-pw-stagger="3">
@@ -53,8 +51,7 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
         <p class="pw-gs-kicker">Three-step setup</p>
         <h2>Native on Windows &amp; Linux.</h2>
         <p class="pw-gs-sub" data-mode-summary>
-          Easy mode checks prerequisites, initializes PostgreSQL 18 in <code>./data/postgres</code>,
-          and downloads a SHA-256 verified MinIO binary.
+          Easy mode sets up PostgreSQL in <code>./data/postgres</code> and MinIO automatically.
         </p>
         <div class="pw-os-pills" role="group" aria-label="Operating system">
           <button type="button" class="is-active" data-os="win">Windows (PowerShell)</button>
@@ -66,7 +63,15 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
         <article class="pw-gs-beat is-active" data-pw-beat>
           <div class="pw-beat-head">
             <span class="pw-beat-num">Step 01</span>
-            <button type="button" class="pw-copy-btn" data-copy-text={cloneSnippet}>Copy</button>
+            <button type="button" class="pw-copy-btn" data-copy-text={cloneSnippet} aria-label="Copy clone commands" title="Copy command">
+              <svg class="pw-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <svg class="pw-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
           </div>
           <h3>Clone and install dependencies</h3>
           <div class="pw-terminal">
@@ -79,15 +84,22 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
         <article class="pw-gs-beat" data-pw-beat>
           <div class="pw-beat-head">
             <span class="pw-beat-num">Step 02</span>
-            <button type="button" class="pw-copy-btn" data-copy-setup data-copy-text="npm run setup">Copy</button>
+            <button type="button" class="pw-copy-btn" data-copy-setup data-copy-text="npm run setup" aria-label="Copy setup command" title="Copy command">
+              <svg class="pw-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <svg class="pw-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
           </div>
           <h3>Run the interactive installer</h3>
           <div class="pw-terminal">
             <pre><code data-setup-cmd><span class="pw-tok-cmd">npm</span> run setup<span class="pw-term-cursor" aria-hidden="true"></span></code></pre>
           </div>
           <p data-setup-desc>
-            Select <strong>Easy (recommended)</strong> to provision PostgreSQL and MinIO automatically,
-            run migrations, and generate your encrypted one-time Admin Setup Token.
+            Pick <strong>Easy</strong> to set up PostgreSQL, MinIO, and your admin setup token.
           </p>
         </article>
 
@@ -96,10 +108,9 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
             <span class="pw-beat-num">Step 03</span>
             <span class="pw-beat-tag" data-os-note>Windows 10/11</span>
           </div>
-          <h3>Complete the browser Setup Wizard</h3>
+          <h3>Finish setup in the browser</h3>
           <p>
-            Open <code>http://localhost:3000/setup</code>, paste your one-time Admin Setup Token,
-            and create your admin account and initial organization.
+            Open <code>http://localhost:3000/setup</code>, paste your token, and create your admin account.
           </p>
         </article>
       </div>
@@ -140,6 +151,7 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
 
   .pw-subhero { position: relative; overflow: hidden; padding: clamp(4rem, 7vw, 6.5rem) 0 clamp(3rem, 5vw, 4.5rem); border-bottom: 1px solid var(--pw-border); }
   .pw-subhero-ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .pw-subhero { position: relative; overflow: hidden; }
   .pw-subhero-grid-bg { position: absolute; inset: -48px; background-image: linear-gradient(to right, var(--pw-border) 1px, transparent 1px), linear-gradient(to bottom, var(--pw-border) 1px, transparent 1px); background-size: 48px 48px; opacity: 0.45; mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 35%, transparent 100%); animation: pw-grid-drift 28s linear infinite; }
   .pw-subhero-glow { position: absolute; top: -180px; left: 50%; width: min(860px, 110vw); height: 420px; transform: translateX(-50%); background: radial-gradient(circle, color-mix(in oklab, var(--pw-accent) 20%, transparent) 0%, transparent 68%); }
   @keyframes pw-grid-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(48px, 48px, 0); } }
@@ -160,9 +172,9 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
 
   .pw-mode-switch, .pw-os-pills { display: inline-flex; flex-wrap: wrap; gap: 0.45rem; }
   .pw-mode-switch button, .pw-os-pills button {
-    font-family: var(--pw-font-mono); font-size: 0.78rem; padding: 0.45rem 0.85rem;
+    font-family: var(--pw-font-mono); font-size: 0.78rem; padding: 0.45rem 0.9rem;
     border-radius: 999px; border: 1px solid var(--pw-border); background: var(--pw-surface);
-    color: var(--pw-ink-secondary); cursor: pointer; min-height: 36px;
+    color: var(--pw-ink-secondary); cursor: pointer; min-height: 44px;
     transition: border-color 180ms ease, color 180ms ease, transform 180ms ease;
   }
   .pw-mode-switch button.is-active, .pw-os-pills button.is-active { border-color: var(--pw-accent); color: var(--pw-accent); font-weight: 600; }
@@ -170,16 +182,16 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
   .pw-section { padding: clamp(4.5rem, 7.5vw, 6.5rem) 0; }
   .pw-section-alt { background: var(--pw-surface); border-top: 1px solid var(--pw-border); border-bottom: 1px solid var(--pw-border); }
   .pw-section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin-bottom: 2rem; }
-  .pw-section-head a { color: var(--pw-accent); text-decoration: none; font-weight: 600; }
+  .pw-section-head a { color: var(--pw-accent); text-decoration: none; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
 
-  .pw-gs-grid { display: grid; grid-template-columns: 0.82fr 1.18fr; gap: clamp(2.5rem, 5vw, 5rem); align-items: start; }
-  .pw-gs-sticky { position: sticky; top: 5.5rem; }
+  .pw-gs-grid { display: grid; grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: start; }
+  .pw-gs-sticky { position: sticky; top: 5.5rem; min-width: 0; }
   .pw-gs-kicker { margin: 0 0 0.6rem; font-family: var(--pw-font-mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pw-accent); }
   .pw-gs-sticky h2 { margin: 0 0 0.85rem; font-size: clamp(1.65rem, 2.8vw, 2.25rem); }
   .pw-gs-sub { color: var(--pw-ink-secondary); line-height: 1.6; margin: 0 0 1.25rem; max-width: 40ch; }
 
-  .pw-gs-rail { display: grid; gap: 2.75rem; border-left: 1px solid var(--pw-border); padding-left: clamp(1.5rem, 3vw, 2.5rem); }
-  .pw-gs-beat { position: relative; padding-bottom: 2rem; border-bottom: 1px solid color-mix(in oklab, var(--pw-border) 55%, transparent); opacity: 0.58; transition: opacity 280ms ease; }
+  .pw-gs-rail { display: grid; gap: 2.75rem; border-left: 1px solid var(--pw-border); padding-left: clamp(1.25rem, 3vw, 2.5rem); min-width: 0; }
+  .pw-gs-beat { position: relative; min-width: 0; padding-bottom: 2rem; border-bottom: 1px solid color-mix(in oklab, var(--pw-border) 55%, transparent); opacity: 0.58; transition: opacity 280ms ease; }
   .pw-gs-beat::before { content: ""; position: absolute; left: calc(-1 * clamp(1.5rem, 3vw, 2.5rem) - 1.5px); top: 0.3rem; width: 3px; height: 1.4rem; background: var(--pw-accent); transform: scaleY(0); transform-origin: top; transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1); }
   .pw-gs-beat.is-active { opacity: 1; }
   .pw-gs-beat.is-active::before { transform: scaleY(1); }
@@ -190,7 +202,11 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
   .pw-gs-beat h3 { margin: 0 0 0.75rem; font-size: 1.2rem; }
   .pw-gs-beat p { margin: 0.75rem 0 0; color: var(--pw-ink-secondary); }
 
-  .pw-copy-btn { background: var(--pw-surface); color: var(--pw-ink-secondary); border: 1px solid var(--pw-border); border-radius: 4px; padding: 0.2rem 0.6rem; font-family: var(--pw-font-mono); font-size: 0.72rem; cursor: pointer; }
+  .pw-copy-btn { background: transparent; color: var(--pw-ink-muted); border: 0; border-radius: 6px; padding: 0; width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; }
+  .pw-copy-btn:hover { background: var(--pw-surface-muted); color: var(--pw-ink); }
+  .pw-copy-btn .pw-check-icon { display: none; color: #16a34a; }
+  .pw-copy-btn.is-copied .pw-copy-icon { display: none; }
+  .pw-copy-btn.is-copied .pw-check-icon { display: block; }
   .pw-terminal { background: var(--pw-rail-bg); color: var(--pw-rail-ink); border-radius: var(--pw-radius-md); border: 1px solid #28313e; padding: 0.9rem 1rem; overflow-x: auto; }
   .pw-terminal pre { margin: 0; font-family: var(--pw-font-mono); font-size: 0.82rem; line-height: 1.6; }
   .pw-tok-cmd { color: #ff8a61; font-weight: 500; }
@@ -204,11 +220,21 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
   .pw-op-cell p { margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--pw-ink-secondary); }
 
   @media (max-width: 900px) {
-    .pw-gs-grid { grid-template-columns: 1fr; }
+    .pw-gs-grid { grid-template-columns: minmax(0, 1fr); }
     .pw-gs-sticky { position: static; }
     .pw-gs-beat { opacity: 1; }
     .pw-ops-grid { grid-template-columns: 1fr 1fr; }
     .pw-op-cell:nth-child(2n) { border-right: 0; }
+  }
+  @media (max-width: 720px) {
+    .pw-subhero { padding: 2.25rem 0 1.75rem; }
+    .pw-section { padding: 2.5rem 0; }
+    .pw-gs-rail { border-left: 0; padding-left: 0; gap: 2rem; }
+    .pw-gs-beat { padding-bottom: 1.5rem; }
+    .pw-gs-beat::before { display: none; }
+    .pw-mode-switch, .pw-os-pills { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+    .pw-mode-switch::-webkit-scrollbar, .pw-os-pills::-webkit-scrollbar { display: none; }
+    .pw-mode-switch button, .pw-os-pills button { flex-shrink: 0; }
   }
   @media (max-width: 540px) {
     .pw-ops-grid { grid-template-columns: 1fr; }
@@ -244,8 +270,8 @@ const cloneSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci`;
       const text = btn.getAttribute("data-copy-text") || "";
       try {
         await navigator.clipboard.writeText(text);
-        btn.textContent = "Copied";
-        setTimeout(() => { btn.textContent = "Copy"; }, 1600);
+        btn.classList.add("is-copied");
+        setTimeout(() => { btn.classList.remove("is-copied"); }, 1600);
       } catch {}
     });
   });

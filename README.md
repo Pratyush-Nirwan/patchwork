@@ -12,9 +12,9 @@
 
 Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boards — no Docker required.
 
-![Version v0.8.0-beta](https://img.shields.io/badge/version-v0.8.0--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square) [![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)
+![Version v0.8.1-beta](https://img.shields.io/badge/version-v0.8.1--beta-C84317?style=flat-square) ![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1D242E?style=flat-square) ![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square) ![Platforms Windows & Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2563EB?style=flat-square) ![Status beta](https://img.shields.io/badge/status-beta-D97706?style=flat-square) [![OpenRepos](https://img.shields.io/endpoint?url=https://openrepos.org/status/patchwork.openrepos.org.json&style=flat-square)](https://patchwork.openrepos.org/)
 
-[Documentation](https://pratyush-nirwan.github.io/patchwork/) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](CONTRIBUTING.md)
+[Documentation](https://getpatchwork.in/) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](CONTRIBUTING.md)
 
 <br />
 
@@ -111,7 +111,7 @@ During a fresh install, `npm run setup` provisions PostgreSQL 18 (`./data/postgr
 
 ## Documentation
 
-- **Public docs**: [Patchwork Documentation](https://pratyush-nirwan.github.io/patchwork/)
+- **Public docs**: [Patchwork Documentation](https://getpatchwork.in/)
 - **In-app docs**: `/documentation` (bundled with every install, served on the same origin)
 - **Key guides**: [Installation](website/src/content/docs/documentation/getting-started/installation.mdx) · [Admin Guide](website/src/content/docs/documentation/admin-guide/system-configuration.mdx) · [Command Reference](website/src/content/docs/documentation/reference/command-palette.mdx) · [Troubleshooting](website/src/content/docs/documentation/operations/troubleshooting.mdx)
 
@@ -166,9 +166,9 @@ See [Contributing & Extending](website/src/content/docs/documentation/developmen
 
 ## Status & Roadmap
 
-> **Beta software (v0.8.0-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
+> **Beta software (v0.8.1-beta)**: Patchwork is pre-1.0 software. Features and data formats may change between releases — back up PostgreSQL, `.env`, and MinIO data before upgrading.
 
-Planned for **v1.0.0** (not yet available in v0.8.0-beta). This roadmap describes planned work. Scope and timing may change.
+Planned for **v1.0.0** (not yet available in v0.8.1-beta). This roadmap describes planned work. Scope and timing may change.
 
 - **Ticketing and Workflow**: Ticket dependencies and subtasks, Sprints and cycles, Ticket templates and recurring tickets, Bulk actions and multi-select, Saved views and custom filters
 - **Views and Analytics**: List and table view, My Work, Cycle time and WIP metrics
@@ -176,7 +176,7 @@ Planned for **v1.0.0** (not yet available in v0.8.0-beta). This roadmap describe
 - **Security, Audit, and Operations**: Audit log viewer, Two-factor authentication, passkeys, and SSO, Backup and restore UI
 
 - **Out of scope**: Docker / container images, native desktop and mobile apps.
-- **Full details**: [Patchwork v1.0.0 Roadmap](https://pratyush-nirwan.github.io/patchwork/documentation/project/roadmap/)
+- **Full details**: [Patchwork v1.0.0 Roadmap](https://getpatchwork.in/documentation/project/roadmap/)
 
 ## Contributing, Security & License
 

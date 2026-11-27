@@ -573,7 +573,7 @@ function xmlEscape(str) {
     .replace(/'/g, "&apos;");
 }
 
-export function renderChangelogRss(parsed, siteBaseUrl = "https://pratyush-nirwan.github.io/patchwork") {
+export function renderChangelogRss(parsed, siteBaseUrl = "https://getpatchwork.in") {
   const cleanBase = siteBaseUrl.replace(/\/+$/, "");
   const published = parsed.releases.filter((r) => !r.isUnreleased);
   const itemsXml = published
@@ -645,7 +645,7 @@ export function generateChangelogDocs(websiteRoot = WEBSITE_ROOT) {
 
   const publicDir = path.join(websiteRoot, "public");
   fs.mkdirSync(publicDir, { recursive: true });
-  const rssBase = process.env.SITE_URL || meta.docsSiteUrl || "https://pratyush-nirwan.github.io/patchwork";
+  const rssBase = process.env.SITE_URL || meta.docsSiteUrl || "https://getpatchwork.in";
   fs.writeFileSync(path.join(publicDir, "changelog.xml"), renderChangelogRss(parsed, rssBase), "utf8");
 
   return Array.from(expectedFiles.keys());
@@ -694,7 +694,7 @@ export function checkChangelog(websiteRoot = WEBSITE_ROOT) {
   }
 
   const rssPath = path.join(websiteRoot, "public/changelog.xml");
-  const rssBase = process.env.SITE_URL || meta.docsSiteUrl || "https://pratyush-nirwan.github.io/patchwork";
+  const rssBase = process.env.SITE_URL || meta.docsSiteUrl || "https://getpatchwork.in";
   const expectedRss = renderChangelogRss(parsed, rssBase);
   if (!fs.existsSync(rssPath)) errors.push("Missing public/changelog.xml. Run npm run generate.");
   else if (fs.readFileSync(rssPath, "utf8").replace(/\r\n/g, "\n") !== expectedRss) {

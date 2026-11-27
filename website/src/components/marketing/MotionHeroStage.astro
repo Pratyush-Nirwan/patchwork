@@ -1,8 +1,5 @@
 ---
-import { Image } from "astro:assets";
 import appMeta from "../../data/generated/app-meta.json";
-import boardLight from "../../assets/screenshots/board-light.png";
-import boardDark from "../../assets/screenshots/board-dark.png";
 
 interface Props {
   href: (p: string) => string;
@@ -11,7 +8,7 @@ interface Props {
 
 const { href, repoUrl } = Astro.props;
 const installSnippet = `git clone ${appMeta.cloneUrl}\ncd patchwork\nnpm ci\nnpm run setup`;
-const heroWords = "Ticketing without the cloud rent, container tax, or seat\u2011tier traps.".split(" ");
+const heroWords = "Self-hosted ticketing. No per-seat rent. No Docker.".split(" ");
 ---
 
 <div class="pw-scroll-progress" aria-hidden="true">
@@ -26,11 +23,7 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
 
   <div class="pw-container pw-hero-inner">
     <div class="pw-hero-copy">
-      <p class="pw-eyebrow pw-tabular" data-pw-stagger="0">
-        {appMeta.displayVersion} &middot; AGPL-3.0 &middot; Native Windows &amp; Linux &middot; Zero Docker
-      </p>
-
-      <h1 class="pw-hero-h1" aria-label="Ticketing without the cloud rent, container tax, or seat-tier traps.">
+      <h1 class="pw-hero-h1" aria-label="Self-hosted ticketing. No per-seat rent. No Docker.">
         {heroWords.map((w, i) => (
           <span class="pw-h1-clip">
             <span class="pw-h1-word" style={`--wi:${i}`}>{w}</span>
@@ -39,9 +32,7 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
       </h1>
 
       <p class="pw-lead" data-pw-stagger="2">
-        I built Patchwork because engineering teams shouldn&apos;t have to pay per seat for basic workflows
-        or babysit six Docker containers just to track bugs. Self-hosted boards, keyboard-first slash pills,
-        and real-time collaboration running natively on Node.js, PostgreSQL, and MinIO.
+        Native Kanban boards, slash commands, and real-time updates on Node.js, PostgreSQL, and MinIO.
       </p>
 
       <div class="pw-cta-row" data-pw-stagger="3">
@@ -52,7 +43,12 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
           </svg>
         </a>
         <a class="pw-btn pw-btn-secondary" href={href("/documentation/")}>Read the docs</a>
-        <a class="pw-btn pw-btn-ghost" href={repoUrl}>View on GitHub</a>
+        <a class="pw-btn pw-btn-ghost" href={repoUrl}>
+          <svg class="pw-star-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <span>Star on GitHub</span>
+        </a>
       </div>
     </div>
 
@@ -68,8 +64,15 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
             class="pw-copy-btn"
             data-copy-text={installSnippet}
             aria-label="Copy install commands"
+            title="Copy install commands"
           >
-            <span data-copy-label>Copy</span>
+            <svg class="pw-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            <svg class="pw-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </button>
         </div>
         <div class="pw-terminal-body">
@@ -78,57 +81,6 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
 <span class="pw-term-line" style="--tl:2"><span class="pw-tok-cmd">npm</span> ci</span>
 <span class="pw-term-line" style="--tl:3"><span class="pw-tok-cmd">npm</span> run setup <span class="pw-tok-dim"># PostgreSQL + MinIO + encrypted token</span><span class="pw-term-cursor" aria-hidden="true"></span></span></code></pre>
         </div>
-      </div>
-    </div>
-
-    <div class="pw-hero-stage" data-pw-hero-stage>
-      <div class="pw-stage-chrome">
-        <div class="pw-stage-left">
-          <span class="pw-stage-dot"></span>
-          <span class="pw-stage-title pw-tabular">Platform / Core Engineering</span>
-          <span class="pw-stage-live">
-            <span class="pw-pulse-dot" aria-hidden="true"></span>
-            LISTEN/NOTIFY live
-          </span>
-        </div>
-
-        <div class="pw-stage-pill-bar" aria-live="off" aria-label="Live command bar preview" data-pw-stage-bar>
-          <span class="pw-stage-cmd" data-pw-type-cmd>/move</span>
-          <span class="pw-stage-pill">
-            <span class="pw-stage-pill-k" data-pw-type-k1>ticket:</span>
-            <span class="pw-stage-pill-v" data-pw-type-arg1>API-14</span>
-          </span>
-          <span class="pw-stage-pill">
-            <span class="pw-stage-pill-k" data-pw-type-k2>column:</span>
-            <span class="pw-stage-pill-v" data-pw-type-arg2>Done</span>
-          </span>
-          <kbd class="pw-stage-kbd">Ctrl+K</kbd>
-        </div>
-
-        <div class="pw-stage-presence" aria-label="Active ticket viewers">
-          <span class="pw-stage-bell" title="Unread notifications" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-            <span class="pw-bell-dot"></span>
-          </span>
-          <span class="pw-av pw-av-1" title="Alex Chen">AC</span>
-          <span class="pw-av pw-av-2" title="Maya Haddad">MH</span>
-          <span class="pw-av pw-av-more">+2</span>
-        </div>
-      </div>
-
-      <div class="pw-frame pw-stage-frame">
-        <Image
-          src={boardLight}
-          alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (light)"
-          class="pw-img-light"
-          fetchpriority="high"
-        />
-        <Image
-          src={boardDark}
-          alt="Patchwork Kanban board with columns, WIP gauges, and seeded engineering tickets (dark)"
-          class="pw-img-dark"
-          fetchpriority="high"
-        />
       </div>
     </div>
   </div>
@@ -165,9 +117,8 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
   .pw-hero-grid-bg { position: absolute; inset: -48px; background-image: linear-gradient(to right, var(--pw-border) 1px, transparent 1px), linear-gradient(to bottom, var(--pw-border) 1px, transparent 1px); background-size: 48px 48px; opacity: 0.55; mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 35%, transparent 100%); animation: pw-grid-drift 28s linear infinite; }
   .pw-hero-glow { position: absolute; top: -180px; left: 50%; width: min(920px, 110vw); height: 460px; transform: translateX(-50%); background: radial-gradient(circle, color-mix(in oklab, var(--pw-accent) 22%, transparent) 0%, transparent 68%); opacity: 0.85; }
   @keyframes pw-grid-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(48px, 48px, 0); } }
-  .pw-hero-inner { position: relative; z-index: 1; display: grid; gap: 2rem; }
-  .pw-hero-copy { max-width: 66rem; }
-  .pw-eyebrow { margin: 0 0 1rem; font-family: var(--pw-font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em; color: var(--pw-accent); }
+  .pw-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .pw-hero-copy { max-width: 66rem; min-width: 0; }
   .pw-hero-h1 { font-size: clamp(2.45rem, 5.1vw, 4.35rem); line-height: 1.06; letter-spacing: -0.03em; margin: 0 0 1.25rem; max-width: 24ch; display: flex; flex-wrap: wrap; column-gap: 0.28em; row-gap: 0.05em; }
   .pw-h1-clip { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.06em; }
   .pw-h1-word { display: inline-block; transform: translate3d(0, 110%, 0); opacity: 0; animation: pw-word-rise 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: calc(80ms + var(--wi, 0) * 45ms); }
@@ -190,6 +141,8 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
   :root[data-theme="dark"] .pw-btn-primary { color: #0d1014; }
   .pw-btn-secondary { background: var(--pw-surface); color: var(--pw-ink); border-color: var(--pw-border); }
   .pw-btn-ghost { color: var(--pw-ink); }
+  .pw-star-icon { color: #d97706; flex-shrink: 0; }
+  :root[data-theme="dark"] .pw-star-icon { color: #f59e0b; }
   [data-pw-stagger] { opacity: 0; transform: translate3d(0, 18px, 0); filter: blur(6px); animation: pw-rise 780ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   [data-pw-stagger="0"] { animation-delay: 40ms; }
   [data-pw-stagger="1"] { animation-delay: 110ms; }
@@ -205,51 +158,42 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
     0% { opacity: 0.25; transform: translate3d(0, 5px, 0); }
     100% { opacity: 1; transform: translate3d(0, 0, 0); }
   }
-  .pw-hero-terminal-wrap { max-width: 44rem; }
+  .pw-hero-terminal-wrap { max-width: 44rem; min-width: 0; }
   .pw-terminal { background: var(--pw-rail-bg); color: var(--pw-rail-ink); border-radius: var(--pw-radius-md); border: 1px solid #28313e; overflow: hidden; }
   .pw-terminal-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid #222b37; font-size: 0.76rem; color: #9aa6b5; }
   .pw-terminal-dots { display: inline-flex; gap: 0.35rem; }
   .pw-terminal-dots span { width: 8px; height: 8px; border-radius: 999px; background: #334050; }
   .pw-terminal-title { font-family: var(--pw-font-mono); font-size: 0.74rem; }
-  .pw-copy-btn { background: #1d2530; color: #eaeef3; border: 1px solid #2d3847; border-radius: 4px; padding: 0.25rem 0.6rem; font-family: var(--pw-font-mono); font-size: 0.72rem; cursor: pointer; min-height: 28px; }
+  .pw-copy-btn { background: transparent; color: #9aa6b5; border: 0; border-radius: 6px; padding: 0; cursor: pointer; width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; transition: background-color 150ms ease, color 150ms ease; }
+  .pw-copy-btn:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
+  .pw-copy-btn .pw-check-icon { display: none; color: #4ade80; }
+  .pw-copy-btn.is-copied .pw-copy-icon { display: none; }
+  .pw-copy-btn.is-copied .pw-check-icon { display: block; }
   .pw-terminal-body { padding: 0.85rem 1rem; }
   .pw-terminal pre { margin: 0; font-family: var(--pw-font-mono); font-size: 0.8rem; line-height: 1.55; overflow-x: auto; }
   .pw-tok-cmd { color: #ff8a61; font-weight: 500; }
   .pw-tok-dim { color: #7c899b; }
-  .pw-hero-stage { margin-top: 0.75rem; border: 1px solid var(--pw-border); border-radius: var(--pw-radius-md); background: var(--pw-surface); overflow: hidden; box-shadow: 0 24px 60px -28px rgba(13, 16, 20, 0.28); transform: perspective(1200px) rotateX(var(--pw-stage-tilt, 3deg)) translate3d(0, var(--pw-stage-y, 0px), 0); transition: transform 180ms ease-out; will-change: transform; }
-  .pw-stage-chrome { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 1rem; border-bottom: 1px solid var(--pw-border); background: var(--pw-surface-muted); }
-  .pw-stage-left { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; font-weight: 600; }
-  .pw-stage-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--pw-accent); }
-  .pw-stage-live { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--pw-font-mono); font-size: 0.7rem; font-weight: 500; color: var(--pw-ink-secondary); padding: 0.15rem 0.5rem; border: 1px solid var(--pw-border); border-radius: 999px; background: var(--pw-surface); }
-  .pw-pulse-dot { width: 6px; height: 6px; border-radius: 999px; background: #16a34a; animation: pw-pulse 2.2s ease-in-out infinite; }
-  @keyframes pw-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
-  .pw-stage-pill-bar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.25rem 0.55rem; border-radius: 6px; border: 1px solid var(--pw-border); background: var(--pw-surface); font-family: var(--pw-font-mono); font-size: 0.75rem; }
-  .pw-stage-cmd { color: var(--pw-accent); font-weight: 600; }
-  .pw-stage-pill { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid var(--pw-border); background: var(--pw-surface-muted); }
-  .pw-stage-pill-k { color: var(--pw-ink-muted); }
-  .pw-stage-pill-v { color: var(--pw-ink); font-weight: 500; }
-  .pw-stage-kbd { font-family: var(--pw-font-mono); font-size: 0.68rem; padding: 0.1rem 0.35rem; border: 1px solid var(--pw-border); border-radius: 3px; color: var(--pw-ink-muted); }
-  .pw-stage-presence { display: inline-flex; align-items: center; }
-  .pw-stage-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-right: 0.65rem; color: var(--pw-ink-secondary); animation: pw-bell-ring 5s ease-in-out infinite; transform-origin: 50% 2px; }
-  .pw-bell-dot { position: absolute; top: -1px; right: -1px; width: 6px; height: 6px; border-radius: 999px; background: var(--pw-accent); }
-  @keyframes pw-bell-ring { 0%, 84%, 100% { transform: rotate(0deg); } 87% { transform: rotate(12deg); } 90% { transform: rotate(-10deg); } 93% { transform: rotate(7deg); } 96% { transform: rotate(-4deg); } }
-  .pw-av { width: 24px; height: 24px; border-radius: 999px; border: 2px solid var(--pw-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; margin-left: -6px; }
-  .pw-av:first-of-type { margin-left: 0; }
-  .pw-av-1 { background: #1d4ed8; color: #ffffff; }
-  .pw-av-2 { background: #c84317; color: #ffffff; }
-  .pw-av-more { background: var(--pw-surface); color: var(--pw-ink-secondary); border-color: var(--pw-border); }
-  .pw-stage-frame { border: 0; border-radius: 0; }
-  .pw-stage-frame img { display: block; width: 100%; height: auto; }
-  :global(.pw-img-dark) { display: none !important; }
-  :global(:root[data-theme="dark"] .pw-img-light) { display: none !important; }
-  :global(:root[data-theme="dark"] .pw-img-dark) { display: block !important; }
   .pw-marquee { margin-top: clamp(2.25rem, 4vw, 3.25rem); border-top: 1px solid var(--pw-border); padding-top: 1rem; overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
   .pw-marquee-track { display: flex; align-items: center; gap: 1.15rem; width: max-content; font-family: var(--pw-font-mono); font-size: 0.78rem; color: var(--pw-ink-muted); animation: pw-marquee-scroll 34s linear infinite; will-change: transform; }
   .pw-marquee:hover .pw-marquee-track { animation-play-state: paused; }
   @keyframes pw-marquee-scroll { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+  @media (max-width: 720px) {
+    .pw-hero-cinematic { padding: 1.5rem 0 2rem; }
+    .pw-hero-inner { gap: 1.25rem; }
+    .pw-eyebrow { margin-bottom: 0.55rem; font-size: 0.72rem; }
+    .pw-hero-h1 { font-size: clamp(1.85rem, 8vw, 2.35rem); margin-bottom: 0.75rem; }
+    .pw-lead { font-size: 0.96rem; line-height: 1.55; margin-bottom: 1.15rem; }
+    .pw-terminal-dots, .pw-marquee { display: none; }
+    .pw-terminal-body { padding: 0.75rem; }
+    .pw-terminal pre { font-size: 0.74rem; }
+  }
+  @media (max-width: 520px) {
+    .pw-cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .pw-btn { width: 100%; justify-content: center; padding: 0.55rem 0.85rem; font-size: 0.9rem; }
+    .pw-btn-ghost { display: none; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .pw-hero-grid-bg, .pw-hero-glow, .pw-pulse-dot, .pw-stage-bell, .pw-marquee-track, .pw-h1-word, .pw-term-line, .pw-term-cursor, [data-pw-stagger] { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
-    .pw-hero-stage { transform: none !important; transition: none !important; }
+    .pw-hero-grid-bg, .pw-hero-glow, .pw-marquee-track, .pw-h1-word, .pw-term-line, .pw-term-cursor, [data-pw-stagger] { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
   }
 </style>
 
@@ -258,58 +202,31 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
   document.querySelectorAll("[data-copy-text]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const text = btn.getAttribute("data-copy-text") || "";
-      const label = btn.querySelector("[data-copy-label]");
       try {
         await navigator.clipboard.writeText(text);
-        if (label) { label.textContent = "Copied"; setTimeout(() => { label.textContent = "Copy"; }, 1600); }
-      } catch { if (label) label.textContent = "Select & copy"; }
+        btn.classList.add("is-copied");
+        btn.setAttribute("aria-label", "Copied");
+        setTimeout(() => {
+          btn.classList.remove("is-copied");
+          btn.setAttribute("aria-label", "Copy install commands");
+        }, 1600);
+      } catch {}
     });
   });
-  const stage = document.querySelector("[data-pw-hero-stage]") as HTMLElement | null;
   const progressBar = document.querySelector("[data-pw-scroll-progress]") as HTMLElement | null;
-  if ((stage || progressBar) && !reducedMotion) {
-    let curTilt = 3.5;
-    let curY = 10;
+  if (progressBar && !reducedMotion) {
     let curProg = 0;
     let rafId = 0;
     const step = () => {
-      let active = false;
-      if (stage) {
-        const rect = stage.getBoundingClientRect();
-        const vh = window.innerHeight || 800;
-        const p = Math.max(0, Math.min(1, 1 - rect.top / (vh * 0.85)));
-        const targetTilt = (1 - p) * 3.5;
-        const targetY = (1 - p) * 10;
-        curTilt += (targetTilt - curTilt) * 0.14;
-        curY += (targetY - curY) * 0.14;
-        stage.style.setProperty("--pw-stage-tilt", `${curTilt.toFixed(2)}deg`);
-        stage.style.setProperty("--pw-stage-y", `${curY.toFixed(2)}px`);
-        if (Math.abs(targetTilt - curTilt) > 0.02 || Math.abs(targetY - curY) > 0.05) active = true;
-      }
-      if (progressBar) {
-        const docH = document.documentElement.scrollHeight - window.innerHeight;
-        const targetProg = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
-        curProg += (targetProg - curProg) * 0.18;
-        progressBar.style.transform = `scaleX(${curProg.toFixed(4)})`;
-        if (Math.abs(targetProg - curProg) > 0.0005) active = true;
-      }
-      rafId = active ? requestAnimationFrame(step) : 0;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const targetProg = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
+      curProg += (targetProg - curProg) * 0.18;
+      progressBar.style.transform = `scaleX(${curProg.toFixed(4)})`;
+      rafId = Math.abs(targetProg - curProg) > 0.0005 ? requestAnimationFrame(step) : 0;
     };
     const kick = () => { if (!rafId) rafId = requestAnimationFrame(step); };
     window.addEventListener("scroll", kick, { passive: true });
     kick();
-  }
-
-  // Interactive subtle 3D Y-tilt on Hero Stage hover
-  if (stage && !reducedMotion) {
-    stage.addEventListener("mousemove", (e) => {
-      const r = stage.getBoundingClientRect();
-      const nx = (e.clientX - r.left) / r.width - 0.5;
-      stage.style.setProperty("--pw-stage-rx", `${(nx * 2.4).toFixed(2)}deg`);
-    });
-    stage.addEventListener("mouseleave", () => {
-      stage.style.setProperty("--pw-stage-rx", "0deg");
-    });
   }
 
   // Magnetic CTA micro-interaction
@@ -324,35 +241,5 @@ const heroWords = "Ticketing without the cloud rent, container tax, or seat\u201
     magBtn.addEventListener("mouseleave", () => {
       magBtn.style.transform = "";
     });
-  }
-
-  const stageBar = document.querySelector("[data-pw-stage-bar]");
-  const cmdEl = document.querySelector("[data-pw-type-cmd]");
-  const k1El = document.querySelector("[data-pw-type-k1]");
-  const k2El = document.querySelector("[data-pw-type-k2]");
-  const arg1El = document.querySelector("[data-pw-type-arg1]");
-  const arg2El = document.querySelector("[data-pw-type-arg2]");
-  const samples = [
-    { cmd: "/move", k1: "ticket:", a1: "API-14", k2: "column:", a2: "Done" },
-    { cmd: "/new", k1: "title:", a1: "Fix SSE backoff", k2: "priority:", a2: "high" },
-    { cmd: "/watch", k1: "ticket:", a1: "CORE-8", k2: "mode:", a2: "subscribed" },
-    { cmd: "/assign", k1: "ticket:", a1: "WEB-21", k2: "user:", a2: "@maya" },
-  ];
-  let idx = 0;
-  if (cmdEl && k1El && k2El && arg1El && arg2El && !reducedMotion) {
-    setInterval(() => {
-      idx = (idx + 1) % samples.length;
-      const next = samples[idx];
-      if (stageBar) {
-        stageBar.classList.remove("is-swapping");
-        void (stageBar as HTMLElement).offsetWidth;
-        stageBar.classList.add("is-swapping");
-      }
-      cmdEl.textContent = next.cmd;
-      k1El.textContent = next.k1;
-      arg1El.textContent = next.a1;
-      k2El.textContent = next.k2;
-      arg2El.textContent = next.a2;
-    }, 2600);
   }
 </script>

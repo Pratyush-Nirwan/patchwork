@@ -1521,9 +1521,10 @@ export function PatchworkApp() {
 
               <p className="text-center text-xs text-[var(--pw-ink-tertiary)] mt-4">
                 Contact your administrator for an account.{" "}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a
-                  href="/documentation"
+                  href="https://getpatchwork.in/documentation/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   data-testid="login-docs-link"
                   className="text-[var(--pw-accent)] hover:underline font-medium"
                 >
@@ -1963,9 +1964,10 @@ export function PatchworkApp() {
             {/* Rail Footer */}
             <div className="border-t border-[var(--pw-rail-border)] p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a
-                  href="/documentation"
+                  href="https://getpatchwork.in/documentation/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   data-testid="nav-documentation"
                   className="flex items-center gap-2 rounded px-2 py-1.5 text-xs font-medium text-[var(--pw-rail-muted)] hover:bg-[var(--pw-rail-surface)] hover:text-white transition min-w-0 flex-1"
                 >

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { Bell, Keyboard, Moon, RotateCcw, Sun, X } from "lucide-react";
 import { Presence, Scale } from "@/components/ui/motion";
 import { Skeleton, SkeletonRegion, Surface } from "@/components/ui/skeleton";
@@ -529,18 +528,22 @@ export function UserSettingsModal({
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0 text-[11px]">
-              <Link
-                href="/documentation/project/changelog/"
+              <a
+                href="https://getpatchwork.in/documentation/changelog/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="font-medium text-[var(--pw-accent)] hover:underline"
               >
                 Changelog
-              </Link>
-              <Link
-                href="/documentation"
+              </a>
+              <a
+                href="https://getpatchwork.in/documentation/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="font-medium text-[var(--pw-accent)] hover:underline"
               >
                 Documentation
-              </Link>
+              </a>
             </div>
           </div>
         </div>

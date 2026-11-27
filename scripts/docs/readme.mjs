@@ -2,25 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_REPO_ROOT, getVersionInfo } from "../lib/version.mjs";
-import { loadRoadmap } from "../../website/scripts/roadmap.mjs";
 
-function renderReadmeRoadmapSection(roadmap, versionInfo, docsSiteUrl) {
+function renderReadmeRoadmapSection(versionInfo, docsSiteUrl) {
   const lines = [
-    `Planned for **${roadmap.targetVersion}** (not yet available in ${versionInfo.displayVersion}). This roadmap describes planned work. Scope and timing may change.`,
+    `Planned for **v1.0.0** (not yet available in ${versionInfo.displayVersion}). This roadmap describes planned work. Scope and timing may change.`,
     "",
-  ];
-  for (const cat of roadmap.categories || []) {
-    const titles = (roadmap.items || [])
-      .filter((it) => it.category === cat.id && it.status !== "shipped")
-      .map((it) => it.title)
-      .join(", ");
-    if (titles) lines.push(`- **${cat.title}**: ${titles}`);
-  }
-  lines.push(
+    "- **Ticketing and Workflow**: Ticket dependencies and subtasks, Sprints and cycles, Ticket templates and recurring tickets, Bulk actions and multi-select, Saved views and custom filters",
+    "- **Views and Analytics**: List and table view, My Work, Cycle time and WIP metrics",
+    "- **Git and Developer Integrations**: Inbound GitHub and GitLab webhooks, Email-to-ticket and public intake form, Personal API tokens",
+    "- **Security, Audit, and Operations**: Audit log viewer, Two-factor authentication, passkeys, and SSO, Backup and restore UI",
     "",
     "- **Out of scope**: Docker / container images, native desktop and mobile apps.",
-    `- **Full details**: [Patchwork ${roadmap.targetVersion} Roadmap](${docsSiteUrl}documentation/project/roadmap/)`
-  );
+    `- **Full details**: [Patchwork v1.0.0 Roadmap](${docsSiteUrl}documentation/project/roadmap/)`,
+  ];
   return lines.join("\n");
 }
 
@@ -32,7 +26,6 @@ const TREE_ANNOTATIONS = {
   scripts: "Node.js CLI installer, seeder, and docs/version tooling",
   src: "Next.js App Router pages, API routes, components, and lib",
   tests: "Vitest unit and integration suites",
-  website: "Self-contained public website and Starlight docs package",
 };
 
 const TREE_EXCLUDES = new Set([
@@ -75,7 +68,7 @@ function buildFeaturesList() {
     "- **Command bar**: Spotlight palette (`Ctrl+K` / `Cmd+K`) with filters, slash commands, inline ghost hints, and session history.",
     "- **Access control**: `argon2id` email/password auth, `admin`/`lead`/`member`/`viewer` roles (`developer`/`tester` sub-roles), admin-only System Configuration, and one-time Admin Setup Token.",
     "- **Attachments & links**: MinIO presigned uploads with size/MIME limits, plus GitHub and GitLab link previews.",
-    "- **Operations**: Native CLI installer (`repair`, `reset`, `--check`), `/api/health`, diagnostics export, and bundled `/documentation`.",
+    "- **Operations**: Native CLI installer (`repair`, `reset`, `--check`), `/api/health`, diagnostics export, and linked online documentation.",
     "- **Cross-platform**: Runs natively on Windows 10/11 and Linux (Ubuntu 22.04/24.04, Debian 12).",
   ].join("\n");
 }
@@ -111,9 +104,7 @@ export function renderReadme(repoRoot = DEFAULT_REPO_ROOT) {
     "[Contributing](CONTRIBUTING.md)",
   ].join(" · ");
 
-  const roadmap = loadRoadmap(path.join(repoRoot, "website"));
   const roadmapSection = renderReadmeRoadmapSection(
-    roadmap,
     { displayVersion, channel },
     docsSiteUrl
   );

@@ -71,7 +71,7 @@ Self-hosted ticketing for engineering orgs with teams, projects, and Kanban boar
 - **Command bar**: Spotlight palette (`Ctrl+K` / `Cmd+K`) with filters, slash commands, inline ghost hints, and session history.
 - **Access control**: `argon2id` email/password auth, `admin`/`lead`/`member`/`viewer` roles (`developer`/`tester` sub-roles), admin-only System Configuration, and one-time Admin Setup Token.
 - **Attachments & links**: MinIO presigned uploads with size/MIME limits, plus GitHub and GitLab link previews.
-- **Operations**: Native CLI installer (`repair`, `reset`, `--check`), `/api/health`, diagnostics export, and bundled `/documentation`.
+- **Operations**: Native CLI installer (`repair`, `reset`, `--check`), `/api/health`, diagnostics export, and linked online documentation.
 - **Cross-platform**: Runs natively on Windows 10/11 and Linux (Ubuntu 22.04/24.04, Debian 12).
 
 ---
@@ -113,7 +113,7 @@ During a fresh install, `npm run setup` provisions PostgreSQL 18 (`./data/postgr
 
 - **Public docs**: [Patchwork Documentation](https://getpatchwork.in/)
 - **In-app docs**: `/documentation` (bundled with every install, served on the same origin)
-- **Key guides**: [Installation](website/src/content/docs/documentation/getting-started/installation.mdx) · [Admin Guide](website/src/content/docs/documentation/admin-guide/system-configuration.mdx) · [Command Reference](website/src/content/docs/documentation/reference/command-palette.mdx) · [Troubleshooting](website/src/content/docs/documentation/operations/troubleshooting.mdx)
+- **Key guides**: [Installation](https://getpatchwork.in/documentation/getting-started/installation/) · [Admin Guide](https://getpatchwork.in/documentation/admin-guide/system-configuration/) · [Command Reference](https://getpatchwork.in/documentation/reference/command-palette/) · [Troubleshooting](https://getpatchwork.in/documentation/operations/troubleshooting/)
 
 ---
 
@@ -136,7 +136,7 @@ flowchart LR
 | **Database & Search** | PostgreSQL 16+, Drizzle ORM, `tsvector` + GIN full-text search |
 | **Real-Time** | PostgreSQL `LISTEN/NOTIFY` over Server-Sent Events (`/api/events`) |
 | **Storage** | Official MinIO binary with S3 presigned URLs |
-| **Website & Docs** | Self-contained Astro Starlight site (`website/`, embedded at `/documentation`) |
+| **Website & Docs** | [getpatchwork.in](https://getpatchwork.in/) ([`patchwork-website`](https://github.com/Pratyush-Nirwan/patchwork-website)) |
 
 ## Project Structure
 
@@ -148,8 +148,7 @@ patchwork/
 ├── e2e/ # Playwright end-to-end tests
 ├── scripts/ # Node.js CLI installer, seeder, and docs/version tooling
 ├── src/ # Next.js App Router pages, API routes, components, and lib
-├── tests/ # Vitest unit and integration suites
-└── website/ # Self-contained public website and Starlight docs package
+└── tests/ # Vitest unit and integration suites
 ```
 
 ## Development
@@ -160,7 +159,7 @@ npm run seed -- --size small # Populate local dev database with sample data
 npm run verify              # Run full checks, unit/integration tests, build, and E2E
 ```
 
-See [Contributing & Extending](website/src/content/docs/documentation/development/contributing-and-extending.mdx) for local database reset, website/docs generation, and release workflows.
+See [Contributing & Extending](https://getpatchwork.in/documentation/development/contributing-and-extending/) for local database reset and release workflows.
 
 ---
 

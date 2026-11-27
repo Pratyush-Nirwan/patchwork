@@ -24,17 +24,9 @@ function createTempRepoCopy({ includeLocksAndBuildInfo = true } = {}): string {
     "package.json",
     "README.md",
     "CHANGELOG.md",
-    "website/package.json",
-    "website/src/data/generated/app-meta.json",
-    "website/src/data/generated/CHANGELOG.md",
-    "website/src/content/docs/documentation/project/roadmap.mdx",
   ];
   if (includeLocksAndBuildInfo) {
-    files.push(
-      "package-lock.json",
-      "website/package-lock.json",
-      "documentation-dist/.build-info.json"
-    );
+    files.push("package-lock.json");
   }
   for (const rel of files) {
     const src = path.join(root, rel);
@@ -102,7 +94,7 @@ describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
       const table = formatStateTable(state);
       expect(table).toContain(PKG_DISPLAY_VERSION);
       expect(table).toContain("Upgrade available: run migrations");
-      expect(table).toContain("/documentation/operations/backups-and-upgrades/");
+      expect(table).toContain("https://getpatchwork.in/documentation/operations/backups-and-upgrades/");
 
       const repair = await runRepair({
         projectDir: tmp,
@@ -114,7 +106,7 @@ describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
       expect(
         repair.manualActions.some((m) =>
           m.includes("Upgrade available: run migrations") &&
-          m.includes("/documentation/operations/backups-and-upgrades/")
+          m.includes("https://getpatchwork.in/documentation/operations/backups-and-upgrades/")
         )
       ).toBe(true);
     } finally {
@@ -122,28 +114,12 @@ describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
     }
   });
 
-  it("documentation-dist/.build-info.json records current version", () => {
-    const buildInfoPath = path.join(process.cwd(), "documentation-dist/.build-info.json");
-    if (fs.existsSync(buildInfoPath)) {
-      const info = JSON.parse(fs.readFileSync(buildInfoPath, "utf8"));
-      expect(info.version).toBe(PKG_VERSION);
-      expect(info.displayVersion).toBe(PKG_DISPLAY_VERSION);
-    }
-  });
-
-  it("version:check passes on clean repo and fails on mismatch, missing changelog, or invalid display variant", () => {
+  it("version:check passes on clean repo and fails on missing changelog or invalid display variant", () => {
     expect(checkVersionConsistency(process.cwd())).toEqual([]);
 
     const tmp = createTempRepoCopy();
     try {
       expect(checkVersionConsistency(tmp)).toEqual([]);
-
-      // Mismatched website/package.json
-      const docsPkgPath = path.join(tmp, "website/package.json");
-      const docsPkg = JSON.parse(fs.readFileSync(docsPkgPath, "utf8"));
-      fs.writeFileSync(docsPkgPath, JSON.stringify({ ...docsPkg, version: "0.6.0" }, null, 2));
-      expect(checkVersionConsistency(tmp).some((e) => e.includes("website/package.json"))).toBe(true);
-      fs.writeFileSync(docsPkgPath, JSON.stringify(docsPkg, null, 2));
 
       // Missing CHANGELOG.md section
       const clPath = path.join(tmp, "CHANGELOG.md");
@@ -188,9 +164,7 @@ describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
       expect(res.commands.some((c) => c.includes("git tag -a v0.8.0-beta.1"))).toBe(true);
 
       const rootPkg = JSON.parse(fs.readFileSync(path.join(tmp, "package.json"), "utf8"));
-      const docsPkg = JSON.parse(fs.readFileSync(path.join(tmp, "website/package.json"), "utf8"));
       expect(rootPkg.version).toBe("0.8.0-beta.1");
-      expect(docsPkg.version).toBe("0.8.0-beta.1");
 
       const updatedCl = fs.readFileSync(clPath, "utf8");
       expect(updatedCl).toContain("## [Unreleased]");

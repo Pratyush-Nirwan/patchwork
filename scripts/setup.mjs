@@ -269,7 +269,7 @@ export async function runCliSetup(rawArgs = process.argv.slice(2), io = {}) {
       writeLine(formatStateTable(detectedState));
       if (detectedState.upgradeAvailable) {
         writeLine(
-          `${YELLOW}Upgrade available: run migrations (npm run db:migrate). See /documentation/operations/backups-and-upgrades/${RESET}`
+          `${YELLOW}Upgrade available: run migrations (npm run db:migrate). See https://getpatchwork.in/documentation/operations/backups-and-upgrades/${RESET}`
         );
       }
       return {
@@ -757,7 +757,7 @@ export async function runCliSetup(rawArgs = process.argv.slice(2), io = {}) {
         writeLine(`  ${GREEN}✔${RESET} PostgreSQL 18:    ${easyRes.pgDataDir} (port ${easyRes.dbPort})`);
         writeLine(`  ${GREEN}✔${RESET} MinIO Bucket:     ${easyRes.minio.bucket} (${easyRes.minio.publicUrl})`);
         writeLine(`  ${GREEN}✔${RESET} Setup Log:        ${logger.logPath}`);
-        writeLine(`  ${GREEN}✔${RESET} Documentation:    ${appUrl}/documentation`);
+        writeLine(`  ${GREEN}✔${RESET} Documentation:    https://getpatchwork.in/documentation/`);
 
         writeLine(`\n${CYAN}==> [Step 5/5] Starting Patchwork supervisor...${RESET}`);
         const serverRes = await startApplicationServer({
@@ -1222,7 +1222,7 @@ export async function runCliSetup(rawArgs = process.argv.slice(2), io = {}) {
       );
       writeLine(`  ${GREEN}✔${RESET} Setup Log:        ${logger.logPath}`);
       writeLine(
-        `  ${GREEN}✔${RESET} Documentation:    http://localhost:${appPortDefault}/documentation`
+        `  ${GREEN}✔${RESET} Documentation:    https://getpatchwork.in/documentation/`
       );
 
       writeLine(`\n${CYAN}==> [Step 9/9] Starting Patchwork server...${RESET}`);

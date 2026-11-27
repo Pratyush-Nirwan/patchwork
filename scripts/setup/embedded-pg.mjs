@@ -33,7 +33,7 @@ export function checkEmbeddedPgMajorVersion(dataDir) {
     throw new Error(
       `Existing PostgreSQL data directory at ${dataDir} uses major version ${raw}, ` +
       `but Patchwork Easy mode expects PostgreSQL ${EMBEDDED_PG_MAJOR}. ` +
-      `Refusing automatic cross-major upgrade. Back up with pg_dump and migrate manually (see /documentation/operations/backups-and-upgrades/).`
+      `Refusing automatic cross-major upgrade. Back up with pg_dump and migrate manually (see https://getpatchwork.in/documentation/operations/backups-and-upgrades/).`
     );
   }
   return { initialized: true, major };

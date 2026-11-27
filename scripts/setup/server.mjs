@@ -119,8 +119,7 @@ export async function runBuildWithSpinner({
   outputStream = process.stdout,
 }) {
   const buildIdPath = path.join(appRootDir, ".next", "BUILD_ID");
-  const docsIndexPath = path.join(appRootDir, "documentation-dist", "index.html");
-  if (skipIfAlreadyBuilt && fs.existsSync(buildIdPath) && fs.existsSync(docsIndexPath)) {
+  if (skipIfAlreadyBuilt && fs.existsSync(buildIdPath)) {
     outputStream.write("✔ Production build ready.\n");
     return;
   }
@@ -136,24 +135,6 @@ export async function runBuildWithSpinner({
   }, 120);
 
   try {
-    const buildEmbeddedScript = path.join(appRootDir, "scripts", "docs", "build-embedded.mjs");
-    if (fs.existsSync(buildEmbeddedScript) && process.env.SKIP_DOCS_BUILD !== "1") {
-      await new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [buildEmbeddedScript], {
-          cwd: appRootDir,
-          env: { ...process.env, NODE_ENV: "production" },
-          stdio: ["ignore", "pipe", "pipe"],
-          windowsHide: true,
-        });
-        const errLines = [];
-        child.stderr.on("data", (d) => errLines.push(d.toString()));
-        child.on("close", (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`embedded docs build exited with ${code}:\n${errLines.join("")}`));
-        });
-      });
-    }
-
     const nextBin = path.join(
       appRootDir,
       "node_modules",

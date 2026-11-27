@@ -38,9 +38,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm --prefix website ci
+        run: npm ci
 
       - name: Start native PostgreSQL (Ubuntu)
         if: runner.os == 'Linux'

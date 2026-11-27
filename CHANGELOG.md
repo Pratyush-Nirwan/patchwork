@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - **Documentation:** Added per-section Open Graph images, sitemap defaults, and JSON-LD SEO metadata ([docs](/introduction/overview/)).
 
 ### Changed
+- **Documentation:** Moved the website and docs to `patchwork-website` (`getpatchwork.in`) and linked in-app docs externally.
 - **Documentation:** Replaced the generic grid mark with an angled ticket logo across headers, favicons, and Open Graph cards.
 - **Documentation:** Streamlined the site header with borderless controls, a GitHub Star link, and mobile responsiveness.
 ## [v0.8.0-beta] - 2026-11-24

@@ -192,7 +192,7 @@ export async function runRepair(options = {}) {
   });
 
   if (initialState.upgradeAvailable) {
-    const msg = `Upgrade available: run migrations (installed ${initialState.installedDisplayVersion} -> disk ${initialState.diskDisplayVersion}). Run 'npm run db:migrate' and see /documentation/operations/backups-and-upgrades/.`;
+    const msg = `Upgrade available: run migrations (installed ${initialState.installedDisplayVersion} -> disk ${initialState.diskDisplayVersion}). Run 'npm run db:migrate' and see https://getpatchwork.in/documentation/operations/backups-and-upgrades/.`;
     found.push(msg);
     manualActions.push(msg);
   }
@@ -357,8 +357,7 @@ export async function runRepair(options = {}) {
     checkMinioAnyway: true,
   });
 
-  const appUrl = (currentValues.APP_URL || "http://localhost:3000").replace(/\/$/, "");
-  const troubleshootUrl = `${appUrl}/documentation/operations/troubleshooting/`;
+  const troubleshootUrl = "https://getpatchwork.in/documentation/operations/troubleshooting/";
 
   if (!finalState.token.exists && !finalState.wizard.completed) {
     found.push("Admin setup_token row is missing in database");

@@ -74,10 +74,4 @@ test.describe("Version Display & Layout Stability", () => {
     await expect(page.getByTestId("about-patchwork-section")).toBeVisible();
     await expect(page.getByTestId("about-version")).toHaveText(VERSION_LABEL);
   });
-
-  test("docs site landing badge and footer display current version", async ({ page }) => {
-    await page.goto("/documentation");
-    await expect(page.getByTestId("docs-landing-version")).toContainText(VERSION_LABEL);
-    await expect(page.getByTestId("docs-footer-version")).toHaveText(VERSION_LABEL);
-  });
 });

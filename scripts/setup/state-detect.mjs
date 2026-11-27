@@ -224,20 +224,6 @@ export async function detectInstallState(options = {}) {
   // 4. Linux services
   const services = checkLinuxServices();
 
-  // 4b. Embedded documentation build
-  const docsDistDir = path.join(projectDir, "documentation-dist");
-  const docsIndexPath = path.join(docsDistDir, "index.html");
-  const docsBuildInfoPath = path.join(docsDistDir, ".build-info.json");
-  let docsBuildInfo = null;
-  if (fs.existsSync(docsBuildInfoPath)) {
-    try {
-      docsBuildInfo = JSON.parse(fs.readFileSync(docsBuildInfoPath, "utf8"));
-    } catch {
-      docsBuildInfo = null;
-    }
-  }
-  const docsBuilt = fs.existsSync(docsIndexPath);
-
   // 4c. App version (disk vs installed)
   const diskPkgDir = fs.existsSync(path.join(projectDir, "package.json"))
     ? projectDir
@@ -368,12 +354,6 @@ export async function detectInstallState(options = {}) {
     wizard: {
       completed: wizardCompleted,
     },
-    docs: {
-      built: docsBuilt,
-      version: docsBuildInfo?.version || null,
-      base: docsBuildInfo?.base || null,
-      builtAt: docsBuildInfo?.builtAt || null,
-    },
     diskVersion: diskVersionInfo.version,
     diskDisplayVersion: diskVersionInfo.displayVersion,
     installedVersion,
@@ -387,7 +367,7 @@ export async function detectInstallState(options = {}) {
 export function formatStateTable(state) {
   const sym = (ok) => (ok ? "✔" : "✖");
   const versionSummary = state.upgradeAvailable
-    ? `⚠ ${state.diskDisplayVersion || ""} (installed ${state.installedDisplayVersion}) — Upgrade available: run migrations (/documentation/operations/backups-and-upgrades/)`
+    ? `⚠ ${state.diskDisplayVersion || ""} (installed ${state.installedDisplayVersion}) — Upgrade available: run migrations (https://getpatchwork.in/documentation/operations/backups-and-upgrades/)`
     : state.installedDisplayVersion
       ? `✔ ${state.diskDisplayVersion} (installed ${state.installedDisplayVersion})`
       : `${state.diskDisplayVersion || "unknown"}`;
@@ -431,12 +411,6 @@ export function formatStateTable(state) {
     [
       "Browser wizard complete flag",
       state.wizard.completed ? "✔ Completed" : "⚠ Incomplete (pending browser wizard)",
-    ],
-    [
-      "Embedded documentation",
-      state.docs?.built
-        ? `✔ Built (v${state.docs.version || "?"}, base=${state.docs.base || "/documentation"})`
-        : "⚠ Not built (run npm run docs:build)",
     ],
     ["Systemd services (Linux)", state.services.summary],
     [

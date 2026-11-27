@@ -105,7 +105,7 @@ During a fresh install, `npm run setup` provisions PostgreSQL 18 (`./data/postgr
 
 - **Public docs**: [Patchwork Documentation]({{DOCS_SITE_URL}})
 - **In-app docs**: `/documentation` (bundled with every install, served on the same origin)
-- **Key guides**: [Installation](website/src/content/docs/documentation/getting-started/installation.mdx) · [Admin Guide](website/src/content/docs/documentation/admin-guide/system-configuration.mdx) · [Command Reference](website/src/content/docs/documentation/reference/command-palette.mdx) · [Troubleshooting](website/src/content/docs/documentation/operations/troubleshooting.mdx)
+- **Key guides**: [Installation]({{DOCS_SITE_URL}}documentation/getting-started/installation/) · [Admin Guide]({{DOCS_SITE_URL}}documentation/admin-guide/system-configuration/) · [Command Reference]({{DOCS_SITE_URL}}documentation/reference/command-palette/) · [Troubleshooting]({{DOCS_SITE_URL}}documentation/operations/troubleshooting/)
 
 ---
 
@@ -128,7 +128,7 @@ flowchart LR
 | **Database & Search** | PostgreSQL 16+, Drizzle ORM, `tsvector` + GIN full-text search |
 | **Real-Time** | PostgreSQL `LISTEN/NOTIFY` over Server-Sent Events (`/api/events`) |
 | **Storage** | Official MinIO binary with S3 presigned URLs |
-| **Website & Docs** | Self-contained Astro Starlight site (`website/`, embedded at `/documentation`) |
+| **Website & Docs** | [getpatchwork.in]({{DOCS_SITE_URL}}) ([`patchwork-website`](https://github.com/Pratyush-Nirwan/patchwork-website)) |
 
 ## Project Structure
 
@@ -144,7 +144,7 @@ npm run seed -- --size small # Populate local dev database with sample data
 npm run verify              # Run full checks, unit/integration tests, build, and E2E
 ```
 
-See [Contributing & Extending](website/src/content/docs/documentation/development/contributing-and-extending.mdx) for local database reset, website/docs generation, and release workflows.
+See [Contributing & Extending]({{DOCS_SITE_URL}}documentation/development/contributing-and-extending/) for local database reset and release workflows.
 
 ---
 

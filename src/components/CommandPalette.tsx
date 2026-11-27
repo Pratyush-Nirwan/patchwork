@@ -132,15 +132,15 @@ interface ArgSuggestion {
 }
 
 const DOCS_TOPICS: Array<{ slug: string; label: string; path: string }> = [
-  { slug: "quick-start", label: "Quick Start", path: "/documentation/getting-started/quick-start/" },
-  { slug: "installation", label: "Installation", path: "/documentation/getting-started/installation/" },
-  { slug: "setup-wizard", label: "Setup Wizard", path: "/documentation/getting-started/setup-wizard/" },
-  { slug: "domain-and-https", label: "Domain & HTTPS", path: "/documentation/getting-started/domain-and-https/" },
-  { slug: "command-palette", label: "Command Palette & Slash Commands", path: "/documentation/user-guide/command-palette/" },
-  { slug: "shortcuts", label: "Shortcuts & Themes", path: "/documentation/user-guide/shortcuts-and-themes/" },
-  { slug: "roles-and-permissions", label: "Roles & Permissions", path: "/documentation/reference/roles-and-permissions/" },
-  { slug: "configuration", label: "Configuration & Settings", path: "/documentation/reference/configuration/" },
-  { slug: "troubleshooting", label: "Troubleshooting & FAQ", path: "/documentation/operations/troubleshooting/" },
+  { slug: "quick-start", label: "Quick Start", path: "https://getpatchwork.in/documentation/getting-started/quick-start/" },
+  { slug: "installation", label: "Installation", path: "https://getpatchwork.in/documentation/getting-started/installation/" },
+  { slug: "setup-wizard", label: "Setup Wizard", path: "https://getpatchwork.in/documentation/getting-started/setup-wizard/" },
+  { slug: "domain-and-https", label: "Domain & HTTPS", path: "https://getpatchwork.in/documentation/getting-started/domain-and-https/" },
+  { slug: "command-palette", label: "Command Palette & Slash Commands", path: "https://getpatchwork.in/documentation/user-guide/command-palette/" },
+  { slug: "shortcuts", label: "Shortcuts & Themes", path: "https://getpatchwork.in/documentation/user-guide/shortcuts-and-themes/" },
+  { slug: "roles-and-permissions", label: "Roles & Permissions", path: "https://getpatchwork.in/documentation/reference/roles-and-permissions/" },
+  { slug: "configuration", label: "Configuration & Settings", path: "https://getpatchwork.in/documentation/reference/configuration/" },
+  { slug: "troubleshooting", label: "Troubleshooting & FAQ", path: "https://getpatchwork.in/documentation/operations/troubleshooting/" },
 ];
 
 function argToPill(arg: CommandArgSpec, value = ""): SlashPillItem {
@@ -1545,10 +1545,11 @@ export function CommandPalette({
               (t) => t.slug === topic || t.slug.includes(topic) || t.label.toLowerCase().includes(topic)
             )
             : undefined;
-          const targetPath = matched ? matched.path : "/documentation";
+          const targetPath = matched ? matched.path : "https://getpatchwork.in/documentation/";
           recordCommandHistory(user.id, rawInput, def);
           onOpenChange(false);
-          window.location.assign(targetPath);
+          const opened = window.open(targetPath, "_blank", "noopener,noreferrer");
+          if (!opened) window.location.assign(targetPath);
           return;
         }
         case "me": {
@@ -3008,13 +3009,15 @@ export function CommandPalette({
                     value="nav-documentation"
                     onSelect={() => {
                       onOpenChange(false);
-                      window.location.assign("/documentation");
+                      const docsUrl = "https://getpatchwork.in/documentation/";
+                      const opened = window.open(docsUrl, "_blank", "noopener,noreferrer");
+                      if (!opened) window.location.assign(docsUrl);
                     }}
                   >
                     <BookOpen className="h-3.5 w-3.5 text-[var(--pw-accent)]" />
                     <span className="font-medium text-[var(--pw-ink)]">Documentation</span>
                     <span className="ml-auto text-[11px] text-[var(--pw-ink-secondary)]">
-                      /documentation
+                      getpatchwork.in/documentation
                     </span>
                   </CommandItem>
                 </CommandGroup>

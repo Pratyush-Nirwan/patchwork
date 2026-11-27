@@ -10,9 +10,6 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 function createTempRepoFixture() {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "patchwork-readme-test-"));
   fs.mkdirSync(path.join(tmpRoot, "docs", "assets", "readme"), { recursive: true });
-  fs.mkdirSync(path.join(tmpRoot, "website", "src", "content", "docs", "documentation", "reference"), {
-    recursive: true,
-  });
 
   // Copy minimal files needed by renderReadme & checkReadme
   for (const rel of [
@@ -23,7 +20,6 @@ function createTempRepoFixture() {
     "AGENTS.md",
     "LICENSE",
     "docs/README.template.md",
-    "website/src/content/docs/documentation/project/roadmap.mdx",
   ]) {
     const src = path.join(REPO_ROOT, rel);
     if (fs.existsSync(src)) {
@@ -47,27 +43,6 @@ function createTempRepoFixture() {
   // Create minimal directories listed in project tree
   for (const dir of ["deploy", "drizzle", "e2e", "scripts", "src", "tests"]) {
     fs.mkdirSync(path.join(tmpRoot, dir), { recursive: true });
-  }
-
-  // Copy roadmap.yaml single source of truth
-  const roadmapYamlDst = path.join(tmpRoot, "website", "src", "data", "roadmap.yaml");
-  fs.mkdirSync(path.dirname(roadmapYamlDst), { recursive: true });
-  fs.copyFileSync(
-    path.join(REPO_ROOT, "website", "src", "data", "roadmap.yaml"),
-    roadmapYamlDst
-  );
-
-  // Copy website docs pages referenced in README.md
-  for (const rel of [
-    "website/src/content/docs/documentation/getting-started/installation.mdx",
-    "website/src/content/docs/documentation/admin-guide/system-configuration.mdx",
-    "website/src/content/docs/documentation/reference/command-palette.mdx",
-    "website/src/content/docs/documentation/operations/troubleshooting.mdx",
-    "website/src/content/docs/documentation/development/contributing-and-extending.mdx",
-  ]) {
-    const dst = path.join(tmpRoot, rel);
-    fs.mkdirSync(path.dirname(dst), { recursive: true });
-    fs.writeFileSync(dst, "# stub\n", "utf8");
   }
 
   fs.writeFileSync(path.join(tmpRoot, "README.md"), renderReadme(tmpRoot), "utf8");

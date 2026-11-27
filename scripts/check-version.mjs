@@ -13,7 +13,7 @@ const INVALID_VARIANT_PATTERNS = [
   { name: '"0.7.0beta" (missing hyphen)', regex: /\b0\.7\.0beta\b/i },
 ];
 
-const SCAN_DIRS = ["src", "scripts", "website/src", "tests", "e2e"];
+const SCAN_DIRS = ["src", "scripts", "tests", "e2e"];
 const SCAN_EXTS = new Set([".ts", ".tsx", ".js", ".mjs", ".astro", ".md", ".mdx", ".json"]);
 
 function walkFiles(dir, out = []) {
@@ -70,60 +70,7 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     }
   }
 
-  // 2. website/package.json, website/package-lock.json & website/src/data/generated/app-meta.json
-  const webPkgPath = path.join(repoRoot, "website/package.json");
-  if (fs.existsSync(webPkgPath)) {
-    try {
-      const webPkg = JSON.parse(fs.readFileSync(webPkgPath, "utf8"));
-      if (webPkg.version !== version) {
-        errors.push(`website/package.json version "${webPkg.version}" != "${version}"`);
-      }
-    } catch {
-      errors.push("website/package.json is not valid JSON.");
-    }
-  }
-
-  const webLockPath = path.join(repoRoot, "website/package-lock.json");
-  if (fs.existsSync(webLockPath)) {
-    try {
-      const webLock = JSON.parse(fs.readFileSync(webLockPath, "utf8"));
-      if (webLock.version !== version) {
-        errors.push(`website/package-lock.json version "${webLock.version}" != "${version}"`);
-      }
-      if (webLock.packages?.[""]?.version && webLock.packages[""].version !== version) {
-        errors.push(`website/package-lock.json packages[""].version "${webLock.packages[""].version}" != "${version}"`);
-      }
-    } catch {
-      errors.push("website/package-lock.json is not valid JSON.");
-    }
-  }
-
-  const appMetaPath = path.join(repoRoot, "website/src/data/generated/app-meta.json");
-  if (fs.existsSync(appMetaPath)) {
-    try {
-      const appMeta = JSON.parse(fs.readFileSync(appMetaPath, "utf8"));
-      if (appMeta.version !== version || appMeta.displayVersion !== displayVersion) {
-        errors.push(`website/src/data/generated/app-meta.json version mismatch.`);
-      }
-    } catch {
-      errors.push("website/src/data/generated/app-meta.json is not valid JSON.");
-    }
-  }
-
-  // 3. documentation-dist/.build-info.json (when built)
-  const buildInfoPath = path.join(repoRoot, "documentation-dist/.build-info.json");
-  if (fs.existsSync(buildInfoPath)) {
-    try {
-      const info = JSON.parse(fs.readFileSync(buildInfoPath, "utf8"));
-      if (info.version !== version) {
-        errors.push(`documentation-dist/.build-info.json version "${info.version}" != "${version}"`);
-      }
-    } catch {
-      errors.push("documentation-dist/.build-info.json is not valid JSON.");
-    }
-  }
-
-  // 4. CHANGELOG.md & docs-site changelog
+  // 2. CHANGELOG.md
   const changelogPath = path.join(repoRoot, "CHANGELOG.md");
   if (!fs.existsSync(changelogPath)) {
     errors.push("CHANGELOG.md is missing.");
@@ -134,20 +81,7 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     }
   }
 
-  const webChangelogCopy = path.join(
-    repoRoot,
-    "website/src/data/generated/CHANGELOG.md"
-  );
-  if (fs.existsSync(webChangelogCopy)) {
-    const docsChangelog = fs.readFileSync(webChangelogCopy, "utf8");
-    if (!docsChangelog.includes(`## [${displayVersion}] - `)) {
-      errors.push(
-        `website/src/data/generated/CHANGELOG.md missing section "## [${displayVersion}] - <YYYY-MM-DD>".`
-      );
-    }
-  }
-
-  // 5. README.md version badge
+  // 3. README.md version badge
   const readmePath = path.join(repoRoot, "README.md");
   if (fs.existsSync(readmePath)) {
     const readme = fs.readFileSync(readmePath, "utf8");
@@ -157,16 +91,7 @@ export function checkVersionConsistency(repoRoot = DEFAULT_REPO_ROOT) {
     }
   }
 
-  // 5b. Roadmap page current release check
-  const roadmapMdxPath = path.join(repoRoot, "website/src/content/docs/documentation/project/roadmap.mdx");
-  if (fs.existsSync(roadmapMdxPath)) {
-    const roadmapMdx = fs.readFileSync(roadmapMdxPath, "utf8");
-    if (!roadmapMdx.includes(`Current release: **${displayVersion}**`)) {
-      errors.push(`website/src/content/docs/documentation/project/roadmap.mdx must show Current release: **${displayVersion}**.`);
-    }
-  }
-
-  // 6. Static scan for invalid display variants
+  // 4. Static scan for invalid display variants
   const selfRel = path.normalize("scripts/check-version.mjs");
   for (const relDir of SCAN_DIRS) {
     for (const filePath of walkFiles(path.join(repoRoot, relDir))) {

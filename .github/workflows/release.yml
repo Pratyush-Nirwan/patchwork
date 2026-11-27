@@ -64,7 +64,6 @@ jobs:
               "scripts",
               "drizzle",
               "deploy",
-              "website",
               "package.json",
               "package-lock.json",
               "next.config.ts",

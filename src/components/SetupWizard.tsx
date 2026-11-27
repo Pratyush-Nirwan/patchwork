@@ -922,7 +922,7 @@ export function SetupWizard() {
 
           <div className="flex items-center gap-3">
             <a
-              href={`/documentation/getting-started/${currentStep === 1 ? "installation" : "setup-wizard"}/`}
+              href={`https://getpatchwork.in/documentation/getting-started/${currentStep === 1 ? "installation" : "setup-wizard"}/`}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="setup-help-link"

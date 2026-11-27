@@ -105,15 +105,12 @@ describe("check-loading-states enforcement", () => {
 
   it("verifies CSS surface-derived skeleton tokens and accessibility media queries exist", () => {
     const appCss = fs.readFileSync(path.resolve(process.cwd(), "src/app/globals.css"), "utf8");
-    const siteCss = fs.readFileSync(path.resolve(process.cwd(), "website/src/styles/tokens.css"), "utf8");
 
-    for (const css of [appCss, siteCss]) {
-      expect(css).toContain("--sk-surface:");
-      expect(css).toContain("--sk-base: color-mix(in oklab");
-      expect(css).toContain("--sk-shine: color-mix(in oklab");
-      expect(css).toContain("forced-colors: active");
-      expect(css).toContain("prefers-contrast: more");
-      expect(css).toContain("prefers-reduced-motion: reduce");
-    }
+    expect(appCss).toContain("--sk-surface:");
+    expect(appCss).toContain("--sk-base: color-mix(in oklab");
+    expect(appCss).toContain("--sk-shine: color-mix(in oklab");
+    expect(appCss).toContain("forced-colors: active");
+    expect(appCss).toContain("prefers-contrast: more");
+    expect(appCss).toContain("prefers-reduced-motion: reduce");
   });
 });

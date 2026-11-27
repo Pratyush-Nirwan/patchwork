@@ -239,9 +239,6 @@ export async function detectInstallState(options = {}) {
       installedVersion = null;
     }
   }
-  if (!installedVersion && docsBuildInfo?.version) {
-    installedVersion = docsBuildInfo.version;
-  }
   const upgradeAvailable = Boolean(
     installedVersion &&
       compareSemver(installedVersion, diskVersionInfo.version) !== null &&

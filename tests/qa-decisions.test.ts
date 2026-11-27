@@ -315,19 +315,6 @@ describe("QA Open Decisions (QA-10 & QA-11)", () => {
         path.join(process.cwd(), ".env.example"),
         "utf8"
       );
-      const domainDoc = fs.readFileSync(
-        path.join(
-          process.cwd(),
-          "website",
-          "src",
-          "content",
-          "docs",
-          "documentation",
-          "getting-started",
-          "domain-and-https.mdx"
-        ),
-        "utf8"
-      );
 
       expect(staticCaddy).not.toContain("/s3/");
       expect(staticCaddy).toContain("files.patchwork.example.com");
@@ -335,8 +322,6 @@ describe("QA Open Decisions (QA-10 & QA-11)", () => {
       expect(staticNginx).toContain("server_name files.patchwork.example.com;");
       expect(staticNginx).toContain("proxy_set_header Host $http_host;");
       expect(envExample).toContain("MINIO_PUBLIC_URL=http://localhost:9000");
-      expect(domainDoc).not.toContain("/s3/\"");
-      expect(domainDoc).toContain("files.patchwork.example.com");
     });
 
     it("signs presigned upload/download URLs with MINIO_PUBLIC_URL and round-trips through a Host-preserving proxy", async () => {

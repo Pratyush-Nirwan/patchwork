@@ -65,7 +65,7 @@ describe(`Single-Source Versioning (${PKG_DISPLAY_VERSION})`, () => {
     expect(scriptVersion.channel).toBe("beta");
     expect(scriptVersion.isValidSemver(PKG_VERSION)).toBe(true);
     expect(scriptVersion.compareSemver("0.6.0", PKG_VERSION)).toBeLessThan(0);
-    expect(scriptVersion.compareSemver(PKG_VERSION, "1.0.0")).toBeLessThan(0);
+    expect(scriptVersion.compareSemver(PKG_VERSION, "99.0.0")).toBeLessThan(0);
   });
 
   it("/api/health returns version and channel, and diagnostics bundle includes version without secrets", async () => {

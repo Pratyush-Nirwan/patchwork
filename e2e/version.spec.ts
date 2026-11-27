@@ -45,9 +45,13 @@ test.describe("Version Display & Layout Stability", () => {
           document.documentElement.classList.toggle("dark", isDark);
         }, dark);
 
+        if (width < 768) {
+          await page.waitForTimeout(150);
+        }
         const sidebar = page.getByTestId("left-sidebar");
         if (!(await sidebar.isVisible())) {
           await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+          await expect(sidebar).toBeVisible({ timeout: 5000 });
         }
 
         const sidebarVer = page.getByTestId("sidebar-version");
